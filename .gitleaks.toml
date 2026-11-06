@@ -54,4 +54,5 @@ regexes = [
   '''^rk_3k9d0a1m2x7q4b8c\.AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8$''',
   '''^rk_3k9d0a1m2x7q4b8c\.x$''',
   '''^stk_01k7c9x3m2ab4d5e6f7g8h9j0k$''',
+  '''^eyJhbGciOiJFUzI1NiJ9\.$''',
 ]
