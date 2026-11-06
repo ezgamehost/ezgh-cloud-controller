@@ -30,7 +30,7 @@ Go 1.27.1 (`go.mod`).
 | --- | --- |
 | Build | `CGO_ENABLED=0 GOOS=linux go build ./cmd/ezgh-cloud` |
 | Tests | `go test -race $(go list ./... \| grep -v /internal/kit/)` |
-| Lint | `gofmt -l .`, `go vet ./...`, `go run honnef.co/go/tools/cmd/staticcheck@v0.8.1 ./...` |
+| Lint | `gofmt -l .`; `go vet` and `go run honnef.co/go/tools/cmd/staticcheck@v0.8.1` over `$(go list ./... \| grep -v /internal/kit/)` (service-template checks the kit) |
 | Logging | `scripts/check-logging.sh` |
 | Gateway API conformance | `go test -tags conformance ./internal/cloud/l7/` against a real cluster (see the file's header) |
 

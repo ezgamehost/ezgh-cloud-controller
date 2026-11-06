@@ -9,6 +9,8 @@
 #   internal/ezghclient/sync.sh [<ezgh-cli commit>]   (default: origin/main of ../ezgh-cli)
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
+grep -qx 'module github.com/ezgamehost/ezgh-cloud-controller' "$here/../../go.mod" ||
+  { echo "sync.sh: run it in ezgh-cloud-controller; this repository copies internal/ezghclient from there (scripts/sync-copies.sh)" >&2; exit 2; }
 cli="${EZGH_CLI:-$here/../../../ezgh-cli}"
 [[ -d $cli/.git || -f $cli/.git ]] || cli="$HOME/code/ezgh-cli"
 [[ -n ${1:-} ]] || git -C "$cli" fetch -q origin
