@@ -1,0 +1,22 @@
+{
+  "events": [
+    {
+      "seq": 131,
+      "kind": "project.created",
+      "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+      "projectId": "0199a3c2-7d3e-7f62-9b5c-4e0a8d3f6b94",
+      "principal": null,
+      "occurredAt": "2026-10-14T09:00:00.000Z"
+    },
+    {
+      "seq": 134,
+      "kind": "project.deleted",
+      "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+      "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a83",
+      "principal": null,
+      "occurredAt": "2026-10-14T09:05:00.000Z"
+    }
+  ],
+  "head": 137,
+  "asOf": "2026-10-14T09:06:00.250Z"
+}

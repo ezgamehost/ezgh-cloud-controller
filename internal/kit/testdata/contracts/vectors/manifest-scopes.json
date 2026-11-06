@@ -1,0 +1,619 @@
+{
+  "description": "[being built] A namespace's scope ceilings (contracts/registration.md, \"Scopes\"), each case on examples/mcpcentral.registration-request.json with scopes set (null: left out). registrations: the stored scopes (sorted by name, actions sorted, status filled in; null: absent, exactly as before, also for an empty list) and the registration's digest, which org-api answers. rules: schema is whether the registration-request schema accepts it; issues, for bodies the schema accepts, the dotted paths of org-api's issues, which the kits apply too (scripts/lib/manifest.mjs registrationIssues).",
+  "registrations": [
+    {
+      "name": "without scopes: no scopes stored, and the digest of the namespace without them",
+      "scopes": null,
+      "stored": null,
+      "digest": "sha256:364a8883fac56517942ab4932194c9e508e1c1eca7ea6032fcea44a1c52d18bc"
+    },
+    {
+      "name": "an empty list is stored and digested as none",
+      "scopes": [],
+      "stored": null,
+      "digest": "sha256:364a8883fac56517942ab4932194c9e508e1c1eca7ea6032fcea44a1c52d18bc"
+    },
+    {
+      "name": "MCP Central's two scopes",
+      "scopes": [
+        {
+          "name": "mcpcentral:connect",
+          "actions": [
+            "mcpcentral.gateways.connect",
+            "mcpcentral.servers.use",
+            "mcpcentral.tools.call"
+          ]
+        },
+        {
+          "name": "mcpcentral:portal",
+          "actions": [
+            "mcpcentral.gateways.connect",
+            "mcpcentral.servers.use",
+            "mcpcentral.connections.*"
+          ]
+        }
+      ],
+      "stored": [
+        {
+          "name": "mcpcentral:connect",
+          "actions": [
+            "mcpcentral.gateways.connect",
+            "mcpcentral.servers.use",
+            "mcpcentral.tools.call"
+          ],
+          "status": "active"
+        },
+        {
+          "name": "mcpcentral:portal",
+          "actions": [
+            "mcpcentral.connections.*",
+            "mcpcentral.gateways.connect",
+            "mcpcentral.servers.use"
+          ],
+          "status": "active"
+        }
+      ],
+      "digest": "sha256:df02eb6859ac92cad8a057ee1889a347f08603b98e5e9df072d7517bfd4e048a"
+    },
+    {
+      "name": "stored sorted by name, actions sorted: the order listed doesn't change the digest",
+      "scopes": [
+        {
+          "name": "mcpcentral:portal",
+          "actions": [
+            "mcpcentral.connections.*",
+            "mcpcentral.servers.use",
+            "mcpcentral.gateways.connect"
+          ]
+        },
+        {
+          "name": "mcpcentral:connect",
+          "actions": [
+            "mcpcentral.gateways.connect",
+            "mcpcentral.servers.use",
+            "mcpcentral.tools.call"
+          ]
+        }
+      ],
+      "stored": [
+        {
+          "name": "mcpcentral:connect",
+          "actions": [
+            "mcpcentral.gateways.connect",
+            "mcpcentral.servers.use",
+            "mcpcentral.tools.call"
+          ],
+          "status": "active"
+        },
+        {
+          "name": "mcpcentral:portal",
+          "actions": [
+            "mcpcentral.connections.*",
+            "mcpcentral.gateways.connect",
+            "mcpcentral.servers.use"
+          ],
+          "status": "active"
+        }
+      ],
+      "digest": "sha256:df02eb6859ac92cad8a057ee1889a347f08603b98e5e9df072d7517bfd4e048a"
+    },
+    {
+      "name": "status active is the default",
+      "scopes": [
+        {
+          "name": "mcpcentral:connect",
+          "actions": [
+            "mcpcentral.gateways.connect",
+            "mcpcentral.servers.use",
+            "mcpcentral.tools.call"
+          ],
+          "status": "active"
+        },
+        {
+          "name": "mcpcentral:portal",
+          "actions": [
+            "mcpcentral.gateways.connect",
+            "mcpcentral.servers.use",
+            "mcpcentral.connections.*"
+          ],
+          "status": "active"
+        }
+      ],
+      "stored": [
+        {
+          "name": "mcpcentral:connect",
+          "actions": [
+            "mcpcentral.gateways.connect",
+            "mcpcentral.servers.use",
+            "mcpcentral.tools.call"
+          ],
+          "status": "active"
+        },
+        {
+          "name": "mcpcentral:portal",
+          "actions": [
+            "mcpcentral.connections.*",
+            "mcpcentral.gateways.connect",
+            "mcpcentral.servers.use"
+          ],
+          "status": "active"
+        }
+      ],
+      "digest": "sha256:df02eb6859ac92cad8a057ee1889a347f08603b98e5e9df072d7517bfd4e048a"
+    },
+    {
+      "name": "a deprecated scope is stored and digested",
+      "scopes": [
+        {
+          "name": "mcpcentral:connect",
+          "actions": [
+            "mcpcentral.gateways.connect",
+            "mcpcentral.servers.use",
+            "mcpcentral.tools.call"
+          ]
+        },
+        {
+          "name": "mcpcentral:portal",
+          "actions": [
+            "mcpcentral.gateways.connect",
+            "mcpcentral.servers.use",
+            "mcpcentral.connections.*"
+          ],
+          "status": "deprecated"
+        }
+      ],
+      "stored": [
+        {
+          "name": "mcpcentral:connect",
+          "actions": [
+            "mcpcentral.gateways.connect",
+            "mcpcentral.servers.use",
+            "mcpcentral.tools.call"
+          ],
+          "status": "active"
+        },
+        {
+          "name": "mcpcentral:portal",
+          "actions": [
+            "mcpcentral.connections.*",
+            "mcpcentral.gateways.connect",
+            "mcpcentral.servers.use"
+          ],
+          "status": "deprecated"
+        }
+      ],
+      "digest": "sha256:ce51ae5284ad8645ea5c17f33ca13b7df97146f3114168b65d6b2ec0c4160adf"
+    }
+  ],
+  "rules": [
+    {
+      "name": "MCP Central's two scopes",
+      "scopes": [
+        {
+          "name": "mcpcentral:connect",
+          "actions": [
+            "mcpcentral.gateways.connect",
+            "mcpcentral.servers.use",
+            "mcpcentral.tools.call"
+          ]
+        },
+        {
+          "name": "mcpcentral:portal",
+          "actions": [
+            "mcpcentral.gateways.connect",
+            "mcpcentral.servers.use",
+            "mcpcentral.connections.*"
+          ]
+        }
+      ],
+      "schema": true,
+      "issues": []
+    },
+    {
+      "name": "left out",
+      "scopes": null,
+      "schema": true,
+      "issues": []
+    },
+    {
+      "name": "a pattern with *",
+      "scopes": [
+        {
+          "name": "mcpcentral:all",
+          "actions": [
+            "mcpcentral.*"
+          ]
+        }
+      ],
+      "schema": true,
+      "issues": []
+    },
+    {
+      "name": "another namespace's scope name",
+      "scopes": [
+        {
+          "name": "widgets:connect",
+          "actions": [
+            "mcpcentral.tools.call"
+          ]
+        }
+      ],
+      "schema": true,
+      "issues": [
+        "scopes.0.name"
+      ]
+    },
+    {
+      "name": "another namespace's action",
+      "scopes": [
+        {
+          "name": "mcpcentral:connect",
+          "actions": [
+            "widgets.widgets.get"
+          ]
+        }
+      ],
+      "schema": true,
+      "issues": [
+        "scopes.0.actions.0"
+      ]
+    },
+    {
+      "name": "a pattern that covers none of the namespace's actions (a typo)",
+      "scopes": [
+        {
+          "name": "mcpcentral:connect",
+          "actions": [
+            "mcpcentral.tool.call"
+          ]
+        }
+      ],
+      "schema": true,
+      "issues": [
+        "scopes.0.actions.0"
+      ]
+    },
+    {
+      "name": "a platform action",
+      "scopes": [
+        {
+          "name": "mcpcentral:connect",
+          "actions": [
+            "projects.get"
+          ]
+        }
+      ],
+      "schema": true,
+      "issues": [
+        "scopes.0.actions.0"
+      ]
+    },
+    {
+      "name": "* alone",
+      "scopes": [
+        {
+          "name": "mcpcentral:connect",
+          "actions": [
+            "*"
+          ]
+        }
+      ],
+      "schema": true,
+      "issues": [
+        "scopes.0.actions.0"
+      ]
+    },
+    {
+      "name": "a name declared twice",
+      "scopes": [
+        {
+          "name": "mcpcentral:connect",
+          "actions": [
+            "mcpcentral.gateways.connect",
+            "mcpcentral.servers.use",
+            "mcpcentral.tools.call"
+          ]
+        },
+        {
+          "name": "mcpcentral:connect",
+          "actions": [
+            "mcpcentral.tools.call"
+          ]
+        }
+      ],
+      "schema": true,
+      "issues": [
+        "scopes.1.name"
+      ]
+    },
+    {
+      "name": "a name with two parts after the namespace",
+      "scopes": [
+        {
+          "name": "mcpcentral:connect:all",
+          "actions": [
+            "mcpcentral.tools.call"
+          ]
+        }
+      ],
+      "schema": false
+    },
+    {
+      "name": "a capital in the name",
+      "scopes": [
+        {
+          "name": "mcpcentral:Connect",
+          "actions": [
+            "mcpcentral.tools.call"
+          ]
+        }
+      ],
+      "schema": false
+    },
+    {
+      "name": "a one-letter word",
+      "scopes": [
+        {
+          "name": "mcpcentral:c",
+          "actions": [
+            "mcpcentral.tools.call"
+          ]
+        }
+      ],
+      "schema": false
+    },
+    {
+      "name": "no actions",
+      "scopes": [
+        {
+          "name": "mcpcentral:connect",
+          "actions": []
+        }
+      ],
+      "schema": false
+    },
+    {
+      "name": "an action twice",
+      "scopes": [
+        {
+          "name": "mcpcentral:connect",
+          "actions": [
+            "mcpcentral.tools.call",
+            "mcpcentral.tools.call"
+          ]
+        }
+      ],
+      "schema": false
+    },
+    {
+      "name": "51 actions",
+      "scopes": [
+        {
+          "name": "mcpcentral:connect",
+          "actions": [
+            "mcpcentral.tools.call*",
+            "mcpcentral.tools.callx*",
+            "mcpcentral.tools.callxx*",
+            "mcpcentral.tools.callxxx*",
+            "mcpcentral.tools.callxxxx*",
+            "mcpcentral.tools.callxxxxx*",
+            "mcpcentral.tools.callxxxxxx*",
+            "mcpcentral.tools.callxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxxxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxxxxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxxxxxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxxxxxxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxxxxxxxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxxxxxxxxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*",
+            "mcpcentral.tools.callxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx*"
+          ]
+        }
+      ],
+      "schema": false
+    },
+    {
+      "name": "an unknown status",
+      "scopes": [
+        {
+          "name": "mcpcentral:connect",
+          "actions": [
+            "mcpcentral.gateways.connect",
+            "mcpcentral.servers.use",
+            "mcpcentral.tools.call"
+          ],
+          "status": "retired"
+        }
+      ],
+      "schema": false
+    },
+    {
+      "name": "an extra field",
+      "scopes": [
+        {
+          "name": "mcpcentral:connect",
+          "actions": [
+            "mcpcentral.gateways.connect",
+            "mcpcentral.servers.use",
+            "mcpcentral.tools.call"
+          ],
+          "description": "x"
+        }
+      ],
+      "schema": false
+    },
+    {
+      "name": "21 scopes",
+      "scopes": [
+        {
+          "name": "mcpcentral:sa",
+          "actions": [
+            "mcpcentral.tools.call"
+          ]
+        },
+        {
+          "name": "mcpcentral:sb",
+          "actions": [
+            "mcpcentral.tools.call"
+          ]
+        },
+        {
+          "name": "mcpcentral:sc",
+          "actions": [
+            "mcpcentral.tools.call"
+          ]
+        },
+        {
+          "name": "mcpcentral:sd",
+          "actions": [
+            "mcpcentral.tools.call"
+          ]
+        },
+        {
+          "name": "mcpcentral:se",
+          "actions": [
+            "mcpcentral.tools.call"
+          ]
+        },
+        {
+          "name": "mcpcentral:sf",
+          "actions": [
+            "mcpcentral.tools.call"
+          ]
+        },
+        {
+          "name": "mcpcentral:sg",
+          "actions": [
+            "mcpcentral.tools.call"
+          ]
+        },
+        {
+          "name": "mcpcentral:sh",
+          "actions": [
+            "mcpcentral.tools.call"
+          ]
+        },
+        {
+          "name": "mcpcentral:si",
+          "actions": [
+            "mcpcentral.tools.call"
+          ]
+        },
+        {
+          "name": "mcpcentral:sj",
+          "actions": [
+            "mcpcentral.tools.call"
+          ]
+        },
+        {
+          "name": "mcpcentral:sk",
+          "actions": [
+            "mcpcentral.tools.call"
+          ]
+        },
+        {
+          "name": "mcpcentral:sl",
+          "actions": [
+            "mcpcentral.tools.call"
+          ]
+        },
+        {
+          "name": "mcpcentral:sm",
+          "actions": [
+            "mcpcentral.tools.call"
+          ]
+        },
+        {
+          "name": "mcpcentral:sn",
+          "actions": [
+            "mcpcentral.tools.call"
+          ]
+        },
+        {
+          "name": "mcpcentral:so",
+          "actions": [
+            "mcpcentral.tools.call"
+          ]
+        },
+        {
+          "name": "mcpcentral:sp",
+          "actions": [
+            "mcpcentral.tools.call"
+          ]
+        },
+        {
+          "name": "mcpcentral:sq",
+          "actions": [
+            "mcpcentral.tools.call"
+          ]
+        },
+        {
+          "name": "mcpcentral:sr",
+          "actions": [
+            "mcpcentral.tools.call"
+          ]
+        },
+        {
+          "name": "mcpcentral:ss",
+          "actions": [
+            "mcpcentral.tools.call"
+          ]
+        },
+        {
+          "name": "mcpcentral:st",
+          "actions": [
+            "mcpcentral.tools.call"
+          ]
+        },
+        {
+          "name": "mcpcentral:su",
+          "actions": [
+            "mcpcentral.tools.call"
+          ]
+        }
+      ],
+      "schema": false
+    }
+  ],
+  "notDirectoryUsable": {
+    "name": "a namespace that isn't directory-usable declares no scopes",
+    "issues": [
+      "scopes"
+    ]
+  }
+}

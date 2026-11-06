@@ -1,0 +1,19 @@
+[
+  {"name": "the endpoint records CallTool per JSON-RPC method", "valid": true},
+  {"name": "JSON-RPC endpoints of one action may share entries", "add": [{"method": "POST", "path": "/mcp", "host": "edge", "auth": "caller", "credentials": "bearer", "action": "mcpcentral.gateways.connect", "idempotencyException": "computation", "trail": {"byRpcMethod": {"tools/call": {"eventName": "CallTool", "eventCategory": "Data", "sensitive": ["arguments"]}, "tools/list": null}, "otherwise": null}}], "valid": true},
+  {"name": "a Data entry on a plain trail", "endpoints": {"POST /v1/servers/:serverId/connection": {"trail": {"eventName": "ConnectServer", "eventCategory": "Data"}}}, "valid": true},
+  {"name": "an explicit Management entry", "endpoints": {"POST /v1/servers/:serverId/connection": {"trail": {"eventName": "ConnectServer", "eventCategory": "Management"}}}, "valid": true},
+  {"name": "an unknown category", "endpoints": {"POST /v1/servers/:serverId/connection": {"trail": {"eventName": "ConnectServer", "eventCategory": "Insight"}}}, "valid": false},
+  {"name": "otherwise may record", "endpoints": {"POST /central": {"trail": {"byRpcMethod": {"tools/call": {"eventName": "CallTool", "eventCategory": "Data"}}, "otherwise": {"eventName": "UsePersonalGateway"}}}}, "valid": true},
+  {"name": "otherwise is written out", "endpoints": {"POST /central": {"trail": {"byRpcMethod": {"tools/call": {"eventName": "CallTool", "eventCategory": "Data"}}}}}, "valid": false},
+  {"name": "a JSON-RPC trail records something", "endpoints": {"POST /central": {"trail": {"byRpcMethod": {"tools/list": null}, "otherwise": null}}}, "valid": false},
+  {"name": "a JSON-RPC trail lists a method", "endpoints": {"POST /central": {"trail": {"byRpcMethod": {}, "otherwise": {"eventName": "UsePersonalGateway"}}}}, "valid": false},
+  {"name": "a JSON-RPC method name", "endpoints": {"POST /central": {"trail": {"byRpcMethod": {"tools call": {"eventName": "CallTool"}}, "otherwise": null}}}, "valid": false},
+  {"name": "an entry and a dispatch at once", "endpoints": {"POST /central": {"trail": {"eventName": "UsePersonalGateway", "byRpcMethod": {"tools/call": {"eventName": "CallTool"}}, "otherwise": null}}}, "valid": false},
+  {"name": "a JSON-RPC trail is for a caller POST", "endpoints": {"GET /v1/me": {"trail": {"byRpcMethod": {"tools/call": {"eventName": "CallTool"}}, "otherwise": null}}}, "valid": false},
+  {"name": "one endpoint can't record one event for two methods", "endpoints": {"POST /central": {"trail": {"byRpcMethod": {"tools/call": {"eventName": "CallTool"}, "resources/read": {"eventName": "CallTool"}}, "otherwise": null}}}, "valid": false},
+  {"name": "JSON-RPC endpoints of another action don't share an event", "add": [{"method": "POST", "path": "/mcp", "host": "edge", "auth": "caller", "credentials": "bearer", "action": "mcpcentral.tools.call", "idempotencyException": "computation", "trail": {"byRpcMethod": {"tools/call": {"eventName": "CallTool", "eventCategory": "Data", "sensitive": ["arguments"]}, "tools/list": null}, "otherwise": null}}], "valid": false},
+  {"name": "a plain write can't reuse a JSON-RPC event", "endpoints": {"POST /v1/servers/:serverId/connection": {"trail": {"eventName": "CallTool"}}}, "valid": false},
+  {"name": "an entry's event name is PascalCase", "endpoints": {"POST /central": {"trail": {"byRpcMethod": {"tools/call": {"eventName": "callTool"}}, "otherwise": null}}}, "valid": false},
+  {"name": "an acting computation is always recorded: CallTool's endpoint with trail null (its action is write-level)", "endpoints": {"POST /central": {"trail": null}}, "valid": false}
+]

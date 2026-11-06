@@ -1,0 +1,21 @@
+{
+  "description": "[being built] Products that refuse a project's deletion (contracts/org-lifecycle.md, \"Products that refuse\"; contracts/registration.md, \"Project deletion checks\"). cases: in applyManifestCase form on examples/widgets.service-manifest.json (manifest patches top-level fields, endpoints patches endpoints by \"METHOD path\", remove drops them, add appends endpoints; null deletes, except trail): valid means the schema accepts it and the rules find nothing (the Go kit's Parse agrees case by case), invalid that the schema or the rules refuse it. issues, where given, are the paths of the rules' issues (the kits' manifestIssues and Check). registrations: the widgets registration with projectDeletionCheck set (null: left out); stored is the stored value (null: absent, the stored form and digest exactly as before) and digest the registration's, which org-api answers.",
+  "route": { "method": "GET", "path": "/internal/v1/lifecycle/projects/:projectId/deletion-check" },
+  "cases": [
+    {"name": "widgets as it is: no check, no route", "valid": true},
+    {"name": "declared, with the route", "manifest": {"projectDeletionCheck": true}, "add": [{"method": "GET", "path": "/internal/v1/lifecycle/projects/:projectId/deletion-check", "auth": "service", "trail": null}], "valid": true},
+    {"name": "false, without the route", "manifest": {"projectDeletionCheck": false}, "valid": true},
+    {"name": "declared without the route: org-api would call a route nobody serves", "manifest": {"projectDeletionCheck": true}, "valid": false, "issues": ["projectDeletionCheck"]},
+    {"name": "the route without declaring it: org-api would never call it", "add": [{"method": "GET", "path": "/internal/v1/lifecycle/projects/:projectId/deletion-check", "auth": "service", "trail": null}], "valid": false, "issues": ["endpoints.15.path"]},
+    {"name": "the route with false", "manifest": {"projectDeletionCheck": false}, "add": [{"method": "GET", "path": "/internal/v1/lifecycle/projects/:projectId/deletion-check", "auth": "service", "trail": null}], "valid": false, "issues": ["endpoints.15.path"]},
+    {"name": "declared without serviceCredentials: org-api holds a credential the product issued", "manifest": {"projectDeletionCheck": true, "serviceCredentials": null}, "add": [{"method": "GET", "path": "/internal/v1/lifecycle/projects/:projectId/deletion-check", "auth": "service", "trail": null}], "valid": false, "issues": ["serviceCredentials"]},
+    {"name": "declared, with the route taking a customer's credential", "manifest": {"projectDeletionCheck": true}, "add": [{"method": "GET", "path": "/internal/v1/lifecycle/projects/:projectId/deletion-check", "auth": "caller", "action": "widgets.widgets.list", "trail": null}], "valid": false, "issues": ["endpoints.15.path", "endpoints.15.auth"]},
+    {"name": "declared, with the route on the ingest host", "manifest": {"projectDeletionCheck": true, "ingest": {"hostname": "widgets-ingest.ezghcloud.com", "port": 4701}}, "add": [{"method": "GET", "path": "/internal/v1/lifecycle/projects/:projectId/deletion-check", "auth": "service", "host": "ingest", "trail": null}], "valid": false, "issues": ["endpoints.15.method", "endpoints.15.auth"]},
+    {"name": "not a boolean", "manifest": {"projectDeletionCheck": "yes"}, "valid": false}
+  ],
+  "registrations": [
+    {"name": "left out: the stored form and digest are exactly as before", "projectDeletionCheck": null, "stored": null, "digest": "sha256:afc16f01c8db3c19a757c6f6e558bf97c0b0940df77c7bb1a139f34d9f526f69"},
+    {"name": "declared", "projectDeletionCheck": true, "stored": true, "digest": "sha256:f4386159452e42d06ad154670e2528b4f216688b3991ea31ef7bb1eb626424c9"},
+    {"name": "false is stored as given", "projectDeletionCheck": false, "stored": false, "digest": "sha256:7ed1247aead3ba139801f4e393244b44408cda63a5474fc2761d8a47ea7f2292"}
+  ]
+}

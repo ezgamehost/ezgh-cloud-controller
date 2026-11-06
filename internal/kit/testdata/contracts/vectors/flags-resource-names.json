@@ -1,0 +1,17 @@
+{
+  "description": "[being built] Feature Flags config actions (flags.configs.get, flags.configs.update) are checked on the environment's name with the flag's key as the path: ezgh:<region>:org_…:prj_…:fen_<12>/<flagKey> (contracts/resources.md). Flag keys match ^[a-z0-9][a-z0-9_-]{0,63}$ (no /, *, : or .), which keeps a config pattern inside its environment and its key prefix.",
+  "flagKey": "^[a-z0-9][a-z0-9_-]{0,63}$",
+  "cases": [
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:fen_7m2k9q4x0a1b/*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:fen_7m2k9q4x0a1b/new-checkout", "matches": true },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:fen_7m2k9q4x0a1b/*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:fen_9z8y7x6w5v4u/new-checkout", "matches": false },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:fen_*/checkout-*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:fen_7m2k9q4x0a1b/checkout-v2", "matches": true },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:fen_*/checkout-*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:fen_7m2k9q4x0a1b/new-checkout", "matches": false },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:fen_7m2k9q4x0a1b/new-checkout", "matches": true },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:fen_7m2k9q4x0a1b", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:fen_7m2k9q4x0a1b/new-checkout", "matches": false },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:fen_7m2k9q4x0a1b*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:fen_7m2k9q4x0a1b/new-checkout", "matches": true },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:fen_*/*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:flg_7m2k9q4x0a1b", "matches": false },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_*:fen_*/beta", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:fen_7m2k9q4x0a1b/beta", "matches": true },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:fen_*/beta", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:fen_7m2k9q4x0a1b/beta-2", "matches": false }
+  ],
+  "refusedKeys": ["New-Checkout", "-start", "a/b", "a*", "a:b", "a.b", "", "a_234567890123456789012345678901234567890123456789012345678901234"]
+}

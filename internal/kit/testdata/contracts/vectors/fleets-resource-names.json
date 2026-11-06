@@ -1,0 +1,20 @@
+{
+  "description": "[being built] Fleets's account actions (fleets.sessions.start, fleets.commands.run, fleets.scripts.runOn) are checked on the node's name with the OS account as the path: ezgh:<region>:org_…:prj_…:nod_<12>/<osUser> (contracts/resources.md). OS account names match ^[a-z_][a-z0-9_-]{0,31}$ (no /, *, : or .), which keeps an account pattern on its node and its name. The bare node name doesn't match account checks, and a deny on it leaves the node's accounts allowed.",
+  "osUser": "^[a-z_][a-z0-9_-]{0,31}$",
+  "cases": [
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:nod_*/root", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:nod_7m2k9q4x0a1b/root", "matches": true },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:nod_*/root", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:nod_7m2k9q4x0a1b/rootx", "matches": false },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:nod_*/root", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:nod_7m2k9q4x0a1b", "matches": false },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:nod_7m2k9q4x0a1b/*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:nod_7m2k9q4x0a1b/root", "matches": true },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:nod_7m2k9q4x0a1b/*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:nod_7m2k9q4x0a1b/ezgh-user", "matches": true },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:nod_7m2k9q4x0a1b/*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:nod_9z8y7x6w5v4u/root", "matches": false },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:nod_7m2k9q4x0a1b", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:nod_7m2k9q4x0a1b/root", "matches": false },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:nod_7m2k9q4x0a1b*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:nod_7m2k9q4x0a1b/root", "matches": true },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:nod_*/ezgh-user", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:nod_9z8y7x6w5v4u/ezgh-user", "matches": true },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:nod_*/ezgh-user", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:nod_9z8y7x6w5v4u/root", "matches": false },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:nod_*/alice*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:nod_7m2k9q4x0a1b/alice-3f9a", "matches": true },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:nod_7m2k9q4x0a1b/deploy", "matches": true },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:nod_*/*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:scr_7m2k9q4x0a1b", "matches": false }
+  ],
+  "refusedOsUsers": ["Root", "-root", "9lives", "a/b", "a*", "a.b", "a:b", "", "a23456789012345678901234567890123"]
+}

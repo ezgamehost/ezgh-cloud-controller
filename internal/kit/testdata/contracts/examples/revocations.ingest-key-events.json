@@ -1,0 +1,9 @@
+{
+  "events": [
+    { "seq": 42, "kind": "ingestKey.revoked", "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70", "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81", "keyId": "0199a3c4-2f30-7b42-8c5d-6e7f8091a2b3", "occurredAt": "2026-10-02T09:30:00.000Z" },
+    { "seq": 43, "kind": "project.deleted", "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70", "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a82", "keyId": null, "occurredAt": "2026-10-02T09:31:00.000Z" },
+    { "seq": 44, "kind": "organization.suspended", "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f71", "projectId": null, "keyId": null, "occurredAt": "2026-10-02T09:32:00.000Z" }
+  ],
+  "head": 44,
+  "asOf": "2026-10-02T09:32:01.250Z"
+}

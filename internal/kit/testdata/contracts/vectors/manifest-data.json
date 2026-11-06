@@ -1,0 +1,60 @@
+{
+  "description": "[being built] Data hosts: a product's own data plane on <namespace>.ezghcloud.com, authenticated by product data-plane keys the product issues (contracts/registration.md, \"Data endpoints\"). manifest is a valid excerpt (Feature Flags: its data plane on flags.ezghcloud.com, its API on flags-api.ezghcloud.com); each case changes it as scripts/lib/manifest-cases.mjs does, and an invalid case's issue is a path both scripts/lib/manifest.mjs and the Go kit's manifest.Check report.",
+  "manifest": {
+    "manifestVersion": 1,
+    "namespace": "flags",
+    "displayName": "Feature Flags",
+    "description": "Feature flags.",
+    "api": { "hostname": "flags-api.ezghcloud.com", "port": 6500 },
+    "data": { "hostname": "flags.ezghcloud.com", "port": 6501 },
+    "resourceTypes": [],
+    "managedPolicies": [],
+    "actions": [
+      { "id": "flags.environments.list", "description": "List environments", "resource": "project", "accessLevel": "list", "managedPolicies": ["ReadOnlyAccess"] }
+    ],
+    "endpoints": [
+      { "method": "GET", "path": "/health", "auth": "none", "trail": null },
+      { "method": "GET", "path": "/ready", "auth": "none", "trail": null },
+      { "method": "GET", "path": "/openapi.json", "auth": "none", "trail": null },
+      { "method": "POST", "path": "/ofrep/v1/evaluate/flags/:key", "host": "data", "auth": "productKey", "trail": null },
+      { "method": "GET", "path": "/v1/sync/snapshot", "host": "data", "auth": "productKey", "trail": null },
+      { "method": "POST", "path": "/v1/sync/stream", "host": "data", "auth": "productKey", "timeoutSeconds": 660, "trail": null }
+    ],
+    "quotas": []
+  },
+  "cases": [
+    { "name": "the base is valid", "valid": true },
+    { "name": "bulk evaluation beside single evaluation", "add": [{ "method": "POST", "path": "/ofrep/v1/evaluate/flags", "host": "data", "auth": "productKey", "trail": null }], "valid": true },
+    { "name": "a client stream with its own timeout", "add": [{ "method": "POST", "path": "/v1/client/stream", "host": "data", "auth": "productKey", "timeoutSeconds": 900, "trail": null }], "valid": true },
+
+    { "name": "data host must be the bare namespace host", "manifest": { "data": { "hostname": "flags-data.ezghcloud.com", "port": 6501 } }, "issue": "data.hostname", "valid": false },
+    { "name": "data host is the namespace's own", "manifest": { "data": { "hostname": "widgets.ezghcloud.com", "port": 6501 } }, "issue": "data.hostname", "valid": false },
+    { "name": "bare namespace data host needs the -api API host", "manifest": { "api": { "hostname": "flags.ezghcloud.com", "port": 6500 } }, "issue": "api.hostname", "valid": false },
+    { "name": "data port must differ from the API port", "manifest": { "data": { "hostname": "flags.ezghcloud.com", "port": 6500 } }, "issue": "data.port", "valid": false },
+    { "name": "data port is 1024-65535", "manifest": { "data": { "hostname": "flags.ezghcloud.com", "port": 443 } }, "issue": "data.port", "valid": false },
+    { "name": "data endpoints need the data host", "manifest": { "data": null }, "issue": "data", "valid": false },
+    { "name": "a data host needs a data endpoint", "remove": ["POST /ofrep/v1/evaluate/flags/:key", "GET /v1/sync/snapshot", "POST /v1/sync/stream"], "issue": "data", "valid": false },
+    { "name": "a data host and a registry host can't share the namespace's host", "manifest": { "registry": { "domain": "flags.ezghcloud.com", "port": 6502 } }, "issue": "data", "valid": false },
+    { "name": "productKey only on the data host", "endpoints": { "POST /ofrep/v1/evaluate/flags/:key": { "host": null } }, "issue": "endpoints.3.host", "valid": false },
+    { "name": "data endpoints only take productKey", "endpoints": { "POST /ofrep/v1/evaluate/flags/:key": { "auth": "caller" } }, "issue": "endpoints.3.host", "valid": false },
+    { "name": "data endpoints aren't recorded", "endpoints": { "POST /ofrep/v1/evaluate/flags/:key": { "trail": { "eventName": "Evaluate" } } }, "issue": "endpoints.3.trail", "valid": false },
+    { "name": "data endpoints name no action", "endpoints": { "POST /ofrep/v1/evaluate/flags/:key": { "action": "flags.environments.list" } }, "issue": "endpoints.3.action", "valid": false },
+    { "name": "data endpoints take no Idempotency-Key", "endpoints": { "POST /ofrep/v1/evaluate/flags/:key": { "idempotencyKey": true } }, "issue": "endpoints.3.idempotencyKey", "valid": false },
+    { "name": "data endpoints aren't computations", "endpoints": { "POST /ofrep/v1/evaluate/flags/:key": { "idempotencyException": "computation" } }, "issue": "endpoints.3.idempotencyException", "valid": false },
+    { "name": "data endpoints consume no quotas", "manifest": { "quotas": [{ "id": "flags.evaluationsPerMinute", "displayName": "Evaluations per minute", "description": "x", "kind": "rate", "scope": "organization", "unit": "request", "default": 10, "window": "PT1M" }] }, "endpoints": { "POST /ofrep/v1/evaluate/flags/:key": { "quotas": ["flags.evaluationsPerMinute"] } }, "issue": "endpoints.3.quotas", "valid": false },
+    { "name": "data endpoints are never asynchronous", "endpoints": { "POST /ofrep/v1/evaluate/flags/:key": { "async": true } }, "issue": "endpoints.3.async", "valid": false },
+    { "name": "data endpoints name no component", "endpoints": { "POST /ofrep/v1/evaluate/flags/:key": { "component": "api" } }, "issue": "endpoints.3.component", "valid": false },
+    { "name": "data endpoints take only their bearer key", "endpoints": { "POST /ofrep/v1/evaluate/flags/:key": { "credentials": "bearer" } }, "issue": "endpoints.3.credentials", "valid": false },
+    { "name": "data endpoints aren't public endpoints", "endpoints": { "GET /v1/sync/snapshot": { "public": "metadata" } }, "issue": "endpoints.4.public", "valid": false },
+    { "name": "data endpoints keep the platform's error model or their protocol's", "endpoints": { "POST /ofrep/v1/evaluate/flags/:key": { "errorModel": "openai" } }, "issue": "endpoints.3.errorModel", "valid": false },
+    { "name": "data endpoints are GET or POST", "endpoints": { "POST /ofrep/v1/evaluate/flags/:key": { "method": "PUT" } }, "issue": "endpoints.3.method", "valid": false },
+    { "name": "data endpoints are HTTP", "endpoints": { "POST /ofrep/v1/evaluate/flags/:key": { "protocol": "grpc" } }, "issue": "endpoints.3.protocol", "valid": false },
+    { "name": "data paths aren't under an organization", "endpoints": { "POST /ofrep/v1/evaluate/flags/:key": { "path": "/v1/organizations/:orgId/evaluate" } }, "issue": "endpoints.3.path", "valid": false },
+    { "name": "data paths aren't internal", "endpoints": { "POST /ofrep/v1/evaluate/flags/:key": { "path": "/internal/v1/evaluate" } }, "issue": "endpoints.3.path", "valid": false },
+    { "name": "data paths aren't the kit's own", "endpoints": { "GET /v1/sync/snapshot": { "path": "/health" } }, "issue": "endpoints.4.path", "valid": false },
+    { "name": "a data route's method and path on the API host too", "add": [{ "method": "GET", "path": "/v1/sync/snapshot", "auth": "none", "public": "metadata", "trail": null }], "issue": "endpoints.4.path", "valid": false },
+    { "name": "a data route's path with another method on the API host", "add": [{ "method": "GET", "path": "/ofrep/v1/evaluate/flags/:key", "auth": "none", "public": "metadata", "trail": null }], "valid": true },
+    { "name": "the same data route twice", "add": [{ "method": "GET", "path": "/v1/sync/snapshot", "host": "data", "auth": "productKey", "trail": null }], "issue": "endpoints.6.path", "valid": false },
+    { "name": "timeoutSeconds within 1..900", "endpoints": { "POST /v1/sync/stream": { "timeoutSeconds": 901 } }, "issue": "endpoints.5.timeoutSeconds", "valid": false }
+  ]
+}

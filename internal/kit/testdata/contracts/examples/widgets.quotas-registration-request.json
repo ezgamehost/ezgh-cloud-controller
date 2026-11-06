@@ -1,0 +1,13 @@
+{
+  "registrationVersion": 1,
+  "namespace": "widgets",
+  "displayName": "Widgets",
+  "internalUrl": "http://widgets-api.widgets.svc.cluster.local:4700",
+  "quotas": [
+    { "id": "widgets.widgetsPerProject", "displayName": "Widgets per project", "description": "Widgets that can exist in one project at a time, in any state.", "kind": "allocation", "scope": "project", "default": 20, "tierDefaults": { "trial": 5 }, "unit": "widget", "adjustable": true, "max": 1000 },
+    { "id": "widgets.largeWidgetsPerOrganization", "displayName": "Large widgets per organization", "description": "Widgets of size large that can exist in the organization at a time.", "kind": "allocation", "scope": "organization", "default": 5, "tierDefaults": { "trial": 1 }, "unit": "widget", "adjustable": true, "max": 200 },
+    { "id": "widgets.widgetCreatesPerMinute", "displayName": "Widget creations per minute", "description": "Create requests accepted per minute, across the organization.", "kind": "rate", "scope": "organization", "default": 30, "unit": "request", "window": "PT1M", "burst": 30, "adjustable": true },
+    { "id": "widgets.api.requestsPerPeriod", "displayName": "API requests per billing period", "description": "Requests to the widgets API in the organization's billing period.", "kind": "usage", "scope": "organization", "default": 1000000, "tierDefaults": { "trial": 10000 }, "unit": "request", "adjustable": true },
+    { "id": "widgets.api.concurrentRequests", "displayName": "Concurrent API requests", "description": "Requests to the widgets API in flight at once, across the organization.", "kind": "concurrency", "scope": "organization", "default": 50, "unit": "request", "leaseTtl": "PT1M", "adjustable": true }
+  ]
+}

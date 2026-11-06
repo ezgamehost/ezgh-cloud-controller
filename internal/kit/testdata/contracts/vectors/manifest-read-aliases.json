@@ -1,0 +1,6 @@
+[
+ {"name":"GET formats share an action and event", "method":"GET", "action":"widgets.widgets.get", "valid":true},
+ {"name":"different actions cannot share an event", "method":"GET", "action":"widgets.widgets.list", "valid":false},
+ {"name":"writes cannot share a read event", "method":"POST", "action":"widgets.widgets.get", "valid":false},
+ {"name":"empty action is not a read alias", "method":"GET", "action":"", "valid":false}
+]

@@ -1,0 +1,24 @@
+{
+  "description": "[being built] Database users and logical databases are checked on the database's name with the kind and the object's name as the path: ezgh:<region>:org_…:prj_…:dbi_<12>/users/<name> and …:dbi_<12>/logical-databases/<name> (contracts/resources.md). The kind is a fixed first component, so a users pattern never reaches a logical database. Managed names have no /, *, : or .; the bare database name doesn't match these checks, and a deny on it leaves them allowed. A name made by hand has %, /, * and : percent-encoded in the path, so it stays one component.",
+  "user": "^[a-z][a-z0-9_]{0,31}$",
+  "logicalDatabase": "^[a-z][a-z0-9_]{0,62}$",
+  "cases": [
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:dbi_*/users/*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:dbi_7m2k9q4x0a1b/users/app", "matches": true },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:dbi_*/users/*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:dbi_7m2k9q4x0a1b/logical-databases/app", "matches": false },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:dbi_*/logical-databases/*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:dbi_7m2k9q4x0a1b/logical-databases/shop", "matches": true },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:dbi_*/logical-databases/*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:dbi_7m2k9q4x0a1b/users/shop", "matches": false },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:dbi_*/users/app", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:dbi_7m2k9q4x0a1b/users/app", "matches": true },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:dbi_*/users/app", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:dbi_7m2k9q4x0a1b/users/app_2", "matches": false },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:dbi_7m2k9q4x0a1b/*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:dbi_7m2k9q4x0a1b/users/app", "matches": true },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:dbi_7m2k9q4x0a1b/*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:dbi_9z8y7x6w5v4u/users/app", "matches": false },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:dbi_7m2k9q4x0a1b", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:dbi_7m2k9q4x0a1b/users/app", "matches": false },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:dbi_7m2k9q4x0a1b*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:dbi_7m2k9q4x0a1b/logical-databases/shop", "matches": true },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:dbi_7m2k9q4x0a1b/users/rpt", "matches": true },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:dbi_*/users/*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:dbi_7m2k9q4x0a1b", "matches": false },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_zzzzzzzzzzzz:dbi_*/users/*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:dbi_7m2k9q4x0a1b/users/app", "matches": false },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:dbi_*/users/*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:dbi_7m2k9q4x0a1b/logical-databases/x%2Fusers%2Fy", "matches": false, "handMade": true },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:dbi_*/logical-databases/*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:dbi_7m2k9q4x0a1b/logical-databases/Shop-DB%2A", "matches": true, "handMade": true }
+  ],
+  "refusedUsers": ["Root", "_app", "9lives", "a/b", "a*", "a.b", "a:b", "a-b", "", "a23456789012345678901234567890123"],
+  "refusedLogicalDatabases": ["Shop", "shop-db", "a/b", "a*", "a.b", "", "a234567890123456789012345678901234567890123456789012345678901234"]
+}

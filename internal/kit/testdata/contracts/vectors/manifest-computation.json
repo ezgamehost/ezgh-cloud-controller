@@ -1,0 +1,10 @@
+[
+  {"name":"normal POST requires idempotency", "endpoint":{"idempotencyKey":false}, "valid":false},
+  {"name":"normal POST retains idempotency", "endpoint":{"idempotencyKey":true}, "valid":true},
+  {"name":"private computation can omit replay", "endpoint":{"idempotencyKey":false,"idempotencyException":"computation"}, "valid":true},
+  {"name":"computation cannot persist replay", "endpoint":{"idempotencyKey":true,"idempotencyException":"computation"}, "valid":false},
+  {"name":"computation cannot be asynchronous", "endpoint":{"idempotencyKey":false,"idempotencyException":"computation","async":true}, "valid":false},
+  {"name":"computation must be POST", "endpoint":{"method":"PUT","idempotencyKey":false,"idempotencyException":"computation"}, "valid":false},
+  {"name":"computation must authorize caller", "endpoint":{"auth":"service","idempotencyKey":false,"idempotencyException":"computation"}, "valid":false},
+  {"name":"unknown exception cannot bypass replay", "endpoint":{"idempotencyKey":false,"idempotencyException":"other"}, "valid":false}
+]

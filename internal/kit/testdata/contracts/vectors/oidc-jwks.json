@@ -1,0 +1,688 @@
+{
+  "description": "[being built] OIDC providers with stored keys (contracts/identity-and-authz.md#oidc-api-keys-being-built). upload: whether org-api accepts jwks on creating or updating a provider; valid false is 400 invalid_request whose issue has exactly this path (the message is for people, not compared); private true means the key has private members and the message says to upload only public keys, and nothing of it is stored, logged or recorded; stored, when given, is exactly what org-api keeps. select: the provider an exchange uses for a token's unverified iss and header kid, given providers (a jwks provider's keys shown by kid only); null is refused (401). conflict: whether a provider being created or updated is 409 conflict against providers. Reference implementation: scripts/lib/oidc-jwks.mjs.",
+  "upload": [
+    {
+      "name": "a Kubernetes cluster's key (kubectl get --raw /openid/v1/jwks)",
+      "jwks": {
+        "keys": [
+          {
+            "use": "sig",
+            "kty": "RSA",
+            "kid": "rvT2Uqf8iC9Lt0pO3hZq1b6mE2wYxJ4nKsV7dGcAfHo",
+            "alg": "RS256",
+            "n": "r99WQsEwXfTIwrwEwyAFNzVCjg0x7H1rP8Oqm6TTXatQ-PABtok_aL_1HRO3TlVEbEXXqFk8ngF8pOif0Fv7KpNspheg4pmBaukCLJhoGvLiuMXR8aylDyCw8Np5Gr1EYy_OU6gQsVhHXayWgFl2V9R3d9feQyxHPIGD0VJxFFbzTLdjj3YSKS30FJ8euTlx_drZ5MdKMXZGKbHryQDq6l0e3piWW3SstIsncVsHL8sTvEdYxJ1ONcKzEW0w7oZeKAWRywHJmf0if03aX5M_Wa3zfGGZMy72C2RRCViShf8CzAtHqcmZGGUAiRaCXDcYNMBzrnHTkH9TPli9uBJd5Q",
+            "e": "AQAB"
+          }
+        ]
+      },
+      "valid": true,
+      "stored": {
+        "keys": [
+          {
+            "kty": "RSA",
+            "kid": "rvT2Uqf8iC9Lt0pO3hZq1b6mE2wYxJ4nKsV7dGcAfHo",
+            "use": "sig",
+            "alg": "RS256",
+            "n": "r99WQsEwXfTIwrwEwyAFNzVCjg0x7H1rP8Oqm6TTXatQ-PABtok_aL_1HRO3TlVEbEXXqFk8ngF8pOif0Fv7KpNspheg4pmBaukCLJhoGvLiuMXR8aylDyCw8Np5Gr1EYy_OU6gQsVhHXayWgFl2V9R3d9feQyxHPIGD0VJxFFbzTLdjj3YSKS30FJ8euTlx_drZ5MdKMXZGKbHryQDq6l0e3piWW3SstIsncVsHL8sTvEdYxJ1ONcKzEW0w7oZeKAWRywHJmf0if03aX5M_Wa3zfGGZMy72C2RRCViShf8CzAtHqcmZGGUAiRaCXDcYNMBzrnHTkH9TPli9uBJd5Q",
+            "e": "AQAB"
+          }
+        ]
+      }
+    },
+    {
+      "name": "old and new keys across a rotation",
+      "jwks": {
+        "keys": [
+          {
+            "use": "sig",
+            "kty": "RSA",
+            "kid": "rvT2Uqf8iC9Lt0pO3hZq1b6mE2wYxJ4nKsV7dGcAfHo",
+            "alg": "RS256",
+            "n": "r99WQsEwXfTIwrwEwyAFNzVCjg0x7H1rP8Oqm6TTXatQ-PABtok_aL_1HRO3TlVEbEXXqFk8ngF8pOif0Fv7KpNspheg4pmBaukCLJhoGvLiuMXR8aylDyCw8Np5Gr1EYy_OU6gQsVhHXayWgFl2V9R3d9feQyxHPIGD0VJxFFbzTLdjj3YSKS30FJ8euTlx_drZ5MdKMXZGKbHryQDq6l0e3piWW3SstIsncVsHL8sTvEdYxJ1ONcKzEW0w7oZeKAWRywHJmf0if03aX5M_Wa3zfGGZMy72C2RRCViShf8CzAtHqcmZGGUAiRaCXDcYNMBzrnHTkH9TPli9uBJd5Q",
+            "e": "AQAB"
+          },
+          {
+            "use": "sig",
+            "kty": "RSA",
+            "kid": "Xy9w3pQm0aLk7Zr2SdTf6vBn1cHe8uJiGo4tYq5WbRs",
+            "alg": "RS256",
+            "n": "jPZ5aLejwh9f0tYvFW4e9oW3FrezyiKp6fW7R0TC0sUbIjyDi039yuQWUKAm7LIutxKQphdrwmHEimTjkkeuKw3dxTD7gZW1RXWl9lg0tJYGi0Ekj9zN1tF2qHpxvqgWJ_Z7DPWiyPFShurkpZaFx4Rm5J38wcGMCpyXcOrfDG0IXtKIuQRJrRw0RTOnfTJO6iE9QG0LGUa08l6QGnDIyQlGTKFPmLfA-0-uApD-j3F6kdu0nmCL-5lge3hTBFMHJjKs0QUsNyM-M1gSJAz1_5u8sCewRCT4Wy-wYTIyjo2fO2_BCmi7X0uBQ7VH1570bhNaO6JwwSLlCRhjldOB8w",
+            "e": "AQAB"
+          }
+        ]
+      },
+      "valid": true
+    },
+    {
+      "name": "an EC P-256 key without alg or use",
+      "jwks": {
+        "keys": [
+          {
+            "kty": "EC",
+            "kid": "p256-2026-10",
+            "crv": "P-256",
+            "x": "TuzWDrEWw6Pm4Y3J2mZoLnQ7_VzGa6zlQxFoahHTs_Q",
+            "y": "3qWMDVwt7x_k9KWhlsjfhlEP6u2Gsfl2g3LO_YyVpD8"
+          }
+        ]
+      },
+      "valid": true
+    },
+    {
+      "name": "other members are dropped (x5c, key_ops)",
+      "jwks": {
+        "keys": [
+          {
+            "use": "sig",
+            "kty": "RSA",
+            "kid": "rvT2Uqf8iC9Lt0pO3hZq1b6mE2wYxJ4nKsV7dGcAfHo",
+            "alg": "RS256",
+            "n": "r99WQsEwXfTIwrwEwyAFNzVCjg0x7H1rP8Oqm6TTXatQ-PABtok_aL_1HRO3TlVEbEXXqFk8ngF8pOif0Fv7KpNspheg4pmBaukCLJhoGvLiuMXR8aylDyCw8Np5Gr1EYy_OU6gQsVhHXayWgFl2V9R3d9feQyxHPIGD0VJxFFbzTLdjj3YSKS30FJ8euTlx_drZ5MdKMXZGKbHryQDq6l0e3piWW3SstIsncVsHL8sTvEdYxJ1ONcKzEW0w7oZeKAWRywHJmf0if03aX5M_Wa3zfGGZMy72C2RRCViShf8CzAtHqcmZGGUAiRaCXDcYNMBzrnHTkH9TPli9uBJd5Q",
+            "e": "AQAB",
+            "x5c": [
+              "MIIB"
+            ],
+            "key_ops": [
+              "verify"
+            ]
+          }
+        ]
+      },
+      "valid": true,
+      "stored": {
+        "keys": [
+          {
+            "kty": "RSA",
+            "kid": "rvT2Uqf8iC9Lt0pO3hZq1b6mE2wYxJ4nKsV7dGcAfHo",
+            "use": "sig",
+            "alg": "RS256",
+            "n": "r99WQsEwXfTIwrwEwyAFNzVCjg0x7H1rP8Oqm6TTXatQ-PABtok_aL_1HRO3TlVEbEXXqFk8ngF8pOif0Fv7KpNspheg4pmBaukCLJhoGvLiuMXR8aylDyCw8Np5Gr1EYy_OU6gQsVhHXayWgFl2V9R3d9feQyxHPIGD0VJxFFbzTLdjj3YSKS30FJ8euTlx_drZ5MdKMXZGKbHryQDq6l0e3piWW3SstIsncVsHL8sTvEdYxJ1ONcKzEW0w7oZeKAWRywHJmf0if03aX5M_Wa3zfGGZMy72C2RRCViShf8CzAtHqcmZGGUAiRaCXDcYNMBzrnHTkH9TPli9uBJd5Q",
+            "e": "AQAB"
+          }
+        ]
+      }
+    },
+    {
+      "name": "not an object",
+      "jwks": [
+        {
+          "use": "sig",
+          "kty": "RSA",
+          "kid": "rvT2Uqf8iC9Lt0pO3hZq1b6mE2wYxJ4nKsV7dGcAfHo",
+          "alg": "RS256",
+          "n": "r99WQsEwXfTIwrwEwyAFNzVCjg0x7H1rP8Oqm6TTXatQ-PABtok_aL_1HRO3TlVEbEXXqFk8ngF8pOif0Fv7KpNspheg4pmBaukCLJhoGvLiuMXR8aylDyCw8Np5Gr1EYy_OU6gQsVhHXayWgFl2V9R3d9feQyxHPIGD0VJxFFbzTLdjj3YSKS30FJ8euTlx_drZ5MdKMXZGKbHryQDq6l0e3piWW3SstIsncVsHL8sTvEdYxJ1ONcKzEW0w7oZeKAWRywHJmf0if03aX5M_Wa3zfGGZMy72C2RRCViShf8CzAtHqcmZGGUAiRaCXDcYNMBzrnHTkH9TPli9uBJd5Q",
+          "e": "AQAB"
+        }
+      ],
+      "valid": false,
+      "path": "jwks"
+    },
+    {
+      "name": "no keys array",
+      "jwks": {
+        "key": {
+          "use": "sig",
+          "kty": "RSA",
+          "kid": "rvT2Uqf8iC9Lt0pO3hZq1b6mE2wYxJ4nKsV7dGcAfHo",
+          "alg": "RS256",
+          "n": "r99WQsEwXfTIwrwEwyAFNzVCjg0x7H1rP8Oqm6TTXatQ-PABtok_aL_1HRO3TlVEbEXXqFk8ngF8pOif0Fv7KpNspheg4pmBaukCLJhoGvLiuMXR8aylDyCw8Np5Gr1EYy_OU6gQsVhHXayWgFl2V9R3d9feQyxHPIGD0VJxFFbzTLdjj3YSKS30FJ8euTlx_drZ5MdKMXZGKbHryQDq6l0e3piWW3SstIsncVsHL8sTvEdYxJ1ONcKzEW0w7oZeKAWRywHJmf0if03aX5M_Wa3zfGGZMy72C2RRCViShf8CzAtHqcmZGGUAiRaCXDcYNMBzrnHTkH9TPli9uBJd5Q",
+          "e": "AQAB"
+        }
+      },
+      "valid": false,
+      "path": "jwks.keys"
+    },
+    {
+      "name": "no keys",
+      "jwks": {
+        "keys": []
+      },
+      "valid": false,
+      "path": "jwks.keys"
+    },
+    {
+      "name": "eleven keys",
+      "jwks": {
+        "keys": [
+          {
+            "use": "sig",
+            "kty": "RSA",
+            "kid": "k0",
+            "alg": "RS256",
+            "n": "r99WQsEwXfTIwrwEwyAFNzVCjg0x7H1rP8Oqm6TTXatQ-PABtok_aL_1HRO3TlVEbEXXqFk8ngF8pOif0Fv7KpNspheg4pmBaukCLJhoGvLiuMXR8aylDyCw8Np5Gr1EYy_OU6gQsVhHXayWgFl2V9R3d9feQyxHPIGD0VJxFFbzTLdjj3YSKS30FJ8euTlx_drZ5MdKMXZGKbHryQDq6l0e3piWW3SstIsncVsHL8sTvEdYxJ1ONcKzEW0w7oZeKAWRywHJmf0if03aX5M_Wa3zfGGZMy72C2RRCViShf8CzAtHqcmZGGUAiRaCXDcYNMBzrnHTkH9TPli9uBJd5Q",
+            "e": "AQAB"
+          },
+          {
+            "use": "sig",
+            "kty": "RSA",
+            "kid": "k1",
+            "alg": "RS256",
+            "n": "r99WQsEwXfTIwrwEwyAFNzVCjg0x7H1rP8Oqm6TTXatQ-PABtok_aL_1HRO3TlVEbEXXqFk8ngF8pOif0Fv7KpNspheg4pmBaukCLJhoGvLiuMXR8aylDyCw8Np5Gr1EYy_OU6gQsVhHXayWgFl2V9R3d9feQyxHPIGD0VJxFFbzTLdjj3YSKS30FJ8euTlx_drZ5MdKMXZGKbHryQDq6l0e3piWW3SstIsncVsHL8sTvEdYxJ1ONcKzEW0w7oZeKAWRywHJmf0if03aX5M_Wa3zfGGZMy72C2RRCViShf8CzAtHqcmZGGUAiRaCXDcYNMBzrnHTkH9TPli9uBJd5Q",
+            "e": "AQAB"
+          },
+          {
+            "use": "sig",
+            "kty": "RSA",
+            "kid": "k2",
+            "alg": "RS256",
+            "n": "r99WQsEwXfTIwrwEwyAFNzVCjg0x7H1rP8Oqm6TTXatQ-PABtok_aL_1HRO3TlVEbEXXqFk8ngF8pOif0Fv7KpNspheg4pmBaukCLJhoGvLiuMXR8aylDyCw8Np5Gr1EYy_OU6gQsVhHXayWgFl2V9R3d9feQyxHPIGD0VJxFFbzTLdjj3YSKS30FJ8euTlx_drZ5MdKMXZGKbHryQDq6l0e3piWW3SstIsncVsHL8sTvEdYxJ1ONcKzEW0w7oZeKAWRywHJmf0if03aX5M_Wa3zfGGZMy72C2RRCViShf8CzAtHqcmZGGUAiRaCXDcYNMBzrnHTkH9TPli9uBJd5Q",
+            "e": "AQAB"
+          },
+          {
+            "use": "sig",
+            "kty": "RSA",
+            "kid": "k3",
+            "alg": "RS256",
+            "n": "r99WQsEwXfTIwrwEwyAFNzVCjg0x7H1rP8Oqm6TTXatQ-PABtok_aL_1HRO3TlVEbEXXqFk8ngF8pOif0Fv7KpNspheg4pmBaukCLJhoGvLiuMXR8aylDyCw8Np5Gr1EYy_OU6gQsVhHXayWgFl2V9R3d9feQyxHPIGD0VJxFFbzTLdjj3YSKS30FJ8euTlx_drZ5MdKMXZGKbHryQDq6l0e3piWW3SstIsncVsHL8sTvEdYxJ1ONcKzEW0w7oZeKAWRywHJmf0if03aX5M_Wa3zfGGZMy72C2RRCViShf8CzAtHqcmZGGUAiRaCXDcYNMBzrnHTkH9TPli9uBJd5Q",
+            "e": "AQAB"
+          },
+          {
+            "use": "sig",
+            "kty": "RSA",
+            "kid": "k4",
+            "alg": "RS256",
+            "n": "r99WQsEwXfTIwrwEwyAFNzVCjg0x7H1rP8Oqm6TTXatQ-PABtok_aL_1HRO3TlVEbEXXqFk8ngF8pOif0Fv7KpNspheg4pmBaukCLJhoGvLiuMXR8aylDyCw8Np5Gr1EYy_OU6gQsVhHXayWgFl2V9R3d9feQyxHPIGD0VJxFFbzTLdjj3YSKS30FJ8euTlx_drZ5MdKMXZGKbHryQDq6l0e3piWW3SstIsncVsHL8sTvEdYxJ1ONcKzEW0w7oZeKAWRywHJmf0if03aX5M_Wa3zfGGZMy72C2RRCViShf8CzAtHqcmZGGUAiRaCXDcYNMBzrnHTkH9TPli9uBJd5Q",
+            "e": "AQAB"
+          },
+          {
+            "use": "sig",
+            "kty": "RSA",
+            "kid": "k5",
+            "alg": "RS256",
+            "n": "r99WQsEwXfTIwrwEwyAFNzVCjg0x7H1rP8Oqm6TTXatQ-PABtok_aL_1HRO3TlVEbEXXqFk8ngF8pOif0Fv7KpNspheg4pmBaukCLJhoGvLiuMXR8aylDyCw8Np5Gr1EYy_OU6gQsVhHXayWgFl2V9R3d9feQyxHPIGD0VJxFFbzTLdjj3YSKS30FJ8euTlx_drZ5MdKMXZGKbHryQDq6l0e3piWW3SstIsncVsHL8sTvEdYxJ1ONcKzEW0w7oZeKAWRywHJmf0if03aX5M_Wa3zfGGZMy72C2RRCViShf8CzAtHqcmZGGUAiRaCXDcYNMBzrnHTkH9TPli9uBJd5Q",
+            "e": "AQAB"
+          },
+          {
+            "use": "sig",
+            "kty": "RSA",
+            "kid": "k6",
+            "alg": "RS256",
+            "n": "r99WQsEwXfTIwrwEwyAFNzVCjg0x7H1rP8Oqm6TTXatQ-PABtok_aL_1HRO3TlVEbEXXqFk8ngF8pOif0Fv7KpNspheg4pmBaukCLJhoGvLiuMXR8aylDyCw8Np5Gr1EYy_OU6gQsVhHXayWgFl2V9R3d9feQyxHPIGD0VJxFFbzTLdjj3YSKS30FJ8euTlx_drZ5MdKMXZGKbHryQDq6l0e3piWW3SstIsncVsHL8sTvEdYxJ1ONcKzEW0w7oZeKAWRywHJmf0if03aX5M_Wa3zfGGZMy72C2RRCViShf8CzAtHqcmZGGUAiRaCXDcYNMBzrnHTkH9TPli9uBJd5Q",
+            "e": "AQAB"
+          },
+          {
+            "use": "sig",
+            "kty": "RSA",
+            "kid": "k7",
+            "alg": "RS256",
+            "n": "r99WQsEwXfTIwrwEwyAFNzVCjg0x7H1rP8Oqm6TTXatQ-PABtok_aL_1HRO3TlVEbEXXqFk8ngF8pOif0Fv7KpNspheg4pmBaukCLJhoGvLiuMXR8aylDyCw8Np5Gr1EYy_OU6gQsVhHXayWgFl2V9R3d9feQyxHPIGD0VJxFFbzTLdjj3YSKS30FJ8euTlx_drZ5MdKMXZGKbHryQDq6l0e3piWW3SstIsncVsHL8sTvEdYxJ1ONcKzEW0w7oZeKAWRywHJmf0if03aX5M_Wa3zfGGZMy72C2RRCViShf8CzAtHqcmZGGUAiRaCXDcYNMBzrnHTkH9TPli9uBJd5Q",
+            "e": "AQAB"
+          },
+          {
+            "use": "sig",
+            "kty": "RSA",
+            "kid": "k8",
+            "alg": "RS256",
+            "n": "r99WQsEwXfTIwrwEwyAFNzVCjg0x7H1rP8Oqm6TTXatQ-PABtok_aL_1HRO3TlVEbEXXqFk8ngF8pOif0Fv7KpNspheg4pmBaukCLJhoGvLiuMXR8aylDyCw8Np5Gr1EYy_OU6gQsVhHXayWgFl2V9R3d9feQyxHPIGD0VJxFFbzTLdjj3YSKS30FJ8euTlx_drZ5MdKMXZGKbHryQDq6l0e3piWW3SstIsncVsHL8sTvEdYxJ1ONcKzEW0w7oZeKAWRywHJmf0if03aX5M_Wa3zfGGZMy72C2RRCViShf8CzAtHqcmZGGUAiRaCXDcYNMBzrnHTkH9TPli9uBJd5Q",
+            "e": "AQAB"
+          },
+          {
+            "use": "sig",
+            "kty": "RSA",
+            "kid": "k9",
+            "alg": "RS256",
+            "n": "r99WQsEwXfTIwrwEwyAFNzVCjg0x7H1rP8Oqm6TTXatQ-PABtok_aL_1HRO3TlVEbEXXqFk8ngF8pOif0Fv7KpNspheg4pmBaukCLJhoGvLiuMXR8aylDyCw8Np5Gr1EYy_OU6gQsVhHXayWgFl2V9R3d9feQyxHPIGD0VJxFFbzTLdjj3YSKS30FJ8euTlx_drZ5MdKMXZGKbHryQDq6l0e3piWW3SstIsncVsHL8sTvEdYxJ1ONcKzEW0w7oZeKAWRywHJmf0if03aX5M_Wa3zfGGZMy72C2RRCViShf8CzAtHqcmZGGUAiRaCXDcYNMBzrnHTkH9TPli9uBJd5Q",
+            "e": "AQAB"
+          },
+          {
+            "use": "sig",
+            "kty": "RSA",
+            "kid": "k10",
+            "alg": "RS256",
+            "n": "r99WQsEwXfTIwrwEwyAFNzVCjg0x7H1rP8Oqm6TTXatQ-PABtok_aL_1HRO3TlVEbEXXqFk8ngF8pOif0Fv7KpNspheg4pmBaukCLJhoGvLiuMXR8aylDyCw8Np5Gr1EYy_OU6gQsVhHXayWgFl2V9R3d9feQyxHPIGD0VJxFFbzTLdjj3YSKS30FJ8euTlx_drZ5MdKMXZGKbHryQDq6l0e3piWW3SstIsncVsHL8sTvEdYxJ1ONcKzEW0w7oZeKAWRywHJmf0if03aX5M_Wa3zfGGZMy72C2RRCViShf8CzAtHqcmZGGUAiRaCXDcYNMBzrnHTkH9TPli9uBJd5Q",
+            "e": "AQAB"
+          }
+        ]
+      },
+      "valid": false,
+      "path": "jwks.keys"
+    },
+    {
+      "name": "a key that isn't an object",
+      "jwks": {
+        "keys": [
+          "abc"
+        ]
+      },
+      "valid": false,
+      "path": "jwks.keys[0]"
+    },
+    {
+      "name": "an RSA private key",
+      "jwks": {
+        "keys": [
+          {
+            "kty": "RSA",
+            "n": "r99WQsEwXfTIwrwEwyAFNzVCjg0x7H1rP8Oqm6TTXatQ-PABtok_aL_1HRO3TlVEbEXXqFk8ngF8pOif0Fv7KpNspheg4pmBaukCLJhoGvLiuMXR8aylDyCw8Np5Gr1EYy_OU6gQsVhHXayWgFl2V9R3d9feQyxHPIGD0VJxFFbzTLdjj3YSKS30FJ8euTlx_drZ5MdKMXZGKbHryQDq6l0e3piWW3SstIsncVsHL8sTvEdYxJ1ONcKzEW0w7oZeKAWRywHJmf0if03aX5M_Wa3zfGGZMy72C2RRCViShf8CzAtHqcmZGGUAiRaCXDcYNMBzrnHTkH9TPli9uBJd5Q",
+            "e": "AQAB",
+            "d": "AmtSjvGEXk5_MnqOoDaBC9zeMQEKdkPVZVemMaTnSWsRXpNCmsWxixnU39UFGP1ARzMAv-6WUGAZ3FTc2eth_ZhwjqpVirhs2NEiuAVSrUg5CSyjci0bSiV7eZyvvMfsuGaQcoMl06KwvJ-ipFpWr-eayxm7k3X49uKbMxZsushfgYuNy8G1k1vJEdMU6XSdvE1iTFcLLEMUWynuk0YAemFZtsxNI7DXSqsKOQAeaBtH_RiFw2YCUdILuI8Z9vRFAoNT_DvbqAr8CriVpcSA97SvdF4kv4QlLUpS1P_AvqWEUK-ViEX1hl9F95X2_Zq__yk6qku12O2Y4LWejx9TQQ",
+            "p": "9yo4S33G1-gWhj1wkRxaniWyeh5FIj4IKo6BMC_6JiIoaXAjyVNINrNUrKQ5udxgaf90GDmJ7OMa7QmApzDSckSF5uX5CqyXGNQV02mbpX6Xvyl85ziwRf3gTKcNCxeig02OJ4n6Qfw6_k7ZqENUSG1GOhD3F1toI15gt9kAjOE",
+            "q": "tii6ECvzSUkVCSQ8r0C2u7rf7tVR4JZbnbzmsL-f5lL5eVRTmBLUAkit66sZPDk86qjxrVOfvfIktYfnRyJN2BKKvi_nscA1B1azl4tLBZA3hoSz0bznRrfBmqezrV6rKz00OZSGRmdU7xl1Vyq1NJ0-W0I30b_33QKdN8gZzYU",
+            "dp": "iwY9egD6WrFaEhH3AjhfpDryBAyIuHUJ5N4ZPoCOBOsLrhr8lh55LQN76kvJiIiz1otwwruCoDMyDwhcTC6DAPEYHENY7K8dokKRMERj3xewxT7R2cEiLYxaoOMJzCZ0K8Tw476RfJIioK67cRDGFKMacEjgo0uv7M0GPAMccyE",
+            "dq": "qTCkuPaJbm0x257Lup9p2m4VJhj-hpJBH_5fapVhaCVzT80SI7KBNmnZGIZ_1t73BKHMb4e3XE526CEFoJ1tHh8CvOlz0zZKSrmt7zjSgqVT3V6OQmWpjpaIfSP8kC_Y3j1nr3-TQ_sf-UB1K3QggHD4hPy5Kdma161g53m09Z0",
+            "qi": "zF-MHy0QScsH-vz_0F4TKG3S2OqG4njObvpYzJuzSiJDR-CZmMiocDLHQe8_pSgiX_S9B8nheB6j47oeYCcmVSxl6hwyXjrE7wicu-AaN9Ujs4ww2wKU--u6TugwrYEgL9yDqVIvplvqJmzKN3wv-8JsDh1byA_LsZn1kID-wJM",
+            "kid": "rvT2Uqf8iC9Lt0pO3hZq1b6mE2wYxJ4nKsV7dGcAfHo"
+          }
+        ]
+      },
+      "valid": false,
+      "path": "jwks.keys[0]",
+      "private": true
+    },
+    {
+      "name": "a private key after a public one",
+      "jwks": {
+        "keys": [
+          {
+            "use": "sig",
+            "kty": "RSA",
+            "kid": "Xy9w3pQm0aLk7Zr2SdTf6vBn1cHe8uJiGo4tYq5WbRs",
+            "alg": "RS256",
+            "n": "jPZ5aLejwh9f0tYvFW4e9oW3FrezyiKp6fW7R0TC0sUbIjyDi039yuQWUKAm7LIutxKQphdrwmHEimTjkkeuKw3dxTD7gZW1RXWl9lg0tJYGi0Ekj9zN1tF2qHpxvqgWJ_Z7DPWiyPFShurkpZaFx4Rm5J38wcGMCpyXcOrfDG0IXtKIuQRJrRw0RTOnfTJO6iE9QG0LGUa08l6QGnDIyQlGTKFPmLfA-0-uApD-j3F6kdu0nmCL-5lge3hTBFMHJjKs0QUsNyM-M1gSJAz1_5u8sCewRCT4Wy-wYTIyjo2fO2_BCmi7X0uBQ7VH1570bhNaO6JwwSLlCRhjldOB8w",
+            "e": "AQAB"
+          },
+          {
+            "kty": "EC",
+            "x": "TuzWDrEWw6Pm4Y3J2mZoLnQ7_VzGa6zlQxFoahHTs_Q",
+            "y": "3qWMDVwt7x_k9KWhlsjfhlEP6u2Gsfl2g3LO_YyVpD8",
+            "crv": "P-256",
+            "d": "SrXax1WXCm9DNr3p9C9f_-FLzCXcRgsICG1X6OPP1A8",
+            "kid": "p256-2026-10"
+          }
+        ]
+      },
+      "valid": false,
+      "path": "jwks.keys[1]",
+      "private": true
+    },
+    {
+      "name": "a symmetric key",
+      "jwks": {
+        "keys": [
+          {
+            "kty": "oct",
+            "kid": "hmac",
+            "k": "c2VjcmV0"
+          }
+        ]
+      },
+      "valid": false,
+      "path": "jwks.keys[0]",
+      "private": true
+    },
+    {
+      "name": "no kid",
+      "jwks": {
+        "keys": [
+          {
+            "use": "sig",
+            "kty": "RSA",
+            "alg": "RS256",
+            "n": "r99WQsEwXfTIwrwEwyAFNzVCjg0x7H1rP8Oqm6TTXatQ-PABtok_aL_1HRO3TlVEbEXXqFk8ngF8pOif0Fv7KpNspheg4pmBaukCLJhoGvLiuMXR8aylDyCw8Np5Gr1EYy_OU6gQsVhHXayWgFl2V9R3d9feQyxHPIGD0VJxFFbzTLdjj3YSKS30FJ8euTlx_drZ5MdKMXZGKbHryQDq6l0e3piWW3SstIsncVsHL8sTvEdYxJ1ONcKzEW0w7oZeKAWRywHJmf0if03aX5M_Wa3zfGGZMy72C2RRCViShf8CzAtHqcmZGGUAiRaCXDcYNMBzrnHTkH9TPli9uBJd5Q",
+            "e": "AQAB"
+          }
+        ]
+      },
+      "valid": false,
+      "path": "jwks.keys[0].kid"
+    },
+    {
+      "name": "an empty kid",
+      "jwks": {
+        "keys": [
+          {
+            "use": "sig",
+            "kty": "RSA",
+            "kid": "",
+            "alg": "RS256",
+            "n": "r99WQsEwXfTIwrwEwyAFNzVCjg0x7H1rP8Oqm6TTXatQ-PABtok_aL_1HRO3TlVEbEXXqFk8ngF8pOif0Fv7KpNspheg4pmBaukCLJhoGvLiuMXR8aylDyCw8Np5Gr1EYy_OU6gQsVhHXayWgFl2V9R3d9feQyxHPIGD0VJxFFbzTLdjj3YSKS30FJ8euTlx_drZ5MdKMXZGKbHryQDq6l0e3piWW3SstIsncVsHL8sTvEdYxJ1ONcKzEW0w7oZeKAWRywHJmf0if03aX5M_Wa3zfGGZMy72C2RRCViShf8CzAtHqcmZGGUAiRaCXDcYNMBzrnHTkH9TPli9uBJd5Q",
+            "e": "AQAB"
+          }
+        ]
+      },
+      "valid": false,
+      "path": "jwks.keys[0].kid"
+    },
+    {
+      "name": "a kid twice",
+      "jwks": {
+        "keys": [
+          {
+            "use": "sig",
+            "kty": "RSA",
+            "kid": "rvT2Uqf8iC9Lt0pO3hZq1b6mE2wYxJ4nKsV7dGcAfHo",
+            "alg": "RS256",
+            "n": "r99WQsEwXfTIwrwEwyAFNzVCjg0x7H1rP8Oqm6TTXatQ-PABtok_aL_1HRO3TlVEbEXXqFk8ngF8pOif0Fv7KpNspheg4pmBaukCLJhoGvLiuMXR8aylDyCw8Np5Gr1EYy_OU6gQsVhHXayWgFl2V9R3d9feQyxHPIGD0VJxFFbzTLdjj3YSKS30FJ8euTlx_drZ5MdKMXZGKbHryQDq6l0e3piWW3SstIsncVsHL8sTvEdYxJ1ONcKzEW0w7oZeKAWRywHJmf0if03aX5M_Wa3zfGGZMy72C2RRCViShf8CzAtHqcmZGGUAiRaCXDcYNMBzrnHTkH9TPli9uBJd5Q",
+            "e": "AQAB"
+          },
+          {
+            "use": "sig",
+            "kty": "RSA",
+            "kid": "rvT2Uqf8iC9Lt0pO3hZq1b6mE2wYxJ4nKsV7dGcAfHo",
+            "alg": "RS256",
+            "n": "jPZ5aLejwh9f0tYvFW4e9oW3FrezyiKp6fW7R0TC0sUbIjyDi039yuQWUKAm7LIutxKQphdrwmHEimTjkkeuKw3dxTD7gZW1RXWl9lg0tJYGi0Ekj9zN1tF2qHpxvqgWJ_Z7DPWiyPFShurkpZaFx4Rm5J38wcGMCpyXcOrfDG0IXtKIuQRJrRw0RTOnfTJO6iE9QG0LGUa08l6QGnDIyQlGTKFPmLfA-0-uApD-j3F6kdu0nmCL-5lge3hTBFMHJjKs0QUsNyM-M1gSJAz1_5u8sCewRCT4Wy-wYTIyjo2fO2_BCmi7X0uBQ7VH1570bhNaO6JwwSLlCRhjldOB8w",
+            "e": "AQAB"
+          }
+        ]
+      },
+      "valid": false,
+      "path": "jwks.keys[1].kid"
+    },
+    {
+      "name": "an encryption key",
+      "jwks": {
+        "keys": [
+          {
+            "use": "enc",
+            "kty": "RSA",
+            "kid": "rvT2Uqf8iC9Lt0pO3hZq1b6mE2wYxJ4nKsV7dGcAfHo",
+            "alg": "RS256",
+            "n": "r99WQsEwXfTIwrwEwyAFNzVCjg0x7H1rP8Oqm6TTXatQ-PABtok_aL_1HRO3TlVEbEXXqFk8ngF8pOif0Fv7KpNspheg4pmBaukCLJhoGvLiuMXR8aylDyCw8Np5Gr1EYy_OU6gQsVhHXayWgFl2V9R3d9feQyxHPIGD0VJxFFbzTLdjj3YSKS30FJ8euTlx_drZ5MdKMXZGKbHryQDq6l0e3piWW3SstIsncVsHL8sTvEdYxJ1ONcKzEW0w7oZeKAWRywHJmf0if03aX5M_Wa3zfGGZMy72C2RRCViShf8CzAtHqcmZGGUAiRaCXDcYNMBzrnHTkH9TPli9uBJd5Q",
+            "e": "AQAB"
+          }
+        ]
+      },
+      "valid": false,
+      "path": "jwks.keys[0].use"
+    },
+    {
+      "name": "RS512",
+      "jwks": {
+        "keys": [
+          {
+            "use": "sig",
+            "kty": "RSA",
+            "kid": "rvT2Uqf8iC9Lt0pO3hZq1b6mE2wYxJ4nKsV7dGcAfHo",
+            "alg": "RS512",
+            "n": "r99WQsEwXfTIwrwEwyAFNzVCjg0x7H1rP8Oqm6TTXatQ-PABtok_aL_1HRO3TlVEbEXXqFk8ngF8pOif0Fv7KpNspheg4pmBaukCLJhoGvLiuMXR8aylDyCw8Np5Gr1EYy_OU6gQsVhHXayWgFl2V9R3d9feQyxHPIGD0VJxFFbzTLdjj3YSKS30FJ8euTlx_drZ5MdKMXZGKbHryQDq6l0e3piWW3SstIsncVsHL8sTvEdYxJ1ONcKzEW0w7oZeKAWRywHJmf0if03aX5M_Wa3zfGGZMy72C2RRCViShf8CzAtHqcmZGGUAiRaCXDcYNMBzrnHTkH9TPli9uBJd5Q",
+            "e": "AQAB"
+          }
+        ]
+      },
+      "valid": false,
+      "path": "jwks.keys[0].alg"
+    },
+    {
+      "name": "a 1,024-bit RSA key",
+      "jwks": {
+        "keys": [
+          {
+            "use": "sig",
+            "kty": "RSA",
+            "kid": "rvT2Uqf8iC9Lt0pO3hZq1b6mE2wYxJ4nKsV7dGcAfHo",
+            "alg": "RS256",
+            "n": "3GgVAuIVoSPAzLCndzvfk5LH2U8WmxiOcgHt2kvP7R9dm7JhaaPkkPIoVpZBl3TxorSv2Y-wdZQy9iCn-ogObJ9NPsIGia-GWqXfoyBDk8qElSxVuvVqSRbPFSgN1gPaKTe3R0P3DO1zdk5d08WL27SzUzHQR3qksL9K1v6tKa8",
+            "e": "AQAB"
+          }
+        ]
+      },
+      "valid": false,
+      "path": "jwks.keys[0].n"
+    },
+    {
+      "name": "an RSA key without e",
+      "jwks": {
+        "keys": [
+          {
+            "use": "sig",
+            "kty": "RSA",
+            "kid": "rvT2Uqf8iC9Lt0pO3hZq1b6mE2wYxJ4nKsV7dGcAfHo",
+            "alg": "RS256",
+            "n": "r99WQsEwXfTIwrwEwyAFNzVCjg0x7H1rP8Oqm6TTXatQ-PABtok_aL_1HRO3TlVEbEXXqFk8ngF8pOif0Fv7KpNspheg4pmBaukCLJhoGvLiuMXR8aylDyCw8Np5Gr1EYy_OU6gQsVhHXayWgFl2V9R3d9feQyxHPIGD0VJxFFbzTLdjj3YSKS30FJ8euTlx_drZ5MdKMXZGKbHryQDq6l0e3piWW3SstIsncVsHL8sTvEdYxJ1ONcKzEW0w7oZeKAWRywHJmf0if03aX5M_Wa3zfGGZMy72C2RRCViShf8CzAtHqcmZGGUAiRaCXDcYNMBzrnHTkH9TPli9uBJd5Q"
+          }
+        ]
+      },
+      "valid": false,
+      "path": "jwks.keys[0].e"
+    },
+    {
+      "name": "n that isn't base64url",
+      "jwks": {
+        "keys": [
+          {
+            "use": "sig",
+            "kty": "RSA",
+            "kid": "rvT2Uqf8iC9Lt0pO3hZq1b6mE2wYxJ4nKsV7dGcAfHo",
+            "alg": "RS256",
+            "n": "not base64url!",
+            "e": "AQAB"
+          }
+        ]
+      },
+      "valid": false,
+      "path": "jwks.keys[0].n"
+    },
+    {
+      "name": "an EC key on P-384",
+      "jwks": {
+        "keys": [
+          {
+            "kty": "EC",
+            "kid": "p384",
+            "crv": "P-384",
+            "x": "eX2_URG6UVRceT9VNOk4yF5lj_9as1QUq7uijMnJN3W1DzUE6WvgXzE273faK96Q",
+            "y": "Dra_D0jTr-cwnhJID6NwNvW1NV5rZ9abIeoVRG2o0CNlTIlspJqENGqWFwa_74lj"
+          }
+        ]
+      },
+      "valid": false,
+      "path": "jwks.keys[0].crv"
+    },
+    {
+      "name": "an EC key saying RS256",
+      "jwks": {
+        "keys": [
+          {
+            "kty": "EC",
+            "kid": "p256-2026-10",
+            "crv": "P-256",
+            "x": "TuzWDrEWw6Pm4Y3J2mZoLnQ7_VzGa6zlQxFoahHTs_Q",
+            "y": "3qWMDVwt7x_k9KWhlsjfhlEP6u2Gsfl2g3LO_YyVpD8",
+            "alg": "RS256"
+          }
+        ]
+      },
+      "valid": false,
+      "path": "jwks.keys[0].alg"
+    },
+    {
+      "name": "an EC point not on the curve",
+      "jwks": {
+        "keys": [
+          {
+            "kty": "EC",
+            "kid": "p256-2026-10",
+            "crv": "P-256",
+            "x": "TuzWDrEWw6Pm4Y3J2mZoLnQ7_VzGa6zlQxFoahHTs_Q",
+            "y": "TuzWDrEWw6Pm4Y3J2mZoLnQ7_VzGa6zlQxFoahHTs_Q"
+          }
+        ]
+      },
+      "valid": false,
+      "path": "jwks.keys[0]"
+    },
+    {
+      "name": "an Ed25519 key",
+      "jwks": {
+        "keys": [
+          {
+            "kty": "OKP",
+            "kid": "ed",
+            "crv": "Ed25519",
+            "x": "11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo"
+          }
+        ]
+      },
+      "valid": false,
+      "path": "jwks.keys[0].kty"
+    }
+  ],
+  "providers": [
+    {
+      "id": "github",
+      "issuer": "https://token.actions.githubusercontent.com",
+      "keySource": "discovery",
+      "jwks": null
+    },
+    {
+      "id": "cluster-a",
+      "issuer": "https://kubernetes.default.svc.cluster.local",
+      "keySource": "jwks",
+      "jwks": {
+        "keys": [
+          {
+            "kid": "rvT2Uqf8iC9Lt0pO3hZq1b6mE2wYxJ4nKsV7dGcAfHo"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cluster-b",
+      "issuer": "https://kubernetes.default.svc.cluster.local",
+      "keySource": "jwks",
+      "jwks": {
+        "keys": [
+          {
+            "kid": "Xy9w3pQm0aLk7Zr2SdTf6vBn1cHe8uJiGo4tYq5WbRs"
+          },
+          {
+            "kid": "p256-2026-10"
+          }
+        ]
+      }
+    }
+  ],
+  "select": [
+    {
+      "name": "a discovery issuer needs no kid",
+      "iss": "https://token.actions.githubusercontent.com",
+      "kid": null,
+      "provider": "github"
+    },
+    {
+      "name": "a discovery issuer ignores the kid",
+      "iss": "https://token.actions.githubusercontent.com",
+      "kid": "anything",
+      "provider": "github"
+    },
+    {
+      "name": "the cluster whose keys hold the kid",
+      "iss": "https://kubernetes.default.svc.cluster.local",
+      "kid": "rvT2Uqf8iC9Lt0pO3hZq1b6mE2wYxJ4nKsV7dGcAfHo",
+      "provider": "cluster-a"
+    },
+    {
+      "name": "the other cluster, by its second key",
+      "iss": "https://kubernetes.default.svc.cluster.local",
+      "kid": "p256-2026-10",
+      "provider": "cluster-b"
+    },
+    {
+      "name": "a kid no provider holds",
+      "iss": "https://kubernetes.default.svc.cluster.local",
+      "kid": "unknown",
+      "provider": null
+    },
+    {
+      "name": "no kid for a jwks issuer",
+      "iss": "https://kubernetes.default.svc.cluster.local",
+      "kid": null,
+      "provider": null
+    },
+    {
+      "name": "an issuer with no provider",
+      "iss": "https://gitlab.com",
+      "kid": "rvT2Uqf8iC9Lt0pO3hZq1b6mE2wYxJ4nKsV7dGcAfHo",
+      "provider": null
+    }
+  ],
+  "conflict": [
+    {
+      "name": "a second cluster with the default issuer",
+      "candidate": {
+        "id": "new",
+        "issuer": "https://kubernetes.default.svc.cluster.local",
+        "keySource": "jwks",
+        "jwks": {
+          "keys": [
+            {
+              "kid": "fresh"
+            }
+          ]
+        }
+      },
+      "conflict": false
+    },
+    {
+      "name": "a cluster reusing another's kid",
+      "candidate": {
+        "id": "new",
+        "issuer": "https://kubernetes.default.svc.cluster.local",
+        "keySource": "jwks",
+        "jwks": {
+          "keys": [
+            {
+              "kid": "rvT2Uqf8iC9Lt0pO3hZq1b6mE2wYxJ4nKsV7dGcAfHo"
+            }
+          ]
+        }
+      },
+      "conflict": true
+    },
+    {
+      "name": "updating a provider's own keys keeps its kids",
+      "candidate": {
+        "id": "cluster-a",
+        "issuer": "https://kubernetes.default.svc.cluster.local",
+        "keySource": "jwks",
+        "jwks": {
+          "keys": [
+            {
+              "kid": "rvT2Uqf8iC9Lt0pO3hZq1b6mE2wYxJ4nKsV7dGcAfHo"
+            },
+            {
+              "kid": "next"
+            }
+          ]
+        }
+      },
+      "conflict": false
+    },
+    {
+      "name": "a discovery provider for an issuer with jwks providers",
+      "candidate": {
+        "id": "new",
+        "issuer": "https://kubernetes.default.svc.cluster.local",
+        "keySource": "discovery",
+        "jwks": null
+      },
+      "conflict": true
+    },
+    {
+      "name": "a jwks provider for a discovery issuer",
+      "candidate": {
+        "id": "new",
+        "issuer": "https://token.actions.githubusercontent.com",
+        "keySource": "jwks",
+        "jwks": {
+          "keys": [
+            {
+              "kid": "x"
+            }
+          ]
+        }
+      },
+      "conflict": true
+    },
+    {
+      "name": "a second discovery provider for an issuer",
+      "candidate": {
+        "id": "new",
+        "issuer": "https://token.actions.githubusercontent.com",
+        "keySource": "discovery",
+        "jwks": null
+      },
+      "conflict": true
+    }
+  ]
+}

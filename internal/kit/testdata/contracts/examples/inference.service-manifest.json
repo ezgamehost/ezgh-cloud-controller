@@ -1,0 +1,36 @@
+{
+  "manifestVersion": 1,
+  "namespace": "inference",
+  "displayName": "Inference",
+  "description": "Hosted model inference behind an OpenAI-compatible API, and the platform's Model Catalog.",
+  "api": { "hostname": "inference-api.ezghcloud.com", "port": 6400 },
+  "serviceCredentials": { "issuerPrefix": "ifk" },
+  "metering": { "producer": "inference", "meters": ["inference.embeddings.inputTokens"] },
+  "resourceTypes": [
+    { "name": "account", "prefix": "ina", "parent": "project", "regional": true, "description": "A project's inference usage account: what inference usage is attributed to. Created on first use; not listed." }
+  ],
+  "managedPolicies": [
+    { "name": "InferenceFullAccess", "description": "Call inference models, and view the models and limits." },
+    { "name": "InferenceReadOnlyAccess", "description": "View inference models and limits. Does not allow calling models." }
+  ],
+  "actions": [
+    { "id": "inference.models.invoke", "description": "Call inference models: create embeddings", "resource": "project", "accessLevel": "write", "managedPolicies": ["InferenceFullAccess"] },
+    { "id": "inference.models.list", "description": "List and view the models a project can call", "resource": "project", "accessLevel": "list", "managedPolicies": ["ReadOnlyAccess", "InferenceFullAccess", "InferenceReadOnlyAccess"] },
+    { "id": "inference.limits.read", "description": "View a project's inference limits", "resource": "project", "accessLevel": "read", "managedPolicies": ["ReadOnlyAccess", "InferenceFullAccess", "InferenceReadOnlyAccess"] }
+  ],
+  "endpoints": [
+    { "method": "GET", "path": "/health", "auth": "none", "trail": null },
+    { "method": "GET", "path": "/ready", "auth": "none", "trail": null },
+    { "method": "GET", "path": "/openapi.json", "auth": "none", "trail": null },
+    { "method": "POST", "path": "/v1/organizations/:orgId/projects/:projectId/openai/v1/embeddings", "auth": "caller", "action": "inference.models.invoke", "credentials": "bearer", "errorModel": "openai", "idempotencyException": "computation", "idempotencyKey": false, "timeoutSeconds": 65, "trail": { "eventName": "CreateEmbeddings", "sensitive": ["input", "user"], "record": "refusals" } },
+    { "method": "GET", "path": "/v1/organizations/:orgId/projects/:projectId/openai/v1/models", "auth": "caller", "action": "inference.models.list", "credentials": "bearer", "errorModel": "openai", "trail": { "eventName": "ListModels" } },
+    { "method": "GET", "path": "/v1/organizations/:orgId/projects/:projectId/openai/v1/models/:model", "auth": "caller", "action": "inference.models.list", "credentials": "bearer", "errorModel": "openai", "trail": { "eventName": "GetModel" } },
+    { "method": "GET", "path": "/v1/organizations/:orgId/projects/:projectId/inference/limits", "auth": "caller", "action": "inference.limits.read", "trail": { "eventName": "GetLimits" } },
+    { "method": "GET", "path": "/public/v1/models", "auth": "none", "public": "metadata", "trail": null },
+    { "method": "GET", "path": "/public/v1/models/:model", "auth": "none", "public": "metadata", "trail": null },
+    { "method": "GET", "path": "/internal/v1/catalog/models", "auth": "service", "trail": null },
+    { "method": "GET", "path": "/internal/v1/catalog/models/:model", "auth": "service", "trail": null },
+    { "method": "GET", "path": "/internal/v1/usage/totals", "auth": "service", "trail": null }
+  ],
+  "quotas": []
+}

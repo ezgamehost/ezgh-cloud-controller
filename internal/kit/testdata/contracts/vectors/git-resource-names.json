@@ -1,0 +1,114 @@
+{
+  "description": "[being built] EZGH Git's branch actions (git.repositories.push, git.pulls.merge, git.pulls.approve) are checked on the repository's name with the branch as the path: ezgh:<region>:org_…:prj_…:gtr_<12>/<branch> (contracts/resources.md). branch is a JavaScript reading of git check-ref-format --branch: it never allows * or :, but does allow /, which org-api's * crosses, so gtr_*/main also matches every branch ending in /main; only a repository's own ID with no * names one branch exactly. The bare repository name doesn't match branch checks, and a deny on it leaves the repository's branches allowed.",
+  "branch": "^(?!-)(?!/)(?!.*//)(?!.*\\.\\.)(?!.*@\\{)(?!.*/\\.)(?!.*\\.lock(/|$))(?!.*[/.]$)(?!@$)[^\\x00-\\x20\\x7f~^:?*\\[\\\\]+$",
+  "cases": [
+    {
+      "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:gtr_7m2k9q4x0a1b/main",
+      "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:gtr_7m2k9q4x0a1b/main",
+      "matches": true
+    },
+    {
+      "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:gtr_7m2k9q4x0a1b/main",
+      "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:gtr_7m2k9q4x0a1b/mainline",
+      "matches": false
+    },
+    {
+      "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:gtr_7m2k9q4x0a1b/main",
+      "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:gtr_7m2k9q4x0a1b/feature/main",
+      "matches": false
+    },
+    {
+      "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:gtr_7m2k9q4x0a1b/main",
+      "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:gtr_7m2k9q4x0a1b",
+      "matches": false
+    },
+    {
+      "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:gtr_*/main",
+      "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:gtr_9z8y7x6w5v4u/main",
+      "matches": true
+    },
+    {
+      "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:gtr_*/main",
+      "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:gtr_9z8y7x6w5v4u/feature/main",
+      "matches": true
+    },
+    {
+      "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:gtr_*/main",
+      "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:gtr_9z8y7x6w5v4u/a/b/main",
+      "matches": true
+    },
+    {
+      "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:gtr_7m2k9q4x0a1b/release/*",
+      "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:gtr_7m2k9q4x0a1b/release/v2",
+      "matches": true
+    },
+    {
+      "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:gtr_7m2k9q4x0a1b/release/*",
+      "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:gtr_7m2k9q4x0a1b/release/2026/q4",
+      "matches": true
+    },
+    {
+      "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:gtr_7m2k9q4x0a1b/release/*",
+      "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:gtr_7m2k9q4x0a1b/releases/v2",
+      "matches": false
+    },
+    {
+      "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:gtr_7m2k9q4x0a1b/release/*",
+      "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:gtr_9z8y7x6w5v4u/release/v2",
+      "matches": false
+    },
+    {
+      "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:gtr_7m2k9q4x0a1b/*",
+      "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:gtr_7m2k9q4x0a1b/feature/x",
+      "matches": true
+    },
+    {
+      "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:gtr_7m2k9q4x0a1b/*",
+      "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:gtr_9z8y7x6w5v4u/main",
+      "matches": false
+    },
+    {
+      "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:gtr_7m2k9q4x0a1b",
+      "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:gtr_7m2k9q4x0a1b/main",
+      "matches": false
+    },
+    {
+      "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:gtr_7m2k9q4x0a1b*",
+      "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:gtr_7m2k9q4x0a1b/main",
+      "matches": true
+    },
+    {
+      "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:gtr_*",
+      "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:gtr_7m2k9q4x0a1b/release/v2",
+      "matches": true
+    }
+  ],
+  "branches": [
+    "main",
+    "release/v2",
+    "feature/a-b_c.d",
+    "2026/q4",
+    "x"
+  ],
+  "refusedBranches": [
+    "",
+    "-x",
+    "/main",
+    "main/",
+    "a//b",
+    "a..b",
+    "a@{b",
+    "a/.b",
+    "a.lock",
+    "a.",
+    "@",
+    "a*",
+    "a:b",
+    "a?b",
+    "a[b",
+    "a b",
+    "a~b",
+    "a^b",
+    "a\\b"
+  ]
+}

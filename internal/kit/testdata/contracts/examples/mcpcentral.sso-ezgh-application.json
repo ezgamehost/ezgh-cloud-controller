@@ -1,0 +1,25 @@
+{
+  "id": "0199a3f7-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+  "slug": "app_3b9d1f7a2c4e",
+  "name": "MCP Central",
+  "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:dir_4k2m9x0a7qpe:app_3b9d1f7a2c4e",
+  "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+  "projectId": null,
+  "region": "us-west-1",
+  "tags": {},
+  "status": "active",
+  "createdAt": "2026-10-04T10:00:00.000Z",
+  "updatedAt": "2026-10-04T10:00:00.000Z",
+  "directoryId": "0199a3f0-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+  "kind": "ezgh",
+  "description": "",
+  "oidc": null,
+  "ezgh": {
+    "product": "mcpcentral",
+    "launchUrl": null,
+    "resourceTokenLifetimeSeconds": 3600,
+    "consoleSessionSeconds": null
+  },
+  "saml": null,
+  "managedBy": "mcpcentral"
+}

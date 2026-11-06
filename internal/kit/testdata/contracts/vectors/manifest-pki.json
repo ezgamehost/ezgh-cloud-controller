@@ -1,0 +1,94 @@
+{
+  "description": "[being built] The PKI host: pki.ezghcloud.com, reserved to namespace certificates, for Private CA's CA certificates, CRLs, OCSP (plain HTTP and HTTPS) and ACME (HTTPS) (contracts/registration.md, \"PKI endpoints\"). manifest is a valid excerpt (Web Certificates: its API on certificates.ezghcloud.com, its PKI host beside it); each case changes it as scripts/lib/manifest-cases.mjs does, and an invalid case's issue is a path both scripts/lib/manifest.mjs and the Go kit's manifest.Check report.",
+  "manifest": {
+    "manifestVersion": 1,
+    "namespace": "certificates",
+    "displayName": "Web Certificates",
+    "description": "Managed public TLS certificates and private certificate authorities.",
+    "api": { "hostname": "certificates.ezghcloud.com", "port": 5700 },
+    "pki": { "hostname": "pki.ezghcloud.com", "port": 5705 },
+    "resourceTypes": [],
+    "managedPolicies": [],
+    "actions": [
+      { "id": "certificates.certificateAuthorities.list", "description": "List certificate authorities", "resource": "project", "accessLevel": "list", "managedPolicies": ["ReadOnlyAccess"] }
+    ],
+    "endpoints": [
+      { "method": "GET", "path": "/health", "auth": "none", "trail": null },
+      { "method": "GET", "path": "/ready", "auth": "none", "trail": null },
+      { "method": "GET", "path": "/openapi.json", "auth": "none", "trail": null },
+      { "method": "GET", "path": "/ca/:file", "host": "pki", "auth": "none", "trail": null },
+      { "method": "GET", "path": "/crl/:file", "host": "pki", "auth": "none", "trail": null },
+      { "method": "POST", "path": "/ocsp/:caId", "host": "pki", "auth": "none", "trail": null },
+      { "method": "GET", "path": "/ocsp/:caId/:request", "host": "pki", "auth": "none", "trail": null },
+      { "method": "GET", "path": "/acme/:caId/directory", "host": "pki", "auth": "none", "trail": null },
+      { "method": "HEAD", "path": "/acme/:caId/directory", "host": "pki", "auth": "none", "trail": null },
+      { "method": "GET", "path": "/acme/:caId/new-nonce", "host": "pki", "auth": "none", "trail": null },
+      { "method": "HEAD", "path": "/acme/:caId/new-nonce", "host": "pki", "auth": "none", "trail": null },
+      { "method": "POST", "path": "/acme/:caId/new-account", "host": "pki", "auth": "none", "trail": null },
+      { "method": "POST", "path": "/acme/:caId/new-order", "host": "pki", "auth": "none", "trail": null },
+      { "method": "POST", "path": "/acme/:caId/order/:id/finalize", "host": "pki", "auth": "none", "trail": null }
+    ],
+    "quotas": []
+  },
+  "cases": [
+    { "name": "the base is valid", "valid": true },
+    {
+      "name": "the rest of ACME: accounts, orders, authorizations, certificates, revocation and key change",
+      "add": [
+        { "method": "POST", "path": "/acme/:caId/account/:id", "host": "pki", "auth": "none", "trail": null },
+        { "method": "POST", "path": "/acme/:caId/order/:id", "host": "pki", "auth": "none", "trail": null },
+        { "method": "POST", "path": "/acme/:caId/authz/:id", "host": "pki", "auth": "none", "trail": null },
+        { "method": "POST", "path": "/acme/:caId/cert/:id", "host": "pki", "auth": "none", "trail": null },
+        { "method": "POST", "path": "/acme/:caId/revoke-cert", "host": "pki", "auth": "none", "trail": null },
+        { "method": "POST", "path": "/acme/:caId/key-change", "host": "pki", "auth": "none", "trail": null }
+      ],
+      "valid": true
+    },
+    { "name": "a PKI endpoint with its own timeout", "endpoints": { "POST /acme/:caId/order/:id/finalize": { "timeoutSeconds": 30 } }, "valid": true },
+    { "name": "the PKI host doesn't move the API host", "manifest": { "api": { "hostname": "certificates-api.ezghcloud.com", "port": 5700 } }, "valid": true },
+
+    {
+      "name": "the PKI host is reserved to namespace certificates",
+      "manifest": {
+        "namespace": "widgets",
+        "api": { "hostname": "widgets.ezghcloud.com", "port": 5700 },
+        "actions": [{ "id": "widgets.widgets.list", "description": "List widgets", "resource": "project", "accessLevel": "list", "managedPolicies": ["ReadOnlyAccess"] }]
+      },
+      "issue": "pki",
+      "valid": false
+    },
+    { "name": "the PKI hostname is exactly pki.ezghcloud.com", "manifest": { "pki": { "hostname": "certificates-pki.ezghcloud.com", "port": 5705 } }, "issue": "pki.hostname", "valid": false },
+    { "name": "the PKI host isn't the namespace's own host", "manifest": { "pki": { "hostname": "certificates.ezghcloud.com", "port": 5705 } }, "issue": "pki.hostname", "valid": false },
+    { "name": "the PKI port differs from the API port", "manifest": { "pki": { "hostname": "pki.ezghcloud.com", "port": 5700 } }, "issue": "pki.port", "valid": false },
+    { "name": "the PKI port is 1024-65535", "manifest": { "pki": { "hostname": "pki.ezghcloud.com", "port": 80 } }, "issue": "pki.port", "valid": false },
+    { "name": "PKI endpoints need the PKI host", "manifest": { "pki": null }, "issue": "pki", "valid": false },
+    {
+      "name": "a PKI host needs a PKI endpoint",
+      "remove": ["GET /ca/:file", "GET /crl/:file", "POST /ocsp/:caId", "GET /ocsp/:caId/:request", "GET /acme/:caId/directory", "HEAD /acme/:caId/directory", "GET /acme/:caId/new-nonce", "HEAD /acme/:caId/new-nonce", "POST /acme/:caId/new-account", "POST /acme/:caId/new-order", "POST /acme/:caId/order/:id/finalize"],
+      "issue": "pki",
+      "valid": false
+    },
+    { "name": "PKI endpoints are unauthenticated", "endpoints": { "GET /crl/:file": { "auth": "caller", "action": "certificates.certificateAuthorities.list" } }, "issue": "endpoints.4.auth", "valid": false },
+    { "name": "off the PKI host, auth none is only the kit's own", "endpoints": { "GET /crl/:file": { "host": null } }, "issue": "endpoints.4.auth", "valid": false },
+    { "name": "PKI endpoints take no action", "endpoints": { "GET /crl/:file": { "action": "certificates.certificateAuthorities.list" } }, "issue": "endpoints.4.action", "valid": false },
+    { "name": "PKI endpoints have trail null", "endpoints": { "GET /crl/:file": { "trail": { "eventName": "GetCrl" } } }, "issue": "endpoints.4.trail", "valid": false },
+    { "name": "PKI endpoints take no Idempotency-Key", "endpoints": { "POST /acme/:caId/new-order": { "idempotencyKey": true } }, "issue": "endpoints.12.idempotencyKey", "valid": false },
+    { "name": "PKI endpoints aren't computations", "endpoints": { "POST /acme/:caId/new-order": { "idempotencyException": "computation" } }, "issue": "endpoints.12.idempotencyException", "valid": false },
+    { "name": "PKI endpoints consume no quotas", "manifest": { "quotas": [{ "id": "certificates.ordersPerMinute", "displayName": "Orders per minute", "description": "x", "kind": "rate", "scope": "organization", "unit": "request", "default": 10, "window": "PT1M" }] }, "endpoints": { "POST /acme/:caId/new-order": { "quotas": ["certificates.ordersPerMinute"] } }, "issue": "endpoints.12.quotas", "valid": false },
+    { "name": "PKI endpoints are never asynchronous", "endpoints": { "POST /acme/:caId/new-order": { "async": true } }, "issue": "endpoints.12.async", "valid": false },
+    { "name": "PKI endpoints name no component", "endpoints": { "GET /crl/:file": { "component": "api" } }, "issue": "endpoints.4.component", "valid": false },
+    { "name": "PKI endpoints take no platform credentials", "endpoints": { "POST /acme/:caId/new-order": { "credentials": "bearer" } }, "issue": "endpoints.12.credentials", "valid": false },
+    { "name": "PKI endpoints aren't public endpoints", "endpoints": { "GET /crl/:file": { "public": "metadata" } }, "issue": "endpoints.4.public", "valid": false },
+    { "name": "PKI endpoints answer their protocols' errors", "endpoints": { "POST /acme/:caId/new-order": { "errorModel": "openai" } }, "issue": "endpoints.12.errorModel", "valid": false },
+    { "name": "PKI endpoints aren't blocked by spend controls", "endpoints": { "POST /acme/:caId/new-order": { "blockedBySpendControls": true } }, "issue": "endpoints.12.blockedBySpendControls", "valid": false },
+    { "name": "PKI endpoints are GET, HEAD or POST", "endpoints": { "GET /crl/:file": { "method": "PUT" } }, "issue": "endpoints.4.method", "valid": false },
+    { "name": "PKI endpoints are HTTP", "endpoints": { "GET /crl/:file": { "protocol": "grpc" } }, "issue": "endpoints.4.protocol", "valid": false },
+    { "name": "PKI paths aren't under an organization", "endpoints": { "GET /crl/:file": { "path": "/v1/organizations/:orgId/crl" } }, "issue": "endpoints.4.path", "valid": false },
+    { "name": "PKI paths aren't internal", "endpoints": { "GET /crl/:file": { "path": "/internal/v1/crl" } }, "issue": "endpoints.4.path", "valid": false },
+    { "name": "PKI paths aren't the kit's own", "endpoints": { "GET /crl/:file": { "path": "/health" } }, "issue": "endpoints.4.path", "valid": false },
+    { "name": "PKI paths are under /ca/, /crl/, /ocsp/ or /acme/", "endpoints": { "GET /crl/:file": { "path": "/certs/:file" } }, "issue": "endpoints.4.path", "valid": false },
+    { "name": "the same PKI route twice", "add": [{ "method": "GET", "path": "/crl/:file", "host": "pki", "auth": "none", "trail": null }], "issue": "endpoints.14.path", "valid": false },
+    { "name": "a PKI route that's an API-host route too", "add": [{ "method": "GET", "path": "/ca/:file", "auth": "none", "public": "metadata", "trail": null }], "issue": "endpoints.3.path", "valid": false },
+    { "name": "timeoutSeconds within 1..900", "endpoints": { "POST /acme/:caId/order/:id/finalize": { "timeoutSeconds": 901 } }, "issue": "endpoints.13.timeoutSeconds", "valid": false }
+  ]
+}

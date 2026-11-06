@@ -1,0 +1,10 @@
+{
+  "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+  "credential": { "authorization": "Bearer ezgh_sat_0123456789abcdefghijABCDEFGHIJklmnopqrstuvw" },
+  "requestUrl": "https://acme.mcp.ezgh.app/central",
+  "checks": [
+    { "action": "mcpcentral.gateways.connect", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:mgw_4k2m9x0a7qpe" },
+    { "action": "mcpcentral.tools.call", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:mcs_8a1b2c3d4e5f/tools/create_issue" },
+    { "action": "mcpcentral.nope.nope", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:mgw_4k2m9x0a7qpe" }
+  ]
+}

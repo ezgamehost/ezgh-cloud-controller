@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "time": { "range": "6h" },
+  "refresh": "off",
+  "variables": [
+    { "name": "environment", "kind": "environment", "default": "production" },
+    { "name": "application", "kind": "application", "includeAll": true },
+    { "name": "region", "kind": "custom", "options": ["us-west", "eu-central"], "multi": true },
+    {
+      "name": "service",
+      "kind": "values",
+      "label": "Service",
+      "source": { "signal": "metrics", "label": "service_name", "match": "http_server_request_duration_seconds_count" },
+      "multi": true,
+      "includeAll": true
+    }
+  ],
+  "panels": [
+    {
+      "id": "p1",
+      "title": "Request rate by service",
+      "description": "",
+      "grid": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "viz": { "type": "timeseries", "style": "lines", "stack": false, "unit": "reqps", "legend": "table" },
+      "signal": "metrics",
+      "queries": [
+        {
+          "ref": "A",
+          "promql": "sum by (service_name) (rate(http_server_request_duration_seconds_count{service_name=~\"$service\"}[$__rate_interval]))",
+          "legend": "{{service_name}}"
+        }
+      ]
+    },
+    {
+      "id": "p2",
+      "title": "Errors by route",
+      "grid": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "viz": { "type": "timeseries", "style": "bars", "stack": true },
+      "signal": "logs",
+      "queries": [
+        { "ref": "A", "filter": "level:error service:$service", "aggregate": { "fn": "count" }, "groupBy": [{ "field": "attr.http.route" }], "limit": 10 }
+      ]
+    },
+    {
+      "id": "p3",
+      "title": "Recent errors",
+      "grid": { "x": 0, "y": 8, "w": 24, "h": 10 },
+      "viz": { "type": "logs", "columns": ["time", "level", "service", "body"] },
+      "signal": "logs",
+      "queries": [{ "ref": "A", "filter": "level:error service:$service" }]
+    }
+  ]
+}

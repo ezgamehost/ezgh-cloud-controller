@@ -1,0 +1,2451 @@
+{
+  "components": {
+    "headers": {
+      "Retry-After": {
+        "description": "Whole seconds to wait before retrying. Never on quota_exceeded.",
+        "schema": {
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "X-Request-Id": {
+        "description": "The request's ID, in every log line and its Trails event.",
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "parameters": {
+      "Cursor": {
+        "description": "The previous page's nextCursor. Bound to the organization, the list and its filters.",
+        "in": "query",
+        "name": "cursor",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "IdempotencyKey": {
+        "description": "Makes a retry safe: the same key and request get the stored response.",
+        "in": "header",
+        "name": "Idempotency-Key",
+        "required": false,
+        "schema": {
+          "pattern": "^[\\x21-\\x7e]{1,200}$",
+          "type": "string"
+        }
+      },
+      "Limit": {
+        "description": "The page size. Out of range is 400, never a clamp.",
+        "in": "query",
+        "name": "limit",
+        "required": false,
+        "schema": {
+          "default": 20,
+          "maximum": 100,
+          "minimum": 1,
+          "type": "integer"
+        }
+      }
+    },
+    "responses": {
+      "AccessDenied": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "access_denied: the caller's policies don't allow the action; forbidden_origin: a cookie-authenticated write from an origin that isn't allowed; spend_limit_reached.",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        }
+      },
+      "Conflict": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "quota_exceeded (an allocation quota, with quota), idempotency_conflict, idempotency_in_progress (with Retry-After), organization_deletion_pending, operation_in_progress, or the endpoint's own 409 codes.",
+        "headers": {
+          "Retry-After": {
+            "$ref": "#/components/headers/Retry-After"
+          },
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        }
+      },
+      "InternalError": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "internal_error: a bug; the details are in the logs, under the request ID.",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        }
+      },
+      "InvalidRequest": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "invalid_request (with issues), invalid_cursor, or the endpoint's own 400 codes.",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        }
+      },
+      "NotFound": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "not_found: unknown, malformed, or in an organization the caller isn't in.",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        }
+      },
+      "Operation": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Operation"
+            }
+          }
+        },
+        "description": "The operation, which Location names; poll it until it finishes.",
+        "headers": {
+          "Location": {
+            "description": "The operation's path.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "Retry-After": {
+            "$ref": "#/components/headers/Retry-After"
+          }
+        }
+      },
+      "PayloadTooLarge": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "payload_too_large: the body is over the endpoint's limit (1 MiB unless it says otherwise).",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        }
+      },
+      "SnapshotOperation": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Operation"
+                },
+                {
+                  "properties": {
+                    "snapshot": {
+                      "$ref": "#/components/schemas/Snapshot"
+                    }
+                  },
+                  "required": [
+                    "snapshot"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "The operation, which Location names (poll it until it finishes), with the snapshot as it is now.",
+        "headers": {
+          "Location": {
+            "description": "The operation's path.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "Retry-After": {
+            "$ref": "#/components/headers/Retry-After"
+          }
+        }
+      },
+      "TooManyRequests": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "too_many_requests, with Retry-After; or quota_exceeded (a rate, usage or concurrency quota, with quota), never with Retry-After.",
+        "headers": {
+          "Retry-After": {
+            "$ref": "#/components/headers/Retry-After"
+          },
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        }
+      },
+      "Unauthenticated": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "unauthenticated: no credential, or one that doesn't check out.",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        }
+      },
+      "Unavailable": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "unavailable: a dependency the request needs is down. Retry after Retry-After.",
+        "headers": {
+          "Retry-After": {
+            "$ref": "#/components/headers/Retry-After"
+          },
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        }
+      },
+      "VolumeOperation": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Operation"
+                },
+                {
+                  "properties": {
+                    "volume": {
+                      "$ref": "#/components/schemas/Volume"
+                    }
+                  },
+                  "required": [
+                    "volume"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        "description": "The operation, which Location names (poll it until it finishes), with the volume as it is now.",
+        "headers": {
+          "Location": {
+            "description": "The operation's path.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "Retry-After": {
+            "$ref": "#/components/headers/Retry-After"
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Error": {
+        "additionalProperties": false,
+        "description": "Every non-2xx answer. Clients branch on code, never on message.",
+        "properties": {
+          "error": {
+            "additionalProperties": true,
+            "properties": {
+              "code": {
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9_]*$",
+                "type": "string"
+              },
+              "issues": {
+                "description": "invalid_request: one entry per problem, at a dotted path.",
+                "items": {
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "path": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "path",
+                    "message"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "message": {
+                "maxLength": 1024,
+                "type": "string"
+              },
+              "quota": {
+                "$ref": "#/components/schemas/QuotaExceeded"
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "type": "object"
+      },
+      "Operation": {
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "cancellable": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdBy": {
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "type": {
+                "enum": [
+                  "user",
+                  "bot"
+                ]
+              }
+            },
+            "required": [
+              "type",
+              "id"
+            ],
+            "type": "object"
+          },
+          "error": {
+            "description": "A failed operation's error, { code, message }.",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "finishedAt": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "organizationId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "projectId": {
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/OperationStatus"
+          },
+          "target": {
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "resourceName": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "resourceName",
+              "type"
+            ],
+            "type": "object"
+          },
+          "type": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "organizationId",
+          "projectId",
+          "type",
+          "action",
+          "status",
+          "target",
+          "cancellable",
+          "createdBy",
+          "createdAt",
+          "updatedAt",
+          "startedAt",
+          "finishedAt",
+          "error"
+        ],
+        "type": "object"
+      },
+      "OperationList": {
+        "properties": {
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "operations": {
+            "items": {
+              "$ref": "#/components/schemas/Operation"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "operations",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "OperationStatus": {
+        "enum": [
+          "queued",
+          "running",
+          "succeeded",
+          "failed",
+          "cancelled"
+        ]
+      },
+      "QuotaExceeded": {
+        "additionalProperties": false,
+        "description": "quota_exceeded: the quota that refused the request. Never with Retry-After.",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "inFlight": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "kind": {
+            "enum": [
+              "allocation",
+              "rate",
+              "usage",
+              "concurrency"
+            ]
+          },
+          "limit": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "periodStart": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "resetsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "scope": {
+            "enum": [
+              "organization",
+              "project",
+              "resource"
+            ]
+          },
+          "scopeResourceName": {
+            "type": "string"
+          },
+          "used": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "window": {
+            "description": "rate only: an ISO 8601 duration, PT1S to PT1H.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "scope",
+          "limit"
+        ],
+        "type": "object"
+      },
+      "Snapshot": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "organizationId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "projectId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "resourceName": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SnapshotStatus"
+          },
+          "storageBytes": {
+            "description": "What the snapshot holds exclusively, measured hourly.",
+            "pattern": "^[0-9]+$",
+            "type": "string"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "volume": {
+            "description": "The volume (vol_), kept after it's deleted.",
+            "type": "string"
+          },
+          "volumeSizeBytes": {
+            "pattern": "^[1-9][0-9]*$",
+            "type": "string"
+          },
+          "volumeType": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "resourceName",
+          "organizationId",
+          "projectId",
+          "region",
+          "tags",
+          "status",
+          "volume",
+          "volumeType",
+          "volumeSizeBytes",
+          "storageBytes",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "SnapshotCreate": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          },
+          "volumeId": {
+            "description": "The volume's vol_ ID. Body references take prefixed IDs only: a UUID is 400 invalid_request.",
+            "pattern": "^vol_[a-z0-9]{12}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "volumeId",
+          "name"
+        ],
+        "type": "object"
+      },
+      "SnapshotList": {
+        "properties": {
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "snapshots": {
+            "items": {
+              "$ref": "#/components/schemas/Snapshot"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "snapshots",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "SnapshotStatus": {
+        "enum": [
+          "creating",
+          "available",
+          "deleting",
+          "failed"
+        ],
+        "type": "string"
+      },
+      "SnapshotUpdate": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          }
+        },
+        "type": "object"
+      },
+      "Tags": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "description": "At most 50; keys 1-128 characters, values at most 256, keys starting with ezgh: are reserved.",
+        "type": "object"
+      },
+      "Volume": {
+        "properties": {
+          "attachment": {
+            "$ref": "#/components/schemas/VolumeAttachment"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "deletionProtection": {
+            "type": "boolean"
+          },
+          "encryption": {
+            "properties": {
+              "keyManagement": {
+                "enum": [
+                  "platform"
+                ],
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "failureReason": {
+            "enum": [
+              "image_checksum_mismatch",
+              "image_content_unavailable",
+              "image_format_unsupported",
+              "internal",
+              null
+            ],
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "iops": {
+            "type": "integer"
+          },
+          "modification": {
+            "description": "A change being applied: a growth or new IOPS and throughput (applying), or a volume type change (moving). null otherwise.",
+            "properties": {
+              "iops": {
+                "type": "integer"
+              },
+              "sizeBytes": {
+                "pattern": "^[1-9][0-9]*$",
+                "type": "string"
+              },
+              "startedAt": {
+                "format": "date-time",
+                "type": "string"
+              },
+              "state": {
+                "enum": [
+                  "applying",
+                  "moving"
+                ]
+              },
+              "throughputMBps": {
+                "type": "integer"
+              },
+              "volumeType": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "state",
+              "volumeType",
+              "sizeBytes",
+              "iops",
+              "throughputMBps",
+              "startedAt"
+            ],
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "organizationId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "progress": {
+            "properties": {
+              "bytesDone": {
+                "pattern": "^(0|[1-9][0-9]*)$",
+                "type": "string"
+              },
+              "bytesTotal": {
+                "pattern": "^(0|[1-9][0-9]*)$",
+                "type": "string"
+              }
+            },
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "projectId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "resourceName": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "description": "The usable size in bytes, a decimal string.",
+            "pattern": "^[1-9][0-9]*$",
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "source": {
+            "$ref": "#/components/schemas/VolumeSource"
+          },
+          "status": {
+            "$ref": "#/components/schemas/VolumeStatus"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          },
+          "throughputMBps": {
+            "description": "MB/s, 10^6 bytes per second.",
+            "type": "integer"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "volumeType": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "resourceName",
+          "organizationId",
+          "projectId",
+          "region",
+          "tags",
+          "status",
+          "volumeType",
+          "sizeBytes",
+          "iops",
+          "throughputMBps",
+          "source",
+          "attachment",
+          "deletionProtection",
+          "encryption",
+          "modification",
+          "progress",
+          "failureReason",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "VolumeAttachment": {
+        "properties": {
+          "attachedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "deleteOnTermination": {
+            "type": "boolean"
+          },
+          "instance": {
+            "type": "string"
+          },
+          "instanceResourceName": {
+            "type": "string"
+          },
+          "state": {
+            "description": "attaching: being attached to a running instance; detaching: a detach is waiting for the instance to release the volume. The volume stays in-use until the detach completes.",
+            "enum": [
+              "attaching",
+              "attached",
+              "detaching"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "instance",
+          "instanceResourceName",
+          "deleteOnTermination",
+          "attachedAt"
+        ],
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "VolumeCreate": {
+        "properties": {
+          "deletionProtection": {
+            "type": "boolean"
+          },
+          "iops": {
+            "description": "Defaults to the type's baseline.",
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "description": "Required for an empty volume; defaults to the image's minimum (rounded up to a GiB) or the snapshot's volume size.",
+            "pattern": "^[1-9][0-9]*$",
+            "type": "string"
+          },
+          "source": {
+            "properties": {
+              "architecture": {
+                "default": "amd64",
+                "type": "string"
+              },
+              "image": {
+                "description": "An image alias, such as linux/ubuntu:24.04. Exact images (img_ IDs) aren't accepted yet.",
+                "type": "string"
+              },
+              "kind": {
+                "enum": [
+                  "empty",
+                  "image",
+                  "snapshot"
+                ],
+                "type": "string"
+              },
+              "snapshotId": {
+                "description": "For kind snapshot: the snapshot's snp_ ID. Body references take prefixed IDs only: a UUID is 400 invalid_request.",
+                "pattern": "^snp_[a-z0-9]{12}$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          },
+          "throughputMBps": {
+            "description": "Defaults to the type's baseline.",
+            "type": "integer"
+          },
+          "volumeType": {
+            "description": "Required, except for a restore, which keeps the snapshot's.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "source"
+        ],
+        "type": "object"
+      },
+      "VolumeList": {
+        "properties": {
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "volumes": {
+            "items": {
+              "$ref": "#/components/schemas/Volume"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "volumes",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "VolumeModify": {
+        "properties": {
+          "iops": {
+            "type": "integer"
+          },
+          "sizeBytes": {
+            "description": "Grow only.",
+            "pattern": "^[1-9][0-9]*$",
+            "type": "string"
+          },
+          "throughputMBps": {
+            "type": "integer"
+          },
+          "volumeType": {
+            "description": "A type change; not available yet.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "VolumeSource": {
+        "properties": {
+          "image": {
+            "description": "The image the volume was copied from (img_).",
+            "type": "string"
+          },
+          "imageSha256": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "empty",
+              "image",
+              "snapshot"
+            ],
+            "type": "string"
+          },
+          "snapshot": {
+            "description": "The snapshot restored (snp_).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "type": "object"
+      },
+      "VolumeStatus": {
+        "enum": [
+          "creating",
+          "available",
+          "in-use",
+          "deleting",
+          "failed"
+        ],
+        "type": "string"
+      },
+      "VolumeType": {
+        "properties": {
+          "baseline": {
+            "properties": {
+              "iops": {
+                "type": "integer"
+              },
+              "throughputMBps": {
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          },
+          "burst": {
+            "properties": {
+              "factor": {
+                "type": "number"
+              },
+              "seconds": {
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          },
+          "default": {
+            "type": "boolean"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "maximum": {
+            "properties": {
+              "iops": {
+                "type": "integer"
+              },
+              "throughputMBps": {
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          },
+          "name": {
+            "type": "string"
+          },
+          "ratios": {
+            "properties": {
+              "maxIopsPerGiB": {
+                "type": "integer"
+              },
+              "maxMBpsPerIops": {
+                "type": "number"
+              }
+            },
+            "type": "object"
+          },
+          "sizeGiB": {
+            "properties": {
+              "max": {
+                "type": "integer"
+              },
+              "min": {
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          },
+          "status": {
+            "enum": [
+              "active",
+              "deprecated"
+            ],
+            "type": "string"
+          },
+          "visibility": {
+            "enum": [
+              "public",
+              "platform"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "VolumeTypeList": {
+        "properties": {
+          "volumeTypes": {
+            "items": {
+              "$ref": "#/components/schemas/VolumeType"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "volumeTypes"
+        ],
+        "type": "object"
+      },
+      "VolumeUpdate": {
+        "properties": {
+          "deletionProtection": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          }
+        },
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "apiKey": {
+        "description": "A customer API key: Bearer ezgh_\u2026",
+        "scheme": "bearer",
+        "type": "http"
+      },
+      "oauth": {
+        "description": "An OAuth access token (Bearer ezgh_at_\u2026) or an EZGH SSO resource token (Bearer ezgh_sat_\u2026)",
+        "scheme": "bearer",
+        "type": "http"
+      },
+      "sessionCookie": {
+        "description": "A signed-in person's session, set by login.ezghcloud.com.",
+        "in": "cookie",
+        "name": "__Secure-better-auth.session_token",
+        "type": "apiKey"
+      }
+    }
+  },
+  "info": {
+    "description": "Encrypted block storage volumes and their snapshots, in a project. Every path is under an organization; lists are paged with limit, cursor and nextCursor. Byte counts are decimal strings; throughput is in MB/s (10^6 bytes per second). The volume types are public at GET /public/v1/volume-types.",
+    "title": "EZGH Block Storage API",
+    "version": "1.0.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/v1/organizations/{orgId}/operations": {
+      "get": {
+        "operationId": "ListOperations",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/OperationStatus"
+            }
+          },
+          {
+            "description": "Only operations on this resource.",
+            "in": "query",
+            "name": "targetResourceName",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationList"
+                }
+              }
+            },
+            "description": "A page of operations."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "List the organization's operations, newest first",
+        "x-ezgh-action": "blockstore.operations.list"
+      }
+    },
+    "/v1/organizations/{orgId}/operations/{operationId}": {
+      "delete": {
+        "description": "409 operation_finished or operation_not_cancellable when it can't be cancelled.",
+        "operationId": "CancelOperation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "operationId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "$ref": "#/components/responses/Operation"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Cancel an operation"
+      },
+      "get": {
+        "description": "While it's queued or running, Retry-After suggests when to poll again. Not recorded in Trails.",
+        "operationId": "GetOperation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "operationId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Operation"
+                }
+              }
+            },
+            "description": "The operation.",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/Retry-After"
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Get an operation (poll it until it finishes)"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/snapshots": {
+      "get": {
+        "operationId": "ListSnapshots",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          },
+          {
+            "description": "Only snapshots in this status.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SnapshotStatus"
+            }
+          },
+          {
+            "description": "Only this volume's, by its ID (vol_\u2026). A UUID is 400 invalid_request (use the volume's ID); any other value matches nothing.",
+            "in": "query",
+            "name": "volume",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SnapshotList"
+                }
+              }
+            },
+            "description": "A page of snapshots."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "List a project's snapshots, newest first",
+        "x-ezgh-action": "blockstore.snapshots.list"
+      },
+      "post": {
+        "description": "Asynchronous: 202 with the CreateSnapshot operation. Crash-consistent.",
+        "operationId": "CreateSnapshot",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SnapshotCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "$ref": "#/components/responses/SnapshotOperation"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Snapshot a volume",
+        "x-ezgh-action": "blockstore.snapshots.create",
+        "x-ezgh-quotas": [
+          "blockstore.snapshots"
+        ]
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/snapshots/{snapshot}": {
+      "delete": {
+        "description": "Asynchronous: 202 with the DeleteSnapshot operation.",
+        "operationId": "DeleteSnapshot",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The snapshot's ID or its prefixed ID (snp_\u2026).",
+            "in": "path",
+            "name": "snapshot",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "202": {
+            "$ref": "#/components/responses/SnapshotOperation"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Delete a snapshot",
+        "x-ezgh-action": "blockstore.snapshots.delete"
+      },
+      "get": {
+        "operationId": "GetSnapshot",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The snapshot's ID or its prefixed ID (snp_\u2026).",
+            "in": "path",
+            "name": "snapshot",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Snapshot"
+                }
+              }
+            },
+            "description": "The snapshot."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Get a snapshot",
+        "x-ezgh-action": "blockstore.snapshots.get"
+      },
+      "patch": {
+        "operationId": "UpdateSnapshot",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The snapshot's ID or its prefixed ID (snp_\u2026).",
+            "in": "path",
+            "name": "snapshot",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SnapshotUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Snapshot"
+                }
+              }
+            },
+            "description": "The snapshot."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Rename or retag a snapshot",
+        "x-ezgh-action": "blockstore.snapshots.update"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/volumes": {
+      "get": {
+        "operationId": "ListVolumes",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          },
+          {
+            "description": "Only volumes in this status.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/VolumeStatus"
+            }
+          },
+          {
+            "description": "Only volumes of this type.",
+            "in": "query",
+            "name": "volumeType",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the volume attached to this instance, by its ID (ins_\u2026). A UUID is 400 invalid_request (use the instance's ID); any other value matches nothing.",
+            "in": "query",
+            "name": "instance",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VolumeList"
+                }
+              }
+            },
+            "description": "A page of volumes."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "List a project's volumes, newest first",
+        "x-ezgh-action": "blockstore.volumes.list"
+      },
+      "post": {
+        "description": "Asynchronous: 202 with the CreateVolume operation and the volume (creating). Empty, from an image (resolved now) or from a snapshot (keeping its type). 409 insufficient_capacity when no storage of the type admits it now.",
+        "operationId": "CreateVolume",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VolumeCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "$ref": "#/components/responses/VolumeOperation"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Create a volume",
+        "x-ezgh-action": "blockstore.volumes.create",
+        "x-ezgh-quotas": [
+          "blockstore.volumeGib",
+          "blockstore.provisionedIops",
+          "blockstore.provisionedThroughput"
+        ]
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/volumes/{volume}": {
+      "delete": {
+        "description": "Asynchronous: 202 with the DeleteVolume operation. 409 volume_in_use while attached; 409 deletion_protection_enabled while protected. Its snapshots stay.",
+        "operationId": "DeleteVolume",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The volume's ID or its prefixed ID (vol_\u2026).",
+            "in": "path",
+            "name": "volume",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "202": {
+            "$ref": "#/components/responses/VolumeOperation"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Delete a volume",
+        "x-ezgh-action": "blockstore.volumes.delete"
+      },
+      "get": {
+        "operationId": "GetVolume",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The volume's ID or its prefixed ID (vol_\u2026).",
+            "in": "path",
+            "name": "volume",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Volume"
+                }
+              }
+            },
+            "description": "The volume."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Get a volume",
+        "x-ezgh-action": "blockstore.volumes.get"
+      },
+      "patch": {
+        "operationId": "UpdateVolume",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The volume's ID or its prefixed ID (vol_\u2026).",
+            "in": "path",
+            "name": "volume",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VolumeUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Volume"
+                }
+              }
+            },
+            "description": "The volume."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Rename or retag a volume, or set its deletion protection",
+        "x-ezgh-action": "blockstore.volumes.update"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/volumes/{volume}/modify": {
+      "post": {
+        "description": "Asynchronous: 202 with the ModifyVolume operation. Grow only; one change at a time.",
+        "operationId": "ModifyVolume",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The volume's ID or its prefixed ID (vol_\u2026).",
+            "in": "path",
+            "name": "volume",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VolumeModify"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "$ref": "#/components/responses/VolumeOperation"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Grow a volume or change its IOPS and throughput, live",
+        "x-ezgh-action": "blockstore.volumes.modify",
+        "x-ezgh-quotas": [
+          "blockstore.volumeGib",
+          "blockstore.provisionedIops",
+          "blockstore.provisionedThroughput"
+        ]
+      }
+    },
+    "/v1/organizations/{orgId}/volume-types": {
+      "get": {
+        "operationId": "ListOrganizationVolumeTypes",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VolumeTypeList"
+                }
+              }
+            },
+            "description": "The volume types."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "List the volume types the organization can use",
+        "x-ezgh-action": "blockstore.volumes.list"
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "https://blockstore-api.ezghcloud.com"
+    }
+  ]
+}

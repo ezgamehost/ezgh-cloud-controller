@@ -1,0 +1,14 @@
+{
+  "principals": [
+    {
+      "principalType": "ssoUser",
+      "id": "0199a3f1-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+      "exists": false
+    },
+    {
+      "principalType": "ssoGroup",
+      "id": "0199a3f4-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+      "exists": true
+    }
+  ]
+}

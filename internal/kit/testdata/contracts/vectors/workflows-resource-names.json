@@ -1,0 +1,18 @@
+{
+  "description": "Policy patterns on Workflows run actions, checked on <app resource name>/<workflow name>. Workflow names match ^[A-Za-z0-9_-]{1,64}$ (no /, *, : or .), which keeps a workflow pattern inside its app and its name prefix.",
+  "workflowName": "^[A-Za-z0-9_-]{1,64}$",
+  "cases": [
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wfa_*/billing-*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wfa_7m2k9q4x0a1b/billing-invoice", "matches": true },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wfa_*/billing-*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wfa_7m2k9q4x0a1b/billing", "matches": false },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wfa_*/billing-*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wfa_7m2k9q4x0a1b/ops-billing-x", "matches": false },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wfa_7m2k9q4x0a1b/onboarding", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wfa_7m2k9q4x0a1b/onboarding", "matches": true },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wfa_7m2k9q4x0a1b/onboarding", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wfa_7m2k9q4x0a1b/onboarding-v2", "matches": false },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wfa_7m2k9q4x0a1b/*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wfa_9z8y7x6w5v4u/onboarding", "matches": false },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wfa_7m2k9q4x0a1b/*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wfa_7m2k9q4x0a1b/onboarding", "matches": true },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wfa_7m2k9q4x0a1b", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wfa_7m2k9q4x0a1b/onboarding", "matches": false },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wfa_7m2k9q4x0a1b/onboarding", "matches": true },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_zzzzzzzzzzzz:wfa_*/*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wfa_7m2k9q4x0a1b/onboarding", "matches": false },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wfa_*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wfa_7m2k9q4x0a1b/billing-invoice", "matches": true }
+  ],
+  "refusedNames": ["billing/invoice", "billing*", "a:b", "a.b", "", "x-very-long-name-that-runs-past-the-sixty-four-character-limit-of-names"]
+}

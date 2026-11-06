@@ -1,0 +1,17 @@
+[
+  {"name": "the Workflows excerpt as it is", "valid": true},
+  {"name": "with a timeout", "endpoints": {"POST /public/v1/callbacks/:token": {"timeoutSeconds": 30}}, "valid": true},
+  {"name": "a GET callback", "endpoints": {"POST /public/v1/callbacks/:token": {"method": "GET"}}, "valid": false},
+  {"name": "a PUT callback", "endpoints": {"POST /public/v1/callbacks/:token": {"method": "PUT"}}, "valid": false},
+  {"name": "outside /public/v1/callbacks/", "endpoints": {"POST /public/v1/callbacks/:token": {"path": "/public/v1/hooks/:token"}}, "valid": false},
+  {"name": "no token parameter", "endpoints": {"POST /public/v1/callbacks/:token": {"path": "/public/v1/callbacks/fixed"}}, "valid": false},
+  {"name": "two segments", "endpoints": {"POST /public/v1/callbacks/:token": {"path": "/public/v1/callbacks/:token/extra"}}, "valid": false},
+  {"name": "recorded", "endpoints": {"POST /public/v1/callbacks/:token": {"trail": {"eventName": "CompleteCallback"}}}, "valid": false},
+  {"name": "with an action", "endpoints": {"POST /public/v1/callbacks/:token": {"action": "workflows.runs.start"}}, "valid": false},
+  {"name": "with an Idempotency-Key", "endpoints": {"POST /public/v1/callbacks/:token": {"idempotencyKey": true}}, "valid": false},
+  {"name": "on the live host", "endpoints": {"POST /public/v1/callbacks/:token": {"host": "live", "component": "live"}}, "valid": false},
+  {"name": "authenticated", "endpoints": {"POST /public/v1/callbacks/:token": {"auth": "caller", "action": "workflows.runs.start", "idempotencyKey": true, "trail": {"eventName": "CompleteCallback"}}}, "valid": false},
+  {"name": "taking credentials", "endpoints": {"POST /public/v1/callbacks/:token": {"credentials": "bearer"}}, "valid": false},
+  {"name": "a POST metadata endpoint is still refused", "add": [{"method": "POST", "path": "/.well-known/thing", "auth": "none", "public": "metadata", "trail": null}], "valid": false},
+  {"name": "a GET redirect is still fine", "add": [{"method": "GET", "path": "/v1/oauth/callback", "auth": "none", "public": "redirect", "trail": null}], "valid": true}
+]

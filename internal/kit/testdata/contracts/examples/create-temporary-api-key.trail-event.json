@@ -1,0 +1,58 @@
+{
+  "eventVersion": "1.0",
+  "eventId": "0199a420-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+  "eventTime": "2026-10-02T12:00:00.000Z",
+  "eventType": "ApiCall",
+  "eventCategory": "Management",
+  "eventSource": "signin.ezghcloud.com",
+  "eventName": "CreateTemporaryApiKey",
+  "readOnly": false,
+  "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+  "projectId": null,
+  "userIdentity": {
+    "type": "Bot",
+    "principalId": "0199a3c4-0d1e-7f20-8a3b-4c5d6e7f8091",
+    "userName": "ops-admin",
+    "isRoot": false,
+    "accessKeyId": null,
+    "sessionContext": {
+      "credential": "federation",
+      "sessionIssuedAt": "2026-10-02T08:00:00.000Z",
+      "ssoProviderId": null,
+      "mfaAuthenticated": true,
+      "clientId": null,
+      "directoryId": "0199a3f0-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+      "sourceIdentity": {
+        "type": "SsoUser",
+        "principalId": "0199a3f1-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+        "userName": "ada@acme.test"
+      }
+    },
+    "invokedBy": null
+  },
+  "sourceIpAddress": "203.0.113.7",
+  "userAgent": "Mozilla/5.0",
+  "requestParameters": {
+    "expiresInSeconds": 3600,
+    "clientId": null
+  },
+  "responseElements": {
+    "apiKeyId": "0199a3f8-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+    "prefix": "ezgh_7Hq2Lm",
+    "expiresAt": "2026-10-02T13:00:00.000Z"
+  },
+  "additionalEventData": null,
+  "errorCode": null,
+  "errorMessage": null,
+  "resources": [
+    {
+      "resourceName": "ezgh::org_k3f9a0x2m7qp:bot_8k2l4m6n8p0q",
+      "type": "Bot"
+    },
+    {
+      "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:dir_4k2m9x0a7qpe",
+      "type": "Directory"
+    }
+  ],
+  "requestId": "0199a420-2b3c-7d4e-8f50-6a7b8c9d0e1f"
+}

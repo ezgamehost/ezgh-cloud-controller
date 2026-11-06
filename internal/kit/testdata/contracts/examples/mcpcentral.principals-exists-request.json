@@ -1,0 +1,20 @@
+{
+  "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+  "principals": [
+    {
+      "type": "user",
+      "id": "jtMJXwL0R8aB3cD4eF5gH6iJ"
+    },
+    {
+      "type": "bot",
+      "id": "0199a3c4-0d1e-7f20-8a3b-4c5d6e7f8091"
+    },
+    {
+      "type": "ssoUser",
+      "id": "0199a3f1-1a2b-7c3d-8e4f-5a6b7c8d9e0f"
+    }
+  ],
+  "projects": [
+    "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81"
+  ]
+}

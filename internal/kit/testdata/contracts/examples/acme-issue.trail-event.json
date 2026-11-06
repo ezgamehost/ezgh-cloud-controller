@@ -1,0 +1,45 @@
+{
+  "eventVersion": "1.0",
+  "eventId": "0199a3f8-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+  "eventTime": "2026-10-12T09:05:00.000Z",
+  "eventType": "ApiCall",
+  "eventCategory": "Management",
+  "eventSource": "certificates.ezghcloud.com",
+  "eventName": "IssueCertificate",
+  "readOnly": false,
+  "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+  "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+  "userIdentity": {
+    "type": "User",
+    "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ",
+    "userName": "ada@acme.test",
+    "isRoot": false,
+    "accessKeyId": "eab_3n8q1w5z0k2r",
+    "sessionContext": { "credential": "acmeBinding", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false },
+    "invokedBy": null
+  },
+  "sourceIpAddress": "203.0.113.9",
+  "userAgent": "cert-manager-certificaterequests-issuer-acme/v1.19.1",
+  "requestParameters": {
+    "certificateAuthorityId": "0199a3f0-4d5e-7f60-8a71-9b0c1d2e3f40",
+    "acmeBindingId": "0199a3f2-5e6f-7071-8b82-0c1d2e3f4051",
+    "orderId": "0199a3f8-0f1a-7b2c-8d3e-4f5a6b7c8d9e",
+    "path": "acme",
+    "profile": "tlsServer",
+    "sans": ["api.internal.acme.test"]
+  },
+  "responseElements": {
+    "id": "0199a3f8-2b3c-7d4e-8f5a-6b7c8d9e0f1a",
+    "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:pct_4k2m9x0a7qpe",
+    "orderId": "0199a3f8-0f1a-7b2c-8d3e-4f5a6b7c8d9e"
+  },
+  "additionalEventData": null,
+  "errorCode": null,
+  "errorMessage": null,
+  "resources": [
+    { "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:pca_7m2k9x0a4qpe", "type": "CertificateAuthority" },
+    { "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:eab_3n8q1w5z0k2r", "type": "AcmeBinding" },
+    { "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:pct_4k2m9x0a7qpe", "type": "PrivateCertificate" }
+  ],
+  "requestId": "0199a3f8-3c4d-7e5f-8a6b-7c8d9e0f1a2b"
+}

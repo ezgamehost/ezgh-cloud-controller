@@ -1,0 +1,33 @@
+{
+  "manifestVersion": 1,
+  "namespace": "queues",
+  "displayName": "Queues",
+  "description": "Durable message queues: standard and FIFO queues with long-poll receive, visibility timeouts, dead-letter queues and HTTPS push.",
+  "api": { "hostname": "queues-api.ezghcloud.com", "port": 6600 },
+  "live": { "hostname": "queues-live.ezghcloud.com", "port": 6650 },
+  "serviceCredentials": { "issuerPrefix": "quk" },
+  "resourceTypes": [
+    { "name": "queue", "prefix": "que", "parent": "project", "regional": true, "description": "A message queue, standard or FIFO." },
+    { "name": "subscription", "prefix": "qsb", "parent": "project", "regional": true, "description": "A queue's managed consumer, pushing its messages to an HTTPS endpoint." }
+  ],
+  "managedPolicies": [
+    { "name": "QueuesFullAccess", "description": "Manage queues and subscriptions, and send, receive and browse messages." },
+    { "name": "QueuesReadOnlyAccess", "description": "View queues and subscriptions, and browse messages." }
+  ],
+  "actions": [
+    { "id": "queues.messages.send", "description": "Send messages to a queue", "resource": "queue", "accessLevel": "write", "managedPolicies": ["QueuesFullAccess"] },
+    { "id": "queues.messages.receive", "description": "Receive messages from a queue", "resource": "queue", "accessLevel": "write", "managedPolicies": ["QueuesFullAccess"] },
+    { "id": "queues.messages.peek", "description": "Browse a queue's messages without receiving them", "resource": "queue", "accessLevel": "read", "managedPolicies": ["ReadOnlyAccess", "QueuesFullAccess", "QueuesReadOnlyAccess"] }
+  ],
+  "endpoints": [
+    { "method": "GET", "path": "/health", "auth": "none", "trail": null },
+    { "method": "GET", "path": "/ready", "auth": "none", "trail": null },
+    { "method": "GET", "path": "/openapi.json", "auth": "none", "trail": null },
+    { "method": "POST", "path": "/v1/organizations/:orgId/projects/:projectId/queues/:queueId/messages", "auth": "caller", "action": "queues.messages.send", "idempotencyKey": true, "trail": { "eventName": "SendMessages", "sensitive": ["messages"], "record": "refusals" } },
+    { "method": "GET", "path": "/v1/organizations/:orgId/projects/:projectId/queues/:queueId/messages", "auth": "caller", "action": "queues.messages.peek", "trail": { "eventName": "PeekMessages", "eventCategory": "Data" } },
+    { "method": "POST", "path": "/v1/organizations/:orgId/projects/:projectId/queues/:queueId/messages/receive", "host": "live", "component": "live", "auth": "caller", "action": "queues.messages.receive", "idempotencyException": "computation", "timeoutSeconds": 30, "trail": { "eventName": "ReceiveMessages", "record": "refusals" } },
+    { "method": "POST", "path": "/v1/receipts/ack", "host": "live", "component": "live", "auth": "receiptHandle", "trail": null },
+    { "method": "POST", "path": "/v1/receipts/visibility", "host": "live", "component": "live", "auth": "receiptHandle", "trail": null }
+  ],
+  "quotas": []
+}

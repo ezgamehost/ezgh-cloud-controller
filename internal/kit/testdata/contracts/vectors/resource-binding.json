@@ -1,0 +1,866 @@
+{
+  "description": "[being built] EZGH SSO resource binding (contracts/api-conventions.md#canonical-resource-urls-being-built, contracts/identity-and-authz.md#resource-binding). canonicalize: sso-edge applies it to RFC 8707 resource (null: invalid_target) and binds the result; kits apply it to the requestUrl they send org-api. canonical is the exact output, or null when the input is refused; reason is for people, not compared. requestUrls: how a kit builds requestUrl from its configured public base URL (on a per-directory host, the base the product built from the alias it resolved, such as https://acme.mcp.ezgh.app) and the raw request-target; headers are ignored (never Host or X-Forwarded-*); null means no requestUrl can be built (a bad base URL is a configuration error; a bad path is 401 without calling org-api). match: org-api's exact comparison of requestUrl (null: not sent) with the token's bound resource; allow, or invalid_token (401, RFC 6750 invalid_token, not recorded). order: the binding is checked before the organization (the path's, or on a per-directory host the organization its alias resolved to); not_found is 404, not recorded; allow means org-api goes on to evaluate policies under the directory and scope ceilings. Reference implementation: scripts/lib/resource-binding.mjs.",
+  "canonicalize": [
+    {
+      "name": "a gateway URL is already canonical",
+      "input": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "canonical": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp"
+    },
+    {
+      "name": "a connect URL is already canonical",
+      "input": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/servers/0199a3f3-1a2b-7c3d-8e4f-5a6b7c8d9e0f/connect",
+      "canonical": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/servers/0199a3f3-1a2b-7c3d-8e4f-5a6b7c8d9e0f/connect"
+    },
+    {
+      "name": "the root path",
+      "input": "https://mcp.ezghcloud.com/",
+      "canonical": "https://mcp.ezghcloud.com/"
+    },
+    {
+      "name": "local stack host",
+      "input": "https://mcp.ezghcloud.localhost/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "canonical": "https://mcp.ezghcloud.localhost/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp"
+    },
+    {
+      "name": "scheme and host are lowercased",
+      "input": "HTTPS://MCP.EzghCloud.COM/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "canonical": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp"
+    },
+    {
+      "name": "path case is kept",
+      "input": "https://mcp.ezghcloud.com/v1/Organizations/ABC",
+      "canonical": "https://mcp.ezghcloud.com/v1/Organizations/ABC"
+    },
+    {
+      "name": "the default port is dropped",
+      "input": "https://mcp.ezghcloud.com:443/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "canonical": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp"
+    },
+    {
+      "name": "another port",
+      "input": "https://mcp.ezghcloud.com:8443/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "canonical": null,
+      "reason": "port"
+    },
+    {
+      "name": "port 80",
+      "input": "https://mcp.ezghcloud.com:80/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "canonical": null,
+      "reason": "port"
+    },
+    {
+      "name": "an empty port",
+      "input": "https://mcp.ezghcloud.com:/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "canonical": null,
+      "reason": "port"
+    },
+    {
+      "name": "a zero-padded default port",
+      "input": "https://mcp.ezghcloud.com:0443/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "canonical": null,
+      "reason": "port"
+    },
+    {
+      "name": "http",
+      "input": "http://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "canonical": null,
+      "reason": "scheme"
+    },
+    {
+      "name": "http on 443",
+      "input": "http://mcp.ezghcloud.com:443/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "canonical": null,
+      "reason": "scheme"
+    },
+    {
+      "name": "no scheme",
+      "input": "//mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "canonical": null,
+      "reason": "not absolute"
+    },
+    {
+      "name": "a relative path",
+      "input": "/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "canonical": null,
+      "reason": "not absolute"
+    },
+    {
+      "name": "userinfo",
+      "input": "https://ada@mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "canonical": null,
+      "reason": "userinfo"
+    },
+    {
+      "name": "userinfo with a password",
+      "input": "https://ada:secret@mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "canonical": null,
+      "reason": "userinfo"
+    },
+    {
+      "name": "an empty userinfo",
+      "input": "https://@mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "canonical": null,
+      "reason": "userinfo"
+    },
+    {
+      "name": "@ in the path isn't userinfo",
+      "input": "https://mcp.ezghcloud.com/v1/@ada",
+      "canonical": "https://mcp.ezghcloud.com/v1/@ada"
+    },
+    {
+      "name": "a trailing slash is kept",
+      "input": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp/",
+      "canonical": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp/"
+    },
+    {
+      "name": "no trailing slash isn't added",
+      "input": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "canonical": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp"
+    },
+    {
+      "name": "no path at all",
+      "input": "https://mcp.ezghcloud.com",
+      "canonical": null,
+      "reason": "empty path"
+    },
+    {
+      "name": "a query",
+      "input": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp?session=1",
+      "canonical": null,
+      "reason": "query"
+    },
+    {
+      "name": "an empty query",
+      "input": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp?",
+      "canonical": null,
+      "reason": "query"
+    },
+    {
+      "name": "a fragment",
+      "input": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp#tools",
+      "canonical": null,
+      "reason": "fragment"
+    },
+    {
+      "name": "an empty fragment",
+      "input": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp#",
+      "canonical": null,
+      "reason": "fragment"
+    },
+    {
+      "name": "a query and a fragment",
+      "input": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp?a=b#c",
+      "canonical": null,
+      "reason": "query"
+    },
+    {
+      "name": "encoded slash",
+      "input": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70%2Fprojects",
+      "canonical": null,
+      "reason": "encoded /"
+    },
+    {
+      "name": "encoded slash, lowercase",
+      "input": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70%2fprojects",
+      "canonical": null,
+      "reason": "encoded /"
+    },
+    {
+      "name": "encoded backslash",
+      "input": "https://mcp.ezghcloud.com/v1/a%5Cb",
+      "canonical": null,
+      "reason": "encoded \\"
+    },
+    {
+      "name": "encoded backslash, lowercase",
+      "input": "https://mcp.ezghcloud.com/v1/a%5cb",
+      "canonical": null,
+      "reason": "encoded \\"
+    },
+    {
+      "name": "encoded dot",
+      "input": "https://mcp.ezghcloud.com/v1/a%2Eb",
+      "canonical": null,
+      "reason": "encoded ."
+    },
+    {
+      "name": "encoded dot, lowercase",
+      "input": "https://mcp.ezghcloud.com/v1/a%2eb",
+      "canonical": null,
+      "reason": "encoded ."
+    },
+    {
+      "name": "encoded dot-dot segment",
+      "input": "https://mcp.ezghcloud.com/v1/%2e%2E/x",
+      "canonical": null,
+      "reason": "encoded . (a WHATWG parser resolves it as ..)"
+    },
+    {
+      "name": "a literal backslash",
+      "input": "https://mcp.ezghcloud.com/v1/a\\b",
+      "canonical": null,
+      "reason": "not a path character (a WHATWG parser turns it into /)"
+    },
+    {
+      "name": "other encodings are kept, not decoded",
+      "input": "https://mcp.ezghcloud.com/v1/%41b",
+      "canonical": "https://mcp.ezghcloud.com/v1/%41b"
+    },
+    {
+      "name": "encoding case is kept",
+      "input": "https://mcp.ezghcloud.com/v1/a%7eb%7E",
+      "canonical": "https://mcp.ezghcloud.com/v1/a%7eb%7E"
+    },
+    {
+      "name": "an encoded percent before 2E isn't an encoded dot",
+      "input": "https://mcp.ezghcloud.com/v1/a%252Eb",
+      "canonical": "https://mcp.ezghcloud.com/v1/a%252Eb"
+    },
+    {
+      "name": "encoded UTF-8 is kept",
+      "input": "https://mcp.ezghcloud.com/v1/caf%C3%A9",
+      "canonical": "https://mcp.ezghcloud.com/v1/caf%C3%A9"
+    },
+    {
+      "name": "a malformed escape",
+      "input": "https://mcp.ezghcloud.com/v1/a%zzb",
+      "canonical": null,
+      "reason": "malformed %"
+    },
+    {
+      "name": "a truncated escape",
+      "input": "https://mcp.ezghcloud.com/v1/a%4",
+      "canonical": null,
+      "reason": "malformed %"
+    },
+    {
+      "name": "a raw space",
+      "input": "https://mcp.ezghcloud.com/v1/a b",
+      "canonical": null,
+      "reason": "not printable ASCII"
+    },
+    {
+      "name": "raw UTF-8 in the path",
+      "input": "https://mcp.ezghcloud.com/v1/café",
+      "canonical": null,
+      "reason": "not printable ASCII"
+    },
+    {
+      "name": "a raw quote",
+      "input": "https://mcp.ezghcloud.com/v1/a\"b",
+      "canonical": null,
+      "reason": "not a path character"
+    },
+    {
+      "name": "a dot segment",
+      "input": "https://mcp.ezghcloud.com/v1/./organizations",
+      "canonical": null,
+      "reason": "dot segment"
+    },
+    {
+      "name": "a dot-dot segment",
+      "input": "https://mcp.ezghcloud.com/v1/../organizations",
+      "canonical": null,
+      "reason": "dot segment"
+    },
+    {
+      "name": "a trailing dot segment",
+      "input": "https://mcp.ezghcloud.com/v1/.",
+      "canonical": null,
+      "reason": "dot segment"
+    },
+    {
+      "name": "a trailing dot-dot segment",
+      "input": "https://mcp.ezghcloud.com/v1/..",
+      "canonical": null,
+      "reason": "dot segment"
+    },
+    {
+      "name": "a leading dot segment",
+      "input": "https://mcp.ezghcloud.com/./v1",
+      "canonical": null,
+      "reason": "dot segment"
+    },
+    {
+      "name": "dots inside a segment are fine",
+      "input": "https://mcp.ezghcloud.com/v1/.well-known/a..b/...",
+      "canonical": "https://mcp.ezghcloud.com/v1/.well-known/a..b/..."
+    },
+    {
+      "name": "a doubled slash",
+      "input": "https://mcp.ezghcloud.com/v1//organizations",
+      "canonical": null,
+      "reason": "//"
+    },
+    {
+      "name": "a doubled leading slash",
+      "input": "https://mcp.ezghcloud.com//v1",
+      "canonical": null,
+      "reason": "//"
+    },
+    {
+      "name": "a doubled trailing slash",
+      "input": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp//",
+      "canonical": null,
+      "reason": "//"
+    },
+    {
+      "name": "a punycode host is kept as ASCII",
+      "input": "https://xn--bcher-kva.ezghcloud.com/v1/x",
+      "canonical": "https://xn--bcher-kva.ezghcloud.com/v1/x"
+    },
+    {
+      "name": "an uppercase punycode host is lowercased, not decoded",
+      "input": "https://XN--BCHER-KVA.ezghcloud.com/v1/x",
+      "canonical": "https://xn--bcher-kva.ezghcloud.com/v1/x"
+    },
+    {
+      "name": "a Unicode (U-label) host is refused, not converted",
+      "input": "https://bücher.ezghcloud.com/v1/x",
+      "canonical": null,
+      "reason": "not printable ASCII"
+    },
+    {
+      "name": "a Unicode lookalike of the platform host",
+      "input": "https://mcp.ëzghcloud.com/v1/x",
+      "canonical": null,
+      "reason": "not printable ASCII"
+    },
+    {
+      "name": "an ideographic full stop",
+      "input": "https://mcp。ezghcloud.com/v1/x",
+      "canonical": null,
+      "reason": "not printable ASCII"
+    },
+    {
+      "name": "a percent-encoded host",
+      "input": "https://mcp%2Eezghcloud.com/v1/x",
+      "canonical": null,
+      "reason": "host"
+    },
+    {
+      "name": "a trailing dot on the host",
+      "input": "https://mcp.ezghcloud.com./v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "canonical": null,
+      "reason": "host"
+    },
+    {
+      "name": "an empty label",
+      "input": "https://mcp..ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "canonical": null,
+      "reason": "host"
+    },
+    {
+      "name": "an empty host",
+      "input": "https:///v1/x",
+      "canonical": null,
+      "reason": "host"
+    },
+    {
+      "name": "an underscore in the host",
+      "input": "https://mcp_api.ezghcloud.com/v1/x",
+      "canonical": null,
+      "reason": "host"
+    },
+    {
+      "name": "a label starting with a hyphen",
+      "input": "https://-mcp.ezghcloud.com/v1/x",
+      "canonical": null,
+      "reason": "host"
+    },
+    {
+      "name": "an IPv6 literal",
+      "input": "https://[::1]/v1/x",
+      "canonical": null,
+      "reason": "host"
+    },
+    {
+      "name": "leading whitespace isn't trimmed",
+      "input": " https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "canonical": null,
+      "reason": "not printable ASCII"
+    },
+    {
+      "name": "a trailing newline isn't trimmed",
+      "input": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp\n",
+      "canonical": null,
+      "reason": "not printable ASCII"
+    },
+    {
+      "name": "empty",
+      "input": "",
+      "canonical": null,
+      "reason": "empty"
+    },
+    {
+      "name": "2048 characters",
+      "input": "https://mcp.ezghcloud.com/v1/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "canonical": "https://mcp.ezghcloud.com/v1/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "name": "2049 characters",
+      "input": "https://mcp.ezghcloud.com/v1/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "canonical": null,
+      "reason": "longer than 2048"
+    },
+    {
+      "name": "a per-directory host's personal gateway",
+      "input": "https://acme.mcp.ezgh.app/central",
+      "canonical": "https://acme.mcp.ezgh.app/central"
+    },
+    {
+      "name": "a per-directory host's curated gateway",
+      "input": "https://acme.mcp.ezgh.app/central/support-bots",
+      "canonical": "https://acme.mcp.ezgh.app/central/support-bots"
+    },
+    {
+      "name": "a per-directory host is lowercased, its path isn't",
+      "input": "https://ACME.MCP.Ezgh.App/central/Support-Bots",
+      "canonical": "https://acme.mcp.ezgh.app/central/Support-Bots"
+    },
+    {
+      "name": "a per-directory host's default port is dropped",
+      "input": "https://acme.mcp.ezgh.app:443/central",
+      "canonical": "https://acme.mcp.ezgh.app/central"
+    },
+    {
+      "name": "a per-directory gateway's trailing slash is kept: a different URL",
+      "input": "https://acme.mcp.ezgh.app/central/",
+      "canonical": "https://acme.mcp.ezgh.app/central/"
+    },
+    {
+      "name": "a per-directory host with another port",
+      "input": "https://acme.mcp.ezgh.app:8443/central",
+      "canonical": null,
+      "reason": "port"
+    },
+    {
+      "name": "a per-directory gateway with a query",
+      "input": "https://acme.mcp.ezgh.app/central/support-bots?alias=globex",
+      "canonical": null,
+      "reason": "query"
+    },
+    {
+      "name": "an ezgh application's audience label (MCP Central's portal)",
+      "input": "https://mcpcentral.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/portal",
+      "canonical": "https://mcpcentral.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/portal"
+    }
+  ],
+  "requestUrls": [
+    {
+      "name": "the gateway path on the configured base URL",
+      "publicBaseUrl": "https://mcp.ezghcloud.com",
+      "requestTarget": "/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "headers": {},
+      "requestUrl": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp"
+    },
+    {
+      "name": "the query string isn't part of it",
+      "publicBaseUrl": "https://mcp.ezghcloud.com",
+      "requestTarget": "/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp?session=1&x=%2F",
+      "headers": {},
+      "requestUrl": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp"
+    },
+    {
+      "name": "an empty query isn't either",
+      "publicBaseUrl": "https://mcp.ezghcloud.com",
+      "requestTarget": "/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp?",
+      "headers": {},
+      "requestUrl": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp"
+    },
+    {
+      "name": "a trailing slash on the base URL",
+      "publicBaseUrl": "https://mcp.ezghcloud.com/",
+      "requestTarget": "/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/servers/0199a3f3-1a2b-7c3d-8e4f-5a6b7c8d9e0f/connect",
+      "headers": {},
+      "requestUrl": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/servers/0199a3f3-1a2b-7c3d-8e4f-5a6b7c8d9e0f/connect"
+    },
+    {
+      "name": "the default port on the base URL",
+      "publicBaseUrl": "https://mcp.ezghcloud.com:443",
+      "requestTarget": "/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "headers": {},
+      "requestUrl": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp"
+    },
+    {
+      "name": "an uppercase base URL host",
+      "publicBaseUrl": "https://MCP.ezghcloud.com",
+      "requestTarget": "/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "headers": {},
+      "requestUrl": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp"
+    },
+    {
+      "name": "Host and X-Forwarded-* are ignored",
+      "publicBaseUrl": "https://mcp.ezghcloud.com",
+      "requestTarget": "/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "headers": {
+        "Host": "evil.example",
+        "X-Forwarded-Host": "evil.example",
+        "X-Forwarded-Proto": "http",
+        "X-Forwarded-Port": "8443",
+        "Forwarded": "host=evil.example;proto=http"
+      },
+      "requestUrl": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp"
+    },
+    {
+      "name": "an absolute-form request-target contributes only its path",
+      "publicBaseUrl": "https://mcp.ezghcloud.com",
+      "requestTarget": "https://evil.example/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "headers": {
+        "Host": "evil.example"
+      },
+      "requestUrl": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp"
+    },
+    {
+      "name": "the path's case and trailing slash are as served",
+      "publicBaseUrl": "https://mcp.ezghcloud.com",
+      "requestTarget": "/v1/Organizations/",
+      "headers": {},
+      "requestUrl": "https://mcp.ezghcloud.com/v1/Organizations/"
+    },
+    {
+      "name": "the raw path, not decoded",
+      "publicBaseUrl": "https://mcp.ezghcloud.com",
+      "requestTarget": "/v1/%41b",
+      "headers": {},
+      "requestUrl": "https://mcp.ezghcloud.com/v1/%41b"
+    },
+    {
+      "name": "an encoded dot-dot path has none",
+      "publicBaseUrl": "https://mcp.ezghcloud.com",
+      "requestTarget": "/v1/%2e%2e/x",
+      "headers": {},
+      "requestUrl": null
+    },
+    {
+      "name": "a doubled slash path has none",
+      "publicBaseUrl": "https://mcp.ezghcloud.com",
+      "requestTarget": "/v1//x",
+      "headers": {},
+      "requestUrl": null
+    },
+    {
+      "name": "a dot segment path has none",
+      "publicBaseUrl": "https://mcp.ezghcloud.com",
+      "requestTarget": "/v1/./x",
+      "headers": {},
+      "requestUrl": null
+    },
+    {
+      "name": "an asterisk-form target has none",
+      "publicBaseUrl": "https://mcp.ezghcloud.com",
+      "requestTarget": "*",
+      "headers": {},
+      "requestUrl": null
+    },
+    {
+      "name": "an http base URL is a configuration error",
+      "publicBaseUrl": "http://mcp.ezghcloud.com",
+      "requestTarget": "/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "headers": {},
+      "requestUrl": null
+    },
+    {
+      "name": "a base URL with a path is a configuration error",
+      "publicBaseUrl": "https://mcp.ezghcloud.com/v1",
+      "requestTarget": "/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "headers": {},
+      "requestUrl": null
+    },
+    {
+      "name": "a base URL with a query is a configuration error",
+      "publicBaseUrl": "https://mcp.ezghcloud.com?x=1",
+      "requestTarget": "/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "headers": {},
+      "requestUrl": null
+    },
+    {
+      "name": "a per-directory host: the personal gateway, on the base built from the resolved alias",
+      "publicBaseUrl": "https://acme.mcp.ezgh.app",
+      "requestTarget": "/central",
+      "headers": {},
+      "requestUrl": "https://acme.mcp.ezgh.app/central"
+    },
+    {
+      "name": "a per-directory host: a curated gateway",
+      "publicBaseUrl": "https://acme.mcp.ezgh.app",
+      "requestTarget": "/central/support-bots",
+      "headers": {},
+      "requestUrl": "https://acme.mcp.ezgh.app/central/support-bots"
+    },
+    {
+      "name": "a per-directory host: the query isn't part of it",
+      "publicBaseUrl": "https://acme.mcp.ezgh.app",
+      "requestTarget": "/central/support-bots?session=1",
+      "headers": {},
+      "requestUrl": "https://acme.mcp.ezgh.app/central/support-bots"
+    },
+    {
+      "name": "a per-directory host: a Host naming another tenant is ignored",
+      "publicBaseUrl": "https://acme.mcp.ezgh.app",
+      "requestTarget": "/central",
+      "headers": {
+        "Host": "globex.mcp.ezgh.app",
+        "X-Forwarded-Host": "globex.mcp.ezgh.app"
+      },
+      "requestUrl": "https://acme.mcp.ezgh.app/central"
+    },
+    {
+      "name": "a per-directory host: an absolute-form target naming another tenant contributes only its path",
+      "publicBaseUrl": "https://acme.mcp.ezgh.app",
+      "requestTarget": "https://globex.mcp.ezgh.app/central/support-bots",
+      "headers": {
+        "Host": "globex.mcp.ezgh.app"
+      },
+      "requestUrl": "https://acme.mcp.ezgh.app/central/support-bots"
+    },
+    {
+      "name": "a per-directory host: the trailing slash is as served",
+      "publicBaseUrl": "https://acme.mcp.ezgh.app",
+      "requestTarget": "/central/",
+      "headers": {},
+      "requestUrl": "https://acme.mcp.ezgh.app/central/"
+    },
+    {
+      "name": "a per-directory base built with a path is a configuration error",
+      "publicBaseUrl": "https://acme.mcp.ezgh.app/central",
+      "requestTarget": "/central",
+      "headers": {},
+      "requestUrl": null
+    }
+  ],
+  "match": [
+    {
+      "name": "exactly the bound gateway URL",
+      "requestUrl": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "resource": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "expected": "allow"
+    },
+    {
+      "name": "exactly the bound connect URL",
+      "requestUrl": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/servers/0199a3f3-1a2b-7c3d-8e4f-5a6b7c8d9e0f/connect",
+      "resource": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/servers/0199a3f3-1a2b-7c3d-8e4f-5a6b7c8d9e0f/connect",
+      "expected": "allow"
+    },
+    {
+      "name": "no requestUrl",
+      "requestUrl": null,
+      "resource": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "expected": "invalid_token"
+    },
+    {
+      "name": "an empty requestUrl",
+      "requestUrl": "",
+      "resource": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "expected": "invalid_token"
+    },
+    {
+      "name": "another gateway",
+      "requestUrl": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e10/mcp",
+      "resource": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "expected": "invalid_token"
+    },
+    {
+      "name": "the connect URL with a gateway-bound token",
+      "requestUrl": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/servers/0199a3f3-1a2b-7c3d-8e4f-5a6b7c8d9e0f/connect",
+      "resource": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "expected": "invalid_token"
+    },
+    {
+      "name": "a sub-path of the bound URL",
+      "requestUrl": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp/tools",
+      "resource": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "expected": "invalid_token"
+    },
+    {
+      "name": "a parent of the bound URL",
+      "requestUrl": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+      "resource": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "expected": "invalid_token"
+    },
+    {
+      "name": "a trailing slash the binding doesn't have",
+      "requestUrl": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp/",
+      "resource": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "expected": "invalid_token"
+    },
+    {
+      "name": "no trailing slash where the binding has one",
+      "requestUrl": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "resource": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp/",
+      "expected": "invalid_token"
+    },
+    {
+      "name": "path case differs",
+      "requestUrl": "https://MCP.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "resource": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "expected": "invalid_token"
+    },
+    {
+      "name": "a non-canonical host case isn't normalized by org-api",
+      "requestUrl": "https://MCP.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "resource": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "expected": "invalid_token"
+    },
+    {
+      "name": "the default port isn't dropped by org-api",
+      "requestUrl": "https://mcp.ezghcloud.com:443/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "resource": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "expected": "invalid_token"
+    },
+    {
+      "name": "a query isn't dropped by org-api",
+      "requestUrl": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp?session=1",
+      "resource": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "expected": "invalid_token"
+    },
+    {
+      "name": "an encoded character isn't decoded by org-api",
+      "requestUrl": "https://mcp.ezghcloud.com/v1/%41b",
+      "resource": "https://mcp.ezghcloud.com/v1/Ab",
+      "expected": "invalid_token"
+    },
+    {
+      "name": "encoding case isn't normalized by org-api",
+      "requestUrl": "https://mcp.ezghcloud.com/v1/a%7Eb",
+      "resource": "https://mcp.ezghcloud.com/v1/a%7eb",
+      "expected": "invalid_token"
+    },
+    {
+      "name": "another product's host",
+      "requestUrl": "https://widgets.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "resource": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "expected": "invalid_token"
+    },
+    {
+      "name": "http",
+      "requestUrl": "http://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "resource": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "expected": "invalid_token"
+    },
+    {
+      "name": "a Unicode host never equals its punycode binding",
+      "requestUrl": "https://bücher.ezghcloud.com/v1/x",
+      "resource": "https://xn--bcher-kva.ezghcloud.com/v1/x",
+      "expected": "invalid_token"
+    },
+    {
+      "name": "the same punycode host",
+      "requestUrl": "https://xn--bcher-kva.ezghcloud.com/v1/x",
+      "resource": "https://xn--bcher-kva.ezghcloud.com/v1/x",
+      "expected": "allow"
+    },
+    {
+      "name": "exactly the bound per-directory gateway",
+      "requestUrl": "https://acme.mcp.ezgh.app/central/support-bots",
+      "resource": "https://acme.mcp.ezgh.app/central/support-bots",
+      "expected": "allow"
+    },
+    {
+      "name": "exactly the bound personal gateway",
+      "requestUrl": "https://acme.mcp.ezgh.app/central",
+      "resource": "https://acme.mcp.ezgh.app/central",
+      "expected": "allow"
+    },
+    {
+      "name": "another tenant's host",
+      "requestUrl": "https://globex.mcp.ezgh.app/central/support-bots",
+      "resource": "https://acme.mcp.ezgh.app/central/support-bots",
+      "expected": "invalid_token"
+    },
+    {
+      "name": "the personal gateway with a curated gateway's token",
+      "requestUrl": "https://acme.mcp.ezgh.app/central",
+      "resource": "https://acme.mcp.ezgh.app/central/support-bots",
+      "expected": "invalid_token"
+    },
+    {
+      "name": "a curated gateway with the personal gateway's token",
+      "requestUrl": "https://acme.mcp.ezgh.app/central/support-bots",
+      "resource": "https://acme.mcp.ezgh.app/central",
+      "expected": "invalid_token"
+    },
+    {
+      "name": "a retired alias's host with a token bound to it, after the redirect to the current alias",
+      "requestUrl": "https://acme-corp.mcp.ezgh.app/central",
+      "resource": "https://acme.mcp.ezgh.app/central",
+      "expected": "invalid_token"
+    },
+    {
+      "name": "exactly the portal's audience label",
+      "requestUrl": "https://mcpcentral.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/portal",
+      "resource": "https://mcpcentral.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/portal",
+      "expected": "allow"
+    },
+    {
+      "name": "a gateway with a portal token",
+      "requestUrl": "https://acme.mcp.ezgh.app/central",
+      "resource": "https://mcpcentral.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/portal",
+      "expected": "invalid_token"
+    },
+    {
+      "name": "the portal label with a gateway token",
+      "requestUrl": "https://mcpcentral.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/portal",
+      "resource": "https://acme.mcp.ezgh.app/central",
+      "expected": "invalid_token"
+    }
+  ],
+  "order": [
+    {
+      "name": "bound URL, the token's organization",
+      "requestUrl": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "resource": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "pathOrganizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+      "tokenOrganizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+      "expected": "allow"
+    },
+    {
+      "name": "bound URL, another organization in the path",
+      "requestUrl": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "resource": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "pathOrganizationId": "0199a3c9-0a1b-7c2d-8e3f-4a5b6c7d8e9f",
+      "tokenOrganizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+      "expected": "not_found"
+    },
+    {
+      "name": "no requestUrl and another organization: the binding comes first",
+      "requestUrl": null,
+      "resource": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "pathOrganizationId": "0199a3c9-0a1b-7c2d-8e3f-4a5b6c7d8e9f",
+      "tokenOrganizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+      "expected": "invalid_token"
+    },
+    {
+      "name": "another URL and another organization: the binding comes first",
+      "requestUrl": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/servers/0199a3f3-1a2b-7c3d-8e4f-5a6b7c8d9e0f/connect",
+      "resource": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "pathOrganizationId": "0199a3c9-0a1b-7c2d-8e3f-4a5b6c7d8e9f",
+      "tokenOrganizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+      "expected": "invalid_token"
+    },
+    {
+      "name": "another URL, the token's organization",
+      "requestUrl": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/servers/0199a3f3-1a2b-7c3d-8e4f-5a6b7c8d9e0f/connect",
+      "resource": "https://mcp.ezghcloud.com/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/gateways/0199a3f2-1a2b-7c3d-8e4f-5a6b7c8d9e0f/mcp",
+      "pathOrganizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+      "tokenOrganizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+      "expected": "invalid_token"
+    },
+    {
+      "name": "a per-directory gateway: the bound URL, the alias's organization is the token's",
+      "requestUrl": "https://acme.mcp.ezgh.app/central/support-bots",
+      "resource": "https://acme.mcp.ezgh.app/central/support-bots",
+      "pathOrganizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+      "tokenOrganizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+      "expected": "allow"
+    },
+    {
+      "name": "a per-directory gateway: the bound URL, but the alias resolved to another organization",
+      "requestUrl": "https://acme.mcp.ezgh.app/central/support-bots",
+      "resource": "https://acme.mcp.ezgh.app/central/support-bots",
+      "pathOrganizationId": "0199a3c9-0a1b-7c2d-8e3f-4a5b6c7d8e9f",
+      "tokenOrganizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+      "expected": "not_found"
+    }
+  ]
+}

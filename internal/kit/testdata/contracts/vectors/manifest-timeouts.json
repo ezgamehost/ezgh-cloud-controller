@@ -1,0 +1,8 @@
+[
+  {"name": "the gateways take up to 15 minutes", "valid": true},
+  {"name": "a short timeout", "endpoints": {"GET /v1/me": {"timeoutSeconds": 5}}, "valid": true},
+  {"name": "at most 900 seconds", "endpoints": {"POST /central": {"timeoutSeconds": 901}}, "valid": false},
+  {"name": "at least a second", "endpoints": {"POST /central": {"timeoutSeconds": -1}}, "valid": false},
+  {"name": "whole seconds", "endpoints": {"POST /central": {"timeoutSeconds": 1.5}}, "valid": false},
+  {"name": "not on the kit's own endpoints", "endpoints": {"GET /health": {"timeoutSeconds": 120}}, "valid": false}
+]

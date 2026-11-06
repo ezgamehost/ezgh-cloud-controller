@@ -1,0 +1,46 @@
+{
+  "eventVersion": "1.0",
+  "eventId": "0199a3d8-7a1b-7c2d-8e3f-4a5b6c7d8e9f",
+  "eventTime": "2026-10-15T08:00:00.412Z",
+  "eventType": "ApiCall",
+  "eventCategory": "Management",
+  "eventSource": "blockstore.ezghcloud.com",
+  "eventName": "CreateVolume",
+  "readOnly": false,
+  "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+  "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+  "userIdentity": {
+    "type": "User",
+    "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ",
+    "userName": "ada@acme.test",
+    "isRoot": false,
+    "accessKeyId": null,
+    "sessionContext": { "credential": "session", "sessionIssuedAt": "2026-10-15T07:30:00.000Z", "ssoProviderId": null, "mfaAuthenticated": false },
+    "invokedBy": "compute.ezghcloud.com"
+  },
+  "sourceIpAddress": "198.51.100.23",
+  "userAgent": "compute.ezghcloud.com",
+  "requestParameters": {
+    "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+    "name": "build-runner-root",
+    "volumeType": "general",
+    "sizeBytes": 21474836480,
+    "source": { "kind": "image", "image": "img_3f8k2m9x0a7q", "imageSha256": "9f2b5c8e1d4a7b0c3e6f9a2d5b8c1e4f7a0d3b6c9e2f5a8b1d4c7e0f3a6b9c2d" },
+    "attachment": { "instance": "ins_5m3n8p2q7r4s", "deleteOnTermination": true },
+    "operationKey": "0199a3d8-6f0a-7b1c-9d2e-3f4a5b6c7d8e"
+  },
+  "responseElements": {
+    "id": "0199a3d8-7b2c-7d3e-8f4a-5b6c7d8e9f0a",
+    "slug": "vol_8d2f6h1j4k9m",
+    "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:vol_8d2f6h1j4k9m"
+  },
+  "additionalEventData": null,
+  "errorCode": null,
+  "errorMessage": null,
+  "resources": [
+    { "resourceName": "ezgh::org_k3f9a0x2m7qp", "type": "Organization" },
+    { "resourceName": "ezgh::org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2", "type": "Project" },
+    { "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:vol_8d2f6h1j4k9m", "type": "Volume" }
+  ],
+  "requestId": "0199a3d8-6e9f-7a0b-8c1d-2e3f4a5b6c7d"
+}

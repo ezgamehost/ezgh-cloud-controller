@@ -1,0 +1,17 @@
+[
+  {"name": "the inference example as it is: embeddings and the models reads in OpenAI's error body", "valid": true},
+  {"name": "embeddings record every call, the default", "endpoints": {"POST /v1/organizations/:orgId/projects/:projectId/openai/v1/embeddings": {"trail": {"eventName": "CreateEmbeddings", "sensitive": ["input", "user"]}}}, "valid": true},
+  {"name": "a GET still may not record refusals only", "endpoints": {"GET /v1/organizations/:orgId/projects/:projectId/openai/v1/models": {"trail": {"eventName": "ListModels", "record": "refusals"}}}, "valid": false},
+  {"name": "errorModel is optional", "endpoints": {"GET /v1/organizations/:orgId/projects/:projectId/openai/v1/models": {"errorModel": null}}, "valid": true},
+  {"name": "a POST that keeps Idempotency-Key", "endpoints": {"POST /v1/organizations/:orgId/projects/:projectId/openai/v1/embeddings": {"idempotencyException": null, "idempotencyKey": true, "timeoutSeconds": null}}, "valid": true},
+  {"name": "a deeper OpenAI path", "add": [{"method": "GET", "path": "/v1/organizations/:orgId/projects/:projectId/openai/v1/models/:model/versions", "auth": "caller", "action": "inference.models.list", "credentials": "bearer", "errorModel": "openai", "trail": {"eventName": "ListModelVersions"}}], "valid": true},
+  {"name": "errorModel is prometheus, openai or nothing", "endpoints": {"GET /v1/organizations/:orgId/projects/:projectId/openai/v1/models": {"errorModel": "graphql"}}, "valid": false},
+  {"name": "an OpenAI base is inside a project", "add": [{"method": "POST", "path": "/v1/organizations/:orgId/openai/v1/embeddings", "auth": "caller", "action": "inference.models.invoke", "credentials": "bearer", "errorModel": "openai", "idempotencyException": "computation", "trail": {"eventName": "CreateOrganizationEmbeddings"}}], "valid": false},
+  {"name": "the OpenAI error model is only for an OpenAI path", "endpoints": {"GET /v1/organizations/:orgId/projects/:projectId/inference/limits": {"errorModel": "openai", "credentials": "bearer"}}, "valid": false},
+  {"name": "the Prometheus error model isn't for an OpenAI path", "endpoints": {"GET /v1/organizations/:orgId/projects/:projectId/openai/v1/models": {"errorModel": "prometheus"}}, "valid": false},
+  {"name": "the OpenAI error model is for GET and POST", "add": [{"method": "DELETE", "path": "/v1/organizations/:orgId/projects/:projectId/openai/v1/models/:model", "auth": "caller", "action": "inference.models.invoke", "credentials": "bearer", "errorModel": "openai", "idempotencyKey": true, "trail": {"eventName": "DeleteModel"}}], "valid": false},
+  {"name": "an OpenAI endpoint takes bearer credentials only", "endpoints": {"POST /v1/organizations/:orgId/projects/:projectId/openai/v1/embeddings": {"credentials": null}}, "valid": false},
+  {"name": "an OpenAI endpoint never takes the cookie", "endpoints": {"GET /v1/organizations/:orgId/projects/:projectId/openai/v1/models": {"credentials": "cookie"}}, "valid": false},
+  {"name": "errorModel isn't for service endpoints", "endpoints": {"GET /internal/v1/catalog/models": {"errorModel": "openai"}}, "valid": false},
+  {"name": "errorModel isn't for public endpoints", "endpoints": {"GET /public/v1/models": {"errorModel": "openai"}}, "valid": false}
+]

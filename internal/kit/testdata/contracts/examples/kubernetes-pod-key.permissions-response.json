@@ -1,0 +1,44 @@
+{
+  "organization": {
+    "id": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+    "name": "Acme",
+    "slug": "org_k3f9a0x2m7qp",
+    "resourceName": "ezgh::org_k3f9a0x2m7qp",
+    "createdAt": "2026-09-01T08:00:00.000Z",
+    "updatedAt": "2026-09-01T08:00:00.000Z",
+    "isRoot": false
+  },
+  "principal": {
+    "type": "bot",
+    "id": "0199a3c5-1e2f-7a31-9b4c-5d6e7f8091a2"
+  },
+  "apiKeyId": "0199f3b0-2c4d-7e6f-8a1b-2c3d4e5f6a7b",
+  "userIdentity": {
+    "type": "Bot",
+    "principalId": "0199a3c5-1e2f-7a31-9b4c-5d6e7f8091a2",
+    "userName": "payments-pods",
+    "isRoot": false,
+    "accessKeyId": "0199f3b0-2c4d-7e6f-8a1b-2c3d4e5f6a7b",
+    "sessionContext": {
+      "credential": "apiKey",
+      "sessionIssuedAt": null,
+      "ssoProviderId": null,
+      "mfaAuthenticated": false,
+      "sourceIdentity": {
+        "type": "KubernetesPod",
+        "principalId": "0199f3a1-6d2e-7c40-8b1a-3e5f7a9c0d12",
+        "userName": "payments/api-worker"
+      }
+    },
+    "invokedBy": null
+  },
+  "resource": "ezgh::org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2",
+  "allowed": [
+    "projects.get"
+  ],
+  "allowedSomewhere": [
+    "organizations.get",
+    "projects.list",
+    "projects.get"
+  ]
+}

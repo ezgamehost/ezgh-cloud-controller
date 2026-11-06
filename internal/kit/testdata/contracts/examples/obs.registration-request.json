@@ -1,0 +1,23 @@
+{
+  "registrationVersion": 1,
+  "namespace": "obs",
+  "displayName": "Observability",
+  "description": "Customer telemetry: OTLP ingest into datasets, one per environment, and search over them.",
+  "orgApi": { "operations": ["ingestKeys.resolve", "ingestKeys.events", "ingestCredentials.resolve"] },
+  "resourceTypes": [
+    { "name": "dataset", "prefix": "dst", "parent": "project", "regional": true, "description": "A dataset: one environment's telemetry in a project." }
+  ],
+  "managedPolicies": [
+    { "name": "ObsFullAccess", "description": "Manage datasets and send telemetry." },
+    { "name": "ObsReadOnlyAccess", "description": "View datasets and read their telemetry." }
+  ],
+  "actions": [
+    { "id": "obs.datasets.list", "description": "List datasets", "resource": "project", "accessLevel": "list", "managedPolicies": ["ReadOnlyAccess", "ObsFullAccess", "ObsReadOnlyAccess"] },
+    { "id": "obs.datasets.get", "description": "View datasets", "resource": "dataset", "accessLevel": "read", "managedPolicies": ["ReadOnlyAccess", "ObsFullAccess", "ObsReadOnlyAccess"] },
+    { "id": "obs.datasets.create", "description": "Create datasets", "resource": "project", "accessLevel": "write", "managedPolicies": ["ObsFullAccess"] },
+    { "id": "obs.logs.ingest", "description": "Send logs with a project ingest key", "resource": "project", "accessLevel": "write", "managedPolicies": ["ObsFullAccess"], "ingest": true },
+    { "id": "obs.logs.search", "description": "Search and tail log records (returns log content)", "resource": "dataset", "accessLevel": "read", "managedPolicies": ["ReadOnlyAccess", "ObsFullAccess", "ObsReadOnlyAccess"] },
+    { "id": "obs.metrics.ingest", "description": "Send metrics (OTLP data points or Prometheus remote write) to a project's datasets with a project ingest key", "resource": "project", "accessLevel": "write", "managedPolicies": ["ObsFullAccess"], "ingest": true },
+    { "id": "obs.metrics.query", "description": "Query a dataset's metrics with PromQL (returns metric data and label values)", "resource": "dataset", "accessLevel": "read", "managedPolicies": ["ReadOnlyAccess", "ObsFullAccess", "ObsReadOnlyAccess"] }
+  ]
+}

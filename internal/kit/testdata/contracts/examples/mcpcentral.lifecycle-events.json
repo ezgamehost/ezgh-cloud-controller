@@ -1,0 +1,55 @@
+{
+  "events": [
+    {
+      "seq": 118,
+      "kind": "member.removed",
+      "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+      "projectId": null,
+      "principal": {
+        "type": "user",
+        "id": "jtMJXwL0R8aB3cD4eF5gH6iJ"
+      },
+      "occurredAt": "2026-10-04T09:30:00.000Z"
+    },
+    {
+      "seq": 119,
+      "kind": "bot.deleted",
+      "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+      "projectId": null,
+      "principal": {
+        "type": "bot",
+        "id": "0199a3c4-0d1e-7f20-8a3b-4c5d6e7f8091"
+      },
+      "occurredAt": "2026-10-04T09:31:00.000Z"
+    },
+    {
+      "seq": 120,
+      "kind": "ssoUser.deleted",
+      "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+      "projectId": null,
+      "principal": {
+        "type": "ssoUser",
+        "id": "0199a3f1-1a2b-7c3d-8e4f-5a6b7c8d9e0f"
+      },
+      "occurredAt": "2026-10-04T09:32:00.000Z"
+    },
+    {
+      "seq": 121,
+      "kind": "project.deleted",
+      "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+      "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a82",
+      "principal": null,
+      "occurredAt": "2026-10-04T09:33:00.000Z"
+    },
+    {
+      "seq": 122,
+      "kind": "organization.deleted",
+      "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f71",
+      "projectId": null,
+      "principal": null,
+      "occurredAt": "2026-10-04T09:34:00.000Z"
+    }
+  ],
+  "head": 122,
+  "asOf": "2026-10-04T09:34:01.250Z"
+}

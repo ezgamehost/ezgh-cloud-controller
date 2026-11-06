@@ -1,0 +1,400 @@
+{
+  "manifestVersion": 1,
+  "namespace": "firewall",
+  "orgApi": {
+    "operations": [
+      "permissions.batch",
+      "permissions.delegated",
+      "lifecycle.events"
+    ]
+  },
+  "displayName": "Firewalls",
+  "description": "Stateful firewalls for network interfaces: inbound and outbound rules by protocol, port and peer address or firewall.",
+  "api": {
+    "hostname": "firewall-api.ezghcloud.com",
+    "port": 7900
+  },
+  "resourceTypes": [
+    {
+      "name": "firewall",
+      "prefix": "fwl",
+      "parent": "project",
+      "regional": true,
+      "description": "A stateful firewall: its inbound and outbound rules and the network interfaces it's attached to."
+    }
+  ],
+  "managedPolicies": [
+    {
+      "name": "FirewallFullAccess",
+      "description": "Create, change and delete firewalls, edit their rules, and attach them to network interfaces and detach them."
+    },
+    {
+      "name": "FirewallReadOnlyAccess",
+      "description": "View firewalls, their rules and attachments, and network interfaces' effective rules."
+    }
+  ],
+  "actions": [
+    {
+      "id": "firewall.firewalls.list",
+      "description": "List firewalls, an interface's firewalls and its effective rules",
+      "resource": "project",
+      "accessLevel": "list",
+      "managedPolicies": [
+        "ReadOnlyAccess",
+        "FirewallFullAccess",
+        "FirewallReadOnlyAccess"
+      ]
+    },
+    {
+      "id": "firewall.firewalls.get",
+      "description": "View firewalls and their attachments",
+      "resource": "firewall",
+      "accessLevel": "read",
+      "managedPolicies": [
+        "ReadOnlyAccess",
+        "FirewallFullAccess",
+        "FirewallReadOnlyAccess"
+      ]
+    },
+    {
+      "id": "firewall.firewalls.create",
+      "description": "Create firewalls",
+      "resource": "project",
+      "accessLevel": "write",
+      "managedPolicies": [
+        "FirewallFullAccess"
+      ]
+    },
+    {
+      "id": "firewall.firewalls.update",
+      "description": "Rename, describe and tag firewalls",
+      "resource": "firewall",
+      "accessLevel": "write",
+      "managedPolicies": [
+        "FirewallFullAccess"
+      ]
+    },
+    {
+      "id": "firewall.firewalls.delete",
+      "description": "Delete firewalls",
+      "resource": "firewall",
+      "accessLevel": "write",
+      "managedPolicies": [
+        "FirewallFullAccess"
+      ]
+    },
+    {
+      "id": "firewall.firewalls.updateRules",
+      "description": "Add, change, replace and delete firewall rules",
+      "resource": "firewall",
+      "accessLevel": "write",
+      "managedPolicies": [
+        "FirewallFullAccess"
+      ]
+    },
+    {
+      "id": "firewall.firewalls.attach",
+      "description": "Attach firewalls to network interfaces",
+      "resource": "firewall",
+      "accessLevel": "write",
+      "managedPolicies": [
+        "FirewallFullAccess"
+      ]
+    },
+    {
+      "id": "firewall.firewalls.detach",
+      "description": "Detach firewalls from network interfaces",
+      "resource": "firewall",
+      "accessLevel": "write",
+      "managedPolicies": [
+        "FirewallFullAccess"
+      ]
+    }
+  ],
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/health",
+      "auth": "none",
+      "trail": null
+    },
+    {
+      "method": "GET",
+      "path": "/ready",
+      "auth": "none",
+      "trail": null
+    },
+    {
+      "method": "GET",
+      "path": "/openapi.json",
+      "auth": "none",
+      "trail": null
+    },
+    {
+      "method": "GET",
+      "path": "/v1/organizations/:orgId/projects/:projectId/firewalls",
+      "auth": "caller",
+      "action": "firewall.firewalls.list",
+      "trail": {
+        "eventName": "ListFirewalls"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/v1/organizations/:orgId/projects/:projectId/firewalls",
+      "auth": "caller",
+      "action": "firewall.firewalls.create",
+      "idempotencyKey": true,
+      "quotas": [
+        "firewall.firewalls.perProject"
+      ],
+      "trail": {
+        "eventName": "CreateFirewall"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/v1/organizations/:orgId/projects/:projectId/firewalls/:firewall",
+      "auth": "caller",
+      "action": "firewall.firewalls.get",
+      "trail": {
+        "eventName": "GetFirewall"
+      }
+    },
+    {
+      "method": "PATCH",
+      "path": "/v1/organizations/:orgId/projects/:projectId/firewalls/:firewall",
+      "auth": "caller",
+      "action": "firewall.firewalls.update",
+      "trail": {
+        "eventName": "UpdateFirewall"
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/v1/organizations/:orgId/projects/:projectId/firewalls/:firewall",
+      "auth": "caller",
+      "action": "firewall.firewalls.delete",
+      "trail": {
+        "eventName": "DeleteFirewall"
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/v1/organizations/:orgId/projects/:projectId/firewalls/:firewall/rules",
+      "auth": "caller",
+      "action": "firewall.firewalls.updateRules",
+      "quotas": [
+        "firewall.writesPerMinute"
+      ],
+      "trail": {
+        "eventName": "ReplaceFirewallRules",
+        "responseElements": [
+          "ruleIds"
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/v1/organizations/:orgId/projects/:projectId/firewalls/:firewall/rules",
+      "auth": "caller",
+      "action": "firewall.firewalls.updateRules",
+      "idempotencyKey": true,
+      "quotas": [
+        "firewall.writesPerMinute"
+      ],
+      "trail": {
+        "eventName": "AddFirewallRules",
+        "responseElements": [
+          "ruleIds"
+        ]
+      }
+    },
+    {
+      "method": "PATCH",
+      "path": "/v1/organizations/:orgId/projects/:projectId/firewalls/:firewall/rules/:ruleId",
+      "auth": "caller",
+      "action": "firewall.firewalls.updateRules",
+      "quotas": [
+        "firewall.writesPerMinute"
+      ],
+      "trail": {
+        "eventName": "UpdateFirewallRule"
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/v1/organizations/:orgId/projects/:projectId/firewalls/:firewall/rules/:ruleId",
+      "auth": "caller",
+      "action": "firewall.firewalls.updateRules",
+      "quotas": [
+        "firewall.writesPerMinute"
+      ],
+      "trail": {
+        "eventName": "DeleteFirewallRule"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/v1/organizations/:orgId/projects/:projectId/firewalls/:firewall/attachments",
+      "auth": "caller",
+      "action": "firewall.firewalls.get",
+      "trail": {
+        "eventName": "ListFirewallAttachments"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/v1/organizations/:orgId/projects/:projectId/firewalls/:firewall/attachments",
+      "auth": "caller",
+      "action": "firewall.firewalls.attach",
+      "idempotencyKey": true,
+      "quotas": [
+        "firewall.writesPerMinute"
+      ],
+      "trail": {
+        "eventName": "AttachFirewall"
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/v1/organizations/:orgId/projects/:projectId/firewalls/:firewall/attachments/:interface",
+      "auth": "caller",
+      "action": "firewall.firewalls.detach",
+      "quotas": [
+        "firewall.writesPerMinute"
+      ],
+      "trail": {
+        "eventName": "DetachFirewall"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/v1/organizations/:orgId/projects/:projectId/interfaces/:interface/firewalls",
+      "auth": "caller",
+      "action": "firewall.firewalls.list",
+      "trail": {
+        "eventName": "GetInterfaceFirewalls"
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/v1/organizations/:orgId/projects/:projectId/interfaces/:interface/firewalls",
+      "auth": "caller",
+      "action": "firewall.firewalls.attach",
+      "quotas": [
+        "firewall.writesPerMinute"
+      ],
+      "trail": {
+        "eventName": "SetInterfaceFirewalls"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/v1/organizations/:orgId/projects/:projectId/interfaces/:interface/effective-rules",
+      "auth": "caller",
+      "action": "firewall.firewalls.list",
+      "trail": {
+        "eventName": "GetInterfaceEffectiveRules"
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/internal/v1/interfaces/:interface",
+      "auth": "service",
+      "trail": null
+    },
+    {
+      "method": "POST",
+      "path": "/internal/v1/interfaces/:interface/initial-firewalls",
+      "auth": "delegated",
+      "action": "firewall.firewalls.attach",
+      "idempotencyKey": true,
+      "trail": {
+        "eventName": "AttachFirewall"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/internal/v1/interface-rulesets/:interface",
+      "auth": "service",
+      "trail": null
+    },
+    {
+      "method": "POST",
+      "path": "/internal/v1/interface-rulesets/batch-get",
+      "auth": "service",
+      "trail": null
+    },
+    {
+      "method": "GET",
+      "path": "/internal/v1/interface-rulesets",
+      "auth": "service",
+      "trail": null
+    },
+    {
+      "method": "GET",
+      "path": "/internal/v1/quotas/usage",
+      "auth": "service",
+      "trail": null
+    }
+  ],
+  "quotas": [
+    {
+      "id": "firewall.firewalls.perProject",
+      "displayName": "Firewalls per project",
+      "description": "Firewalls that can exist in one project in a region, the project's default firewall included.",
+      "kind": "allocation",
+      "scope": "project",
+      "perRegion": true,
+      "unit": "firewall",
+      "default": 100,
+      "adjustable": true,
+      "max": 2500
+    },
+    {
+      "id": "firewall.rules.perFirewall",
+      "displayName": "Rules per firewall",
+      "description": "Inbound and outbound rules one firewall can hold.",
+      "kind": "allocation",
+      "scope": "resource",
+      "resourceType": "firewall",
+      "unit": "rule",
+      "default": 100,
+      "adjustable": true,
+      "max": 200
+    },
+    {
+      "id": "firewall.writesPerMinute",
+      "displayName": "Firewall writes per minute",
+      "description": "Rule and attachment changes accepted per minute across the organization (a launch's initial attachments aren't counted).",
+      "kind": "rate",
+      "scope": "organization",
+      "unit": "request",
+      "default": 120,
+      "window": "PT1M",
+      "burst": 240,
+      "adjustable": true,
+      "max": 1200
+    }
+  ],
+  "serviceCredentials": {
+    "issuerPrefix": "fwk"
+  },
+  "delegation": {
+    "callers": [
+      {
+        "namespace": "compute",
+        "actions": [
+          "firewall.firewalls.attach"
+        ]
+      },
+      {
+        "namespace": "network",
+        "actions": [
+          "firewall.firewalls.attach"
+        ]
+      }
+    ]
+  }
+}

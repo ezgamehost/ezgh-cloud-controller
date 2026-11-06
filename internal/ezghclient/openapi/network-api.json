@@ -1,0 +1,6032 @@
+{
+  "components": {
+    "headers": {
+      "Retry-After": {
+        "description": "Whole seconds to wait before retrying. Never on quota_exceeded.",
+        "schema": {
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "X-Request-Id": {
+        "description": "The request's ID, in every log line and its Trails event.",
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "parameters": {
+      "Cursor": {
+        "description": "The previous page's nextCursor. Bound to the organization, the list and its filters.",
+        "in": "query",
+        "name": "cursor",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "IdempotencyKey": {
+        "description": "Makes a retry safe: the same key and request get the stored response.",
+        "in": "header",
+        "name": "Idempotency-Key",
+        "required": false,
+        "schema": {
+          "pattern": "^[\\x21-\\x7e]{1,200}$",
+          "type": "string"
+        }
+      },
+      "IfMatch": {
+        "description": "* or the route table's ETags read (its routes' revision), comma-separated; optional. A stale one is 412 precondition_failed.",
+        "in": "header",
+        "name": "If-Match",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "Limit": {
+        "description": "The page size. Out of range is 400, never a clamp.",
+        "in": "query",
+        "name": "limit",
+        "required": false,
+        "schema": {
+          "default": 20,
+          "maximum": 100,
+          "minimum": 1,
+          "type": "integer"
+        }
+      }
+    },
+    "responses": {
+      "AccessDenied": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "access_denied: the caller's policies don't allow the action; forbidden_origin: a cookie-authenticated write from an origin that isn't allowed; spend_limit_reached.",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        }
+      },
+      "Conflict": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "quota_exceeded (an allocation quota, with quota), idempotency_conflict, idempotency_in_progress (with Retry-After), organization_deletion_pending, operation_in_progress, or the endpoint's own 409 codes.",
+        "headers": {
+          "Retry-After": {
+            "$ref": "#/components/headers/Retry-After"
+          },
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        }
+      },
+      "InternalError": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "internal_error: a bug; the details are in the logs, under the request ID.",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        }
+      },
+      "InvalidRequest": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "invalid_request (with issues), invalid_cursor, or the endpoint's own 400 codes.",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        }
+      },
+      "NotFound": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "not_found: unknown, malformed, or in an organization the caller isn't in.",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        }
+      },
+      "PayloadTooLarge": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "payload_too_large: the body is over the endpoint's limit (1 MiB unless it says otherwise).",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        }
+      },
+      "TooManyRequests": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "too_many_requests, with Retry-After; or quota_exceeded (a rate, usage or concurrency quota, with quota), never with Retry-After.",
+        "headers": {
+          "Retry-After": {
+            "$ref": "#/components/headers/Retry-After"
+          },
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        }
+      },
+      "Unauthenticated": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "unauthenticated: no credential, or one that doesn't check out.",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        }
+      },
+      "Unavailable": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "unavailable: a dependency the request needs is down. Retry after Retry-After.",
+        "headers": {
+          "Retry-After": {
+            "$ref": "#/components/headers/Retry-After"
+          },
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Error": {
+        "additionalProperties": false,
+        "description": "Every non-2xx answer. Clients branch on code, never on message.",
+        "properties": {
+          "error": {
+            "additionalProperties": true,
+            "properties": {
+              "code": {
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9_]*$",
+                "type": "string"
+              },
+              "issues": {
+                "description": "invalid_request: one entry per problem, at a dotted path.",
+                "items": {
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "path": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "path",
+                    "message"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "message": {
+                "maxLength": 1024,
+                "type": "string"
+              },
+              "quota": {
+                "$ref": "#/components/schemas/QuotaExceeded"
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "type": "object"
+      },
+      "Ipv4Address": {
+        "description": "A public IPv4 address.",
+        "properties": {
+          "address": {
+            "type": "string"
+          },
+          "association": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "properties": {
+                  "instance": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "networkInterface": {
+                    "type": "string"
+                  },
+                  "privateIpv4Address": {
+                    "description": "On a private interface, the private IPv4 the address is mapped onto (the interface's primary private address, the one the guest sees); null on a public interface.",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "state": {
+                    "enum": [
+                      "associating",
+                      "associated",
+                      "disassociating"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "networkInterface",
+                  "instance",
+                  "state",
+                  "privateIpv4Address"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "autoRelease": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "organizationId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "projectId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "resourceName": {
+            "type": "string"
+          },
+          "slug": {
+            "description": "pip_\u2026",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "allocated",
+              "releasing"
+            ],
+            "type": "string"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "resourceName",
+          "organizationId",
+          "projectId",
+          "region",
+          "tags",
+          "status",
+          "address",
+          "autoRelease",
+          "association",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "Ipv4AddressAssociate": {
+        "additionalProperties": false,
+        "properties": {
+          "allowReassociation": {
+            "description": "Move the address if it's associated with another interface.",
+            "type": "boolean"
+          },
+          "networkInterface": {
+            "description": "The network interface's eni_ ID (a UUID is 400 invalid_request).",
+            "pattern": "^eni_[a-z0-9]{12}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "networkInterface"
+        ],
+        "type": "object"
+      },
+      "Ipv4AddressCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "Ipv4AddressList": {
+        "properties": {
+          "ipv4Addresses": {
+            "items": {
+              "$ref": "#/components/schemas/Ipv4Address"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ipv4Addresses",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "Ipv4AddressUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "autoRelease": {
+            "type": "boolean"
+          },
+          "name": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          }
+        },
+        "type": "object"
+      },
+      "NetworkGateway": {
+        "description": "A Network Gateway: the internet path of the VPC it is attached to.",
+        "properties": {
+          "attachmentState": {
+            "enum": [
+              "detached",
+              "attached"
+            ],
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "organizationId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "projectId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "resourceName": {
+            "type": "string"
+          },
+          "slug": {
+            "description": "ngw_\u2026",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "available",
+              "deleting"
+            ],
+            "type": "string"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "vpc": {
+            "description": "The VPC it is attached to (vpc_\u2026), null while detached.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "description",
+          "resourceName",
+          "organizationId",
+          "projectId",
+          "region",
+          "tags",
+          "status",
+          "vpc",
+          "attachmentState",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "NetworkGatewayAttach": {
+        "additionalProperties": false,
+        "properties": {
+          "vpc": {
+            "description": "The VPC's ID (vpc_\u2026), in the gateway's project.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "vpc"
+        ],
+        "type": "object"
+      },
+      "NetworkGatewayCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "maxLength": 500,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "NetworkGatewayList": {
+        "properties": {
+          "networkGateways": {
+            "items": {
+              "$ref": "#/components/schemas/NetworkGateway"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "networkGateways",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "NetworkGatewayUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "maxLength": 500,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          }
+        },
+        "type": "object"
+      },
+      "NetworkInterface": {
+        "description": "A network interface: public, with its own routed IPv6 /64, or private, in a VPC's subnet (subnet set).",
+        "properties": {
+          "attachment": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "properties": {
+                  "attachedAt": {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  "deleteOnTermination": {
+                    "type": "boolean"
+                  },
+                  "deviceIndex": {
+                    "type": "integer"
+                  },
+                  "instance": {
+                    "type": "string"
+                  },
+                  "primary": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "instance",
+                  "deviceIndex",
+                  "primary",
+                  "deleteOnTermination",
+                  "attachedAt"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "ipv4Address": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "properties": {
+                  "address": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "slug": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "slug",
+                  "address"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "ipv6Address": {
+            "description": "<prefix>::1; on a private interface its primary ULA /128 address.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ipv6Prefix": {
+            "description": "The routed public /64. Always set on a public interface; on a private one only when it holds one (through its VPC's network gateway), null otherwise.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "macAddress": {
+            "type": "string"
+          },
+          "mtu": {
+            "description": "1500 for a public interface, 8900 (read-only) for a private one.",
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "organizationId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "privateAddressAssignments": {
+            "description": "Every realized private address, primaries first, then by family and address; [] on a public interface.",
+            "items": {
+              "properties": {
+                "address": {
+                  "type": "string"
+                },
+                "family": {
+                  "enum": [
+                    "ipv4",
+                    "ipv6"
+                  ],
+                  "type": "string"
+                },
+                "generation": {
+                  "description": "The address's ownership generation, a decimal string (the compare-and-swap value of address operations).",
+                  "pattern": "^(0|[1-9][0-9]*)$",
+                  "type": "string"
+                },
+                "primary": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "family",
+                "address",
+                "primary",
+                "generation"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "privateIpv4Address": {
+            "description": "A private interface's primary IPv4 address, fixed for its life; null on a public one (and while creating).",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "privatePrefixAssignments": {
+            "description": "Every realized delegated prefix, by family and address; [] on a public interface.",
+            "items": {
+              "properties": {
+                "family": {
+                  "enum": [
+                    "ipv4",
+                    "ipv6"
+                  ],
+                  "type": "string"
+                },
+                "generation": {
+                  "type": "string"
+                },
+                "prefix": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "family",
+                "prefix",
+                "generation"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "projectId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "publicIpv6Address": {
+            "description": "<ipv6Prefix>::1, null without a /64. On a private interface: the public IPv6 its /64 gives the guest (ipv6Address stays its ULA).",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "region": {
+            "type": "string"
+          },
+          "resourceName": {
+            "type": "string"
+          },
+          "secondaryPrivateIpv4Addresses": {
+            "description": "Realized secondary IPv4 addresses; [] on a public interface.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "secondaryPrivateIpv6Addresses": {
+            "description": "Realized secondary IPv6 addresses; [] on a public interface.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "slug": {
+            "description": "eni_\u2026",
+            "type": "string"
+          },
+          "sourceDestCheck": {
+            "description": "With false, a private interface may send packets whose source isn't its own and receive packets routed to it that aren't addressed to it (an appliance a route table targets). Always true on a public interface.",
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "creating",
+              "available",
+              "attached",
+              "deleting"
+            ],
+            "type": "string"
+          },
+          "subnet": {
+            "description": "A private interface's subnet (sbn_\u2026), fixed for its life; null on a public one.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "vpc": {
+            "description": "A private interface's VPC (vpc_\u2026); null on a public one.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "description",
+          "resourceName",
+          "organizationId",
+          "projectId",
+          "region",
+          "tags",
+          "status",
+          "macAddress",
+          "mtu",
+          "ipv6Prefix",
+          "ipv6Address",
+          "ipv4Address",
+          "attachment",
+          "createdAt",
+          "updatedAt",
+          "vpc",
+          "subnet",
+          "privateIpv4Address",
+          "secondaryPrivateIpv4Addresses",
+          "secondaryPrivateIpv6Addresses",
+          "privateAddressAssignments",
+          "publicIpv6Address",
+          "sourceDestCheck",
+          "privatePrefixAssignments"
+        ],
+        "type": "object"
+      },
+      "NetworkInterfaceCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "maxLength": 500,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "firewalls": {
+            "description": "Omitted: the project's default firewall (with subnet, the VPC's default firewall). []: none.",
+            "items": {
+              "description": "A firewall's fwl_ ID (a UUID is 400 invalid_request at this item).",
+              "pattern": "^fwl_[a-z0-9]{12}$",
+              "type": "string"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "ipv4": {
+            "description": "A public interface: {allocate: true} or {address: \"pip_\u2026\"}. A private interface (subnet set): {allocate: true|false}, a public IPv4 mapped onto its primary private address (the guest sees only the private one); omitted, the subnet's autoAssignPublicIpv4 decides. Allocating needs an attached network gateway on the VPC (409 vpc_has_no_gateway).",
+            "oneOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "allocate": {
+                    "const": true
+                  }
+                },
+                "required": [
+                  "allocate"
+                ],
+                "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "address": {
+                    "description": "The address's pip_ ID (a UUID is 400 invalid_request).",
+                    "pattern": "^pip_[a-z0-9]{12}$",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "address"
+                ],
+                "type": "object"
+              },
+              {
+                "additionalProperties": false,
+                "description": "With subnet only.",
+                "properties": {
+                  "allocate": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "allocate"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "ipv6": {
+            "additionalProperties": false,
+            "description": "With subnet only (a public interface always has its /64; 400 invalid_request otherwise): a public IPv6 /64 the guest configures beside its ULA; omitted, the subnet's autoAssignPublicIpv6 decides. Allocating needs an attached network gateway (409 vpc_has_no_gateway); 409 ipv6_pool_exhausted as a public create.",
+            "properties": {
+              "allocate": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "allocate"
+            ],
+            "type": "object"
+          },
+          "name": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          },
+          "privateIpv4Address": {
+            "description": "With subnet: the primary IPv4 address (a usable address of the subnet); omitted, the lowest free one, or one released over an hour ago.",
+            "format": "ipv4",
+            "type": "string"
+          },
+          "subnet": {
+            "description": "Makes the interface private, in this subnet of the project (another project's is 404). Not taken with ipv4.",
+            "pattern": "^sbn_[a-z0-9]{12}$",
+            "type": "string"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "NetworkInterfaceList": {
+        "properties": {
+          "networkInterfaces": {
+            "items": {
+              "$ref": "#/components/schemas/NetworkInterface"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "networkInterfaces",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "NetworkInterfaceUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "maxLength": 500,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          },
+          "sourceDestCheck": {
+            "description": "The source/destination check (default true). false only on a private interface (400 on a public one).",
+            "type": "boolean"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          }
+        },
+        "type": "object"
+      },
+      "PrivateAddressAssign": {
+        "additionalProperties": false,
+        "properties": {
+          "address": {
+            "description": "An address of the interface's subnet, in canonical form; omit it for the next eligible one.",
+            "type": "string"
+          },
+          "family": {
+            "enum": [
+              "ipv4",
+              "ipv6"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "family"
+        ],
+        "type": "object"
+      },
+      "PrivateAddressOperation": {
+        "properties": {
+          "address": {
+            "description": "The address, or a delegated prefix in CIDR form.",
+            "type": "string"
+          },
+          "blockedReason": {
+            "enum": [
+              "waiting_for_withdrawal",
+              "waiting_for_fence",
+              "waiting_for_destination",
+              "dependency_unavailable",
+              null
+            ],
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "destinationInterface": {
+            "description": "The interface the address goes to (eni_\u2026); null on unassign.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "error": {
+            "description": "On failed: the standard error's inner {code, message}.",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ],
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "expectedGeneration": {
+            "description": "The request's expectedGeneration; null on assign.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "family": {
+            "enum": [
+              "ipv4",
+              "ipv6"
+            ],
+            "type": "string"
+          },
+          "finishedAt": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "generation": {
+            "description": "The address's next ownership generation, reserved when the request was accepted.",
+            "pattern": "^(0|[1-9][0-9]*)$",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "phase": {
+            "enum": [
+              "reserved",
+              "withdrawing",
+              "activating",
+              "complete"
+            ],
+            "type": "string"
+          },
+          "sourceInterface": {
+            "description": "The interface the address leaves (eni_\u2026); null on assign.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "enum": [
+              "queued",
+              "running",
+              "succeeded",
+              "failed"
+            ],
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "assign",
+              "unassign",
+              "reassign"
+            ],
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "status",
+          "phase",
+          "family",
+          "address",
+          "sourceInterface",
+          "destinationInterface",
+          "expectedGeneration",
+          "generation",
+          "blockedReason",
+          "createdAt",
+          "updatedAt",
+          "finishedAt",
+          "error"
+        ],
+        "type": "object"
+      },
+      "PrivateAddressOperationList": {
+        "properties": {
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "operations": {
+            "items": {
+              "$ref": "#/components/schemas/PrivateAddressOperation"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "operations",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "PrivateAddressReassign": {
+        "additionalProperties": false,
+        "properties": {
+          "address": {
+            "type": "string"
+          },
+          "destinationInterface": {
+            "description": "The network interface's ID (eni_\u2026).",
+            "type": "string"
+          },
+          "expectedGeneration": {
+            "description": "The address's generation (privateAddressAssignments), a decimal string.",
+            "pattern": "^(0|[1-9][0-9]*)$",
+            "type": "string"
+          },
+          "family": {
+            "enum": [
+              "ipv4",
+              "ipv6"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "family",
+          "address",
+          "expectedGeneration",
+          "destinationInterface"
+        ],
+        "type": "object"
+      },
+      "PrivateAddressUnassign": {
+        "additionalProperties": false,
+        "properties": {
+          "address": {
+            "type": "string"
+          },
+          "expectedGeneration": {
+            "description": "The address's generation (privateAddressAssignments), a decimal string.",
+            "pattern": "^(0|[1-9][0-9]*)$",
+            "type": "string"
+          },
+          "family": {
+            "enum": [
+              "ipv4",
+              "ipv6"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "family",
+          "address",
+          "expectedGeneration"
+        ],
+        "type": "object"
+      },
+      "PrivatePrefixAssign": {
+        "additionalProperties": false,
+        "properties": {
+          "family": {
+            "enum": [
+              "ipv4",
+              "ipv6"
+            ],
+            "type": "string"
+          },
+          "prefix": {
+            "description": "An aligned IPv4 /28 or IPv6 /80 of the interface's subnet, in canonical form; omit it for a free one.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "family"
+        ],
+        "type": "object"
+      },
+      "PrivatePrefixUnassign": {
+        "additionalProperties": false,
+        "properties": {
+          "expectedGeneration": {
+            "description": "The prefix's generation (privatePrefixAssignments), a decimal string.",
+            "type": "string"
+          },
+          "family": {
+            "enum": [
+              "ipv4",
+              "ipv6"
+            ],
+            "type": "string"
+          },
+          "prefix": {
+            "description": "The prefix, as privatePrefixAssignments shows it.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "family",
+          "prefix",
+          "expectedGeneration"
+        ],
+        "type": "object"
+      },
+      "QuotaExceeded": {
+        "additionalProperties": false,
+        "description": "quota_exceeded: the quota that refused the request. Never with Retry-After.",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "inFlight": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "kind": {
+            "enum": [
+              "allocation",
+              "rate",
+              "usage",
+              "concurrency"
+            ]
+          },
+          "limit": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "periodStart": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "resetsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "scope": {
+            "enum": [
+              "organization",
+              "project",
+              "resource"
+            ]
+          },
+          "scopeResourceName": {
+            "type": "string"
+          },
+          "used": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "window": {
+            "description": "rate only: an ISO 8601 duration, PT1S to PT1H.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "scope",
+          "limit"
+        ],
+        "type": "object"
+      },
+      "Route": {
+        "properties": {
+          "destination": {
+            "description": "A CIDR, IPv4 or IPv6.",
+            "type": "string"
+          },
+          "state": {
+            "description": "active, or blackhole when the target is deleted, not attached to an instance, or (a gateway) not attached to this VPC.",
+            "type": "string"
+          },
+          "target": {
+            "$ref": "#/components/schemas/RouteTarget"
+          }
+        },
+        "required": [
+          "destination",
+          "target",
+          "state"
+        ],
+        "type": "object"
+      },
+      "RouteInput": {
+        "additionalProperties": false,
+        "properties": {
+          "destination": {
+            "description": "A canonical CIDR (host bits zero). Inside the VPC's ranges it must be exactly one subnet's CIDR (never the VPC's own range) and target a network interface; it may not equal or lie inside 169.254.0.0/16 or fd65:7a67:6800::/48.",
+            "type": "string"
+          },
+          "state": {
+            "description": "Ignored: a PUT may echo the routes exactly as GET shows them. Refused elsewhere.",
+            "type": "string"
+          },
+          "target": {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "description": "The VPC's attached network gateway (ngw_\u2026), or a private network interface in the VPC (eni_\u2026); null for local.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "type": {
+                "description": "local only in a PUT, echoing a local route as GET shows it.",
+                "enum": [
+                  "networkGateway",
+                  "networkInterface",
+                  "local"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "id"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "destination",
+          "target"
+        ],
+        "type": "object"
+      },
+      "RouteTable": {
+        "description": "A VPC route table: the routes a subnet's traffic takes.",
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "main": {
+            "description": "The VPC's main table, used by every subnet without an explicit table.",
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "organizationId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "projectId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "resourceName": {
+            "type": "string"
+          },
+          "routes": {
+            "description": "Local routes first, then by family, prefix length (longest first) and address.",
+            "items": {
+              "$ref": "#/components/schemas/Route"
+            },
+            "type": "array"
+          },
+          "slug": {
+            "description": "rtb_\u2026",
+            "type": "string"
+          },
+          "subnets": {
+            "description": "The subnets that use this table (sbn_\u2026), explicitly or, for the main table, by default.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "vpc": {
+            "description": "The VPC (vpc_\u2026).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "description",
+          "resourceName",
+          "organizationId",
+          "projectId",
+          "region",
+          "tags",
+          "vpc",
+          "main",
+          "routes",
+          "subnets",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "RouteTableCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "maxLength": 500,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          },
+          "routes": {
+            "items": {
+              "$ref": "#/components/schemas/RouteInput"
+            },
+            "type": "array"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          },
+          "vpc": {
+            "description": "The VPC (vpc_\u2026).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "vpc"
+        ],
+        "type": "object"
+      },
+      "RouteTableList": {
+        "properties": {
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "routeTables": {
+            "items": {
+              "$ref": "#/components/schemas/RouteTable"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "routeTables",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "RouteTableUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "maxLength": 500,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          }
+        },
+        "type": "object"
+      },
+      "RouteTarget": {
+        "properties": {
+          "id": {
+            "description": "The target's ID (ngw_\u2026, eni_\u2026); null for local.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": {
+            "description": "local, networkGateway or networkInterface. An open set: more types may be added, so treat an unknown one as displayable.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "id"
+        ],
+        "type": "object"
+      },
+      "RoutesRemove": {
+        "additionalProperties": false,
+        "properties": {
+          "destinations": {
+            "description": "Destination CIDRs; an absent one is ignored.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "destinations"
+        ],
+        "type": "object"
+      },
+      "RoutesReplace": {
+        "additionalProperties": false,
+        "properties": {
+          "routes": {
+            "items": {
+              "$ref": "#/components/schemas/RouteInput"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "routes"
+        ],
+        "type": "object"
+      },
+      "RoutesSet": {
+        "additionalProperties": false,
+        "properties": {
+          "routes": {
+            "items": {
+              "$ref": "#/components/schemas/RouteInput"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "routes"
+        ],
+        "type": "object"
+      },
+      "Subnet": {
+        "description": "A range of a VPC.",
+        "properties": {
+          "autoAssignPublicIpv4": {
+            "description": "An interface created in the subnet without ipv4 allocates a public IPv4 mapped onto its private address (the VPC needs an attached network gateway).",
+            "type": "boolean"
+          },
+          "autoAssignPublicIpv6": {
+            "description": "An interface created in the subnet without ipv6 allocates a public IPv6 /64 (the VPC needs an attached network gateway).",
+            "type": "boolean"
+          },
+          "availableIpv4Addresses": {
+            "description": "Addresses free for interfaces: the range less its five reserved addresses, live allocations and addresses still being withdrawn.",
+            "type": "integer"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "ipv4Cidr": {
+            "type": "string"
+          },
+          "ipv6Cidr": {
+            "description": "A /64 of the VPC's /56.",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "organizationId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "projectId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "resourceName": {
+            "type": "string"
+          },
+          "routeTable": {
+            "description": "The subnet's effective route table (rtb_\u2026): its explicit one, else the VPC's main table.",
+            "type": "string"
+          },
+          "slug": {
+            "description": "sbn_\u2026",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "available"
+            ],
+            "type": "string"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "vpc": {
+            "description": "vpc_\u2026",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "description",
+          "resourceName",
+          "organizationId",
+          "projectId",
+          "region",
+          "tags",
+          "status",
+          "ipv4Cidr",
+          "ipv6Cidr",
+          "createdAt",
+          "updatedAt",
+          "vpc",
+          "availableIpv4Addresses",
+          "autoAssignPublicIpv4",
+          "autoAssignPublicIpv6",
+          "routeTable"
+        ],
+        "type": "object"
+      },
+      "SubnetCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "maxLength": 500,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ipv4Cidr": {
+            "description": "A canonical IPv4 CIDR, /8 to /28, inside the VPC's range.",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          },
+          "vpc": {
+            "description": "The VPC's ID (vpc_\u2026).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "vpc",
+          "ipv4Cidr"
+        ],
+        "type": "object"
+      },
+      "SubnetList": {
+        "properties": {
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "subnets": {
+            "items": {
+              "$ref": "#/components/schemas/Subnet"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "subnets",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "SubnetUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "autoAssignPublicIpv4": {
+            "description": "The subnet's launch default for a mapped public IPv4; existing interfaces are untouched.",
+            "type": "boolean"
+          },
+          "autoAssignPublicIpv6": {
+            "description": "The subnet's launch default for a public IPv6 /64; existing interfaces are untouched.",
+            "type": "boolean"
+          },
+          "description": {
+            "maxLength": 500,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          },
+          "routeTable": {
+            "description": "Associates the subnet with a route table of its VPC (rtb_\u2026; needs network.routeTables.associate on it), or null for the VPC's main table. Refused with 409 route_table_conflict when the table routes the subnet's CIDR or targets an interface in it.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          }
+        },
+        "type": "object"
+      },
+      "Tags": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "description": "At most 50; keys 1-128 characters, values at most 256, keys starting with ezgh: are reserved.",
+        "type": "object"
+      },
+      "Vpc": {
+        "description": "A private regional network.",
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "defaultFirewall": {
+            "description": "The VPC's default firewall (fwl_\u2026).",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "failureReason": {
+            "description": "Why a create or delete couldn't finish yet; null otherwise. The recovery pass keeps retrying. vpc_in_use: a delete removed the default firewall while the VPC had subnets; it stays deleting until they are deleted and the VPC is deleted again. addresses_withdrawing: the delete is done but addresses of deleted network interfaces are still being withdrawn from hosts; the VPC is removed once that finishes, with nothing more to do.",
+            "enum": [
+              "default_firewall_unavailable",
+              "default_firewall_conflict",
+              "vpc_in_use",
+              "addresses_withdrawing",
+              null
+            ],
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "ipv4Cidr": {
+            "type": "string"
+          },
+          "ipv6Cidr": {
+            "description": "A generated ULA /56.",
+            "type": "string"
+          },
+          "mtu": {
+            "description": "Read-only.",
+            "enum": [
+              8900
+            ],
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "organizationId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "projectId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "resourceName": {
+            "type": "string"
+          },
+          "slug": {
+            "description": "vpc_\u2026",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "available",
+              "deleting"
+            ],
+            "type": "string"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "description",
+          "resourceName",
+          "organizationId",
+          "projectId",
+          "region",
+          "tags",
+          "status",
+          "ipv4Cidr",
+          "ipv6Cidr",
+          "createdAt",
+          "updatedAt",
+          "mtu",
+          "defaultFirewall",
+          "failureReason"
+        ],
+        "type": "object"
+      },
+      "VpcCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "maxLength": 500,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ipv4Cidr": {
+            "description": "A canonical IPv4 CIDR, /8 to /28, inside 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 100.64.0.0/10 or 198.18.0.0/15.",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          }
+        },
+        "required": [
+          "name",
+          "ipv4Cidr"
+        ],
+        "type": "object"
+      },
+      "VpcList": {
+        "properties": {
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "vpcs": {
+            "items": {
+              "$ref": "#/components/schemas/Vpc"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "vpcs",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "VpcUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "maxLength": 500,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          }
+        },
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "apiKey": {
+        "description": "A customer API key: Bearer ezgh_\u2026",
+        "scheme": "bearer",
+        "type": "http"
+      },
+      "oauth": {
+        "description": "An OAuth access token (Bearer ezgh_at_\u2026) or an EZGH SSO resource token (Bearer ezgh_sat_\u2026)",
+        "scheme": "bearer",
+        "type": "http"
+      },
+      "sessionCookie": {
+        "description": "A signed-in person's session, set by login.ezghcloud.com.",
+        "in": "cookie",
+        "name": "__Secure-better-auth.session_token",
+        "type": "apiKey"
+      }
+    }
+  },
+  "info": {
+    "description": "Network interfaces (each with its own routed public IPv6 /64), public IPv4 addresses, and VPCs with their subnets. Every path is under an organization; lists are paged with limit, cursor and nextCursor.",
+    "title": "EZGH Network API",
+    "version": "1.0.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/v1/organizations/{orgId}/projects/{projectId}/ipv4-addresses": {
+      "get": {
+        "operationId": "ListIpv4Addresses",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          },
+          {
+            "description": "Only the address associated with this network interface, by its ID (eni_\u2026). A UUID is 400 invalid_request (use the network interface's ID); any other value matches nothing.",
+            "in": "query",
+            "name": "networkInterface",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ipv4AddressList"
+                }
+              }
+            },
+            "description": "A page of IPv4 addresses."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "List a project's IPv4 addresses, newest first",
+        "x-ezgh-action": "network.publicIps.list"
+      },
+      "post": {
+        "description": "Metered while allocated, associated or not.",
+        "operationId": "AllocateIpv4Address",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Ipv4AddressCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ipv4Address"
+                }
+              }
+            },
+            "description": "The address."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Allocate a public IPv4 address",
+        "x-ezgh-action": "network.publicIps.allocate",
+        "x-ezgh-quotas": [
+          "network.ipv4AddressesPerOrganization",
+          "network.ipv4AllocationsPerHour"
+        ]
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/ipv4-addresses/{ipv4Address}": {
+      "delete": {
+        "description": "Refused with 409 address_associated until it's disassociated.",
+        "operationId": "ReleaseIpv4Address",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The IPv4 address's slug (pip_\u2026) or ID.",
+            "in": "path",
+            "name": "ipv4Address",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Done; no body."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Release an IPv4 address",
+        "x-ezgh-action": "network.publicIps.release"
+      },
+      "get": {
+        "operationId": "GetIpv4Address",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The IPv4 address's slug (pip_\u2026) or ID.",
+            "in": "path",
+            "name": "ipv4Address",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ipv4Address"
+                }
+              }
+            },
+            "description": "The address."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Get an IPv4 address",
+        "x-ezgh-action": "network.publicIps.get"
+      },
+      "patch": {
+        "description": "Refused with 409 interface_deleting when autoRelease changes while the address's network interface is being deleted.",
+        "operationId": "UpdateIpv4Address",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The IPv4 address's slug (pip_\u2026) or ID.",
+            "in": "path",
+            "name": "ipv4Address",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Ipv4AddressUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ipv4Address"
+                }
+              }
+            },
+            "description": "The address."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Rename or tag an IPv4 address, or set autoRelease",
+        "x-ezgh-action": "network.publicIps.update"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/ipv4-addresses/{ipv4Address}/associate": {
+      "post": {
+        "description": "On an interface not running on a host the association completes at once; otherwise association.state is associating until the host confirms. Refused with 409 interface_deleting while the address's current network interface is being deleted, and 409 association_in_progress while its association is still changing. On a private network interface the address is mapped 1:1 onto its primary private IPv4 (the guest sees only the private address); its VPC needs an attached network gateway (409 vpc_has_no_gateway), and a host it's bound on must support the gateway (409 host_unsupported) and have a prefix for it (409 host_prefix_limit).",
+        "operationId": "AssociateIpv4Address",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The IPv4 address's slug (pip_\u2026) or ID.",
+            "in": "path",
+            "name": "ipv4Address",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Ipv4AddressAssociate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ipv4Address"
+                }
+              }
+            },
+            "description": "The address."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Associate an IPv4 address with a network interface",
+        "x-ezgh-action": "network.publicIps.associate"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/ipv4-addresses/{ipv4Address}/disassociate": {
+      "post": {
+        "description": "On an interface not running on a host it completes at once; otherwise association.state is disassociating until the host confirms. Refused with 409 interface_deleting while the network interface is being deleted.",
+        "operationId": "DisassociateIpv4Address",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The IPv4 address's slug (pip_\u2026) or ID.",
+            "in": "path",
+            "name": "ipv4Address",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ipv4Address"
+                }
+              }
+            },
+            "description": "The address."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Disassociate an IPv4 address",
+        "x-ezgh-action": "network.publicIps.disassociate"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/network-gateways": {
+      "get": {
+        "operationId": "ListNetworkGateways",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          },
+          {
+            "description": "Only the gateway attached to this VPC, by its ID (vpc_\u2026). A UUID is 400 invalid_request (use the VPC's ID); any other value matches nothing.",
+            "in": "query",
+            "name": "vpc"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkGatewayList"
+                }
+              }
+            },
+            "description": "A page of network gateways."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "List a project's network gateways, newest first",
+        "x-ezgh-action": "network.networkGateways.list"
+      },
+      "post": {
+        "description": "Creates a detached gateway. Attach it to a VPC to give that VPC's interfaces their internet path: mapped public IPv4 addresses and public IPv6 /64s. Refused with 409 quota_exceeded at network.networkGatewaysPerProject.",
+        "operationId": "CreateNetworkGateway",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NetworkGatewayCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkGateway"
+                }
+              }
+            },
+            "description": "The network gateway."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Create a network gateway",
+        "x-ezgh-action": "network.networkGateways.create",
+        "x-ezgh-quotas": [
+          "network.networkGatewaysPerProject"
+        ]
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/network-gateways/{gateway}": {
+      "delete": {
+        "description": "Refused with 409 gateway_attached while it is attached to a VPC: detach it first.",
+        "operationId": "DeleteNetworkGateway",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The network gateway's ID (ngw_\u2026) or UUID.",
+            "in": "path",
+            "name": "gateway",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Done; no body."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Delete a network gateway",
+        "x-ezgh-action": "network.networkGateways.delete"
+      },
+      "get": {
+        "operationId": "GetNetworkGateway",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The network gateway's ID (ngw_\u2026) or UUID.",
+            "in": "path",
+            "name": "gateway",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkGateway"
+                }
+              }
+            },
+            "description": "The network gateway."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Get a network gateway",
+        "x-ezgh-action": "network.networkGateways.get"
+      },
+      "patch": {
+        "operationId": "UpdateNetworkGateway",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The network gateway's ID (ngw_\u2026) or UUID.",
+            "in": "path",
+            "name": "gateway",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NetworkGatewayUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkGateway"
+                }
+              }
+            },
+            "description": "The network gateway."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Rename, describe or tag a network gateway",
+        "x-ezgh-action": "network.networkGateways.update"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/network-gateways/{gateway}/attach": {
+      "post": {
+        "description": "Needs network.vpcs.update on the VPC too. A VPC has at most one gateway (409 vpc_has_gateway); the gateway and the VPC must be in one project (400 invalid_request).",
+        "operationId": "AttachNetworkGateway",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The network gateway's ID (ngw_\u2026) or UUID.",
+            "in": "path",
+            "name": "gateway",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NetworkGatewayAttach"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkGateway"
+                }
+              }
+            },
+            "description": "The network gateway, attached."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Attach a network gateway to a VPC",
+        "x-ezgh-action": "network.networkGateways.attach"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/network-gateways/{gateway}/detach": {
+      "post": {
+        "description": "Needs network.vpcs.update on the VPC too. Refused with 409 gateway_in_use while a public IPv4 address is mapped onto one of the VPC's interfaces or one of them holds a public IPv6 /64; the error's mappings and ipv6Prefixes count each kind. A /64 lives as long as its interface: delete those interfaces first.",
+        "operationId": "DetachNetworkGateway",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The network gateway's ID (ngw_\u2026) or UUID.",
+            "in": "path",
+            "name": "gateway",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkGateway"
+                }
+              }
+            },
+            "description": "The network gateway, detached."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Detach a network gateway from its VPC",
+        "x-ezgh-action": "network.networkGateways.detach"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/network-interfaces": {
+      "get": {
+        "operationId": "ListNetworkInterfaces",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          },
+          {
+            "description": "Only the interfaces attached to this instance, by its ID (ins_\u2026). A UUID is 400 invalid_request (use the instance's ID); any other value matches nothing.",
+            "in": "query",
+            "name": "instance",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only interfaces in this status.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "creating",
+                "available",
+                "attached",
+                "deleting"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkInterfaceList"
+                }
+              }
+            },
+            "description": "A page of network interfaces."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "List a project's network interfaces, newest first",
+        "x-ezgh-action": "network.networkInterfaces.list"
+      },
+      "post": {
+        "description": "Allocates its routed IPv6 /64 (and, with ipv4, a public IPv4 address) and attaches its initial firewalls: the project's default firewall when firewalls is omitted, none for [].",
+        "operationId": "CreateNetworkInterface",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NetworkInterfaceCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkInterface"
+                }
+              }
+            },
+            "description": "The interface, available."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Create a network interface",
+        "x-ezgh-action": "network.networkInterfaces.create",
+        "x-ezgh-quotas": [
+          "network.networkInterfacesPerProject"
+        ]
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/network-interfaces/{networkInterface}": {
+      "delete": {
+        "description": "Refused with 409 interface_in_use while it's attached. Its /64 goes back to the pool, and its IPv4 address is released if autoRelease, else disassociated.",
+        "operationId": "DeleteNetworkInterface",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The network interface's slug (eni_\u2026) or ID.",
+            "in": "path",
+            "name": "networkInterface",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Done; no body."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Delete a network interface",
+        "x-ezgh-action": "network.networkInterfaces.delete"
+      },
+      "get": {
+        "operationId": "GetNetworkInterface",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The network interface's slug (eni_\u2026) or ID.",
+            "in": "path",
+            "name": "networkInterface",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkInterface"
+                }
+              }
+            },
+            "description": "The interface."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Get a network interface",
+        "x-ezgh-action": "network.networkInterfaces.get"
+      },
+      "patch": {
+        "operationId": "UpdateNetworkInterface",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The network interface's slug (eni_\u2026) or ID.",
+            "in": "path",
+            "name": "networkInterface",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NetworkInterfaceUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkInterface"
+                }
+              }
+            },
+            "description": "The interface."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Rename, describe or tag a network interface",
+        "x-ezgh-action": "network.networkInterfaces.update"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/network-interfaces/{networkInterface}/private-addresses/assign": {
+      "post": {
+        "description": "From the interface's own subnet: the address given, or the next eligible one. Requires an Idempotency-Key (1\u2013200 characters); a retry with it answers the same operation as it is now. Refused with 409 public_interface, interface_not_available, migration_in_progress and private_address_limit_exceeded (at most 2 secondary addresses per interface, 4,000 addresses per VPC, and 5,000 addresses, delegated prefixes and interfaces together); 409 address_in_use for an address owned, reserved, inside a delegated prefix or still being withdrawn, and 409 subnet_full when none is free.",
+        "operationId": "AssignPrivateAddress",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The network interface's slug (eni_\u2026) or ID.",
+            "in": "path",
+            "name": "networkInterface",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrivateAddressAssign"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivateAddressOperation"
+                }
+              }
+            },
+            "description": "Accepted: the operation (also at Location; poll it after Retry-After, 2 seconds), even when it completes at once."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Assign a secondary private address to a network interface",
+        "x-ezgh-action": "network.networkInterfaces.assignPrivateAddress"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/network-interfaces/{networkInterface}/private-addresses/reassign": {
+      "post": {
+        "description": "The destination is another private interface in the same subnet; the caller needs the action on both. The old owner's permission is withdrawn everywhere before the destination is given the address. Requires an Idempotency-Key (1\u2013200 characters); a retry with it answers the same operation as it is now. Refused with 409 public_interface, interface_not_available, migration_in_progress and private_address_limit_exceeded (at most 2 secondary addresses per interface, 4,000 addresses per VPC); 409 subnet_mismatch, primary_address_immutable, address_not_assigned, address_generation_conflict and address_operation_in_progress.",
+        "operationId": "ReassignPrivateAddress",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The network interface's slug (eni_\u2026) or ID.",
+            "in": "path",
+            "name": "networkInterface",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrivateAddressReassign"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivateAddressOperation"
+                }
+              }
+            },
+            "description": "Accepted: the operation (also at Location; poll it after Retry-After, 2 seconds), even when it completes at once."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Move a secondary private address to another network interface",
+        "x-ezgh-action": "network.networkInterfaces.reassignPrivateAddress"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/network-interfaces/{networkInterface}/private-addresses/unassign": {
+      "post": {
+        "description": "expectedGeneration is the address's generation from privateAddressAssignments; the operation advances it. Requires an Idempotency-Key (1\u2013200 characters); a retry with it answers the same operation as it is now. Refused with 409 public_interface, interface_not_available, migration_in_progress and private_address_limit_exceeded (at most 2 secondary addresses per interface, 4,000 addresses per VPC); 409 primary_address_immutable, address_not_assigned, address_generation_conflict and address_operation_in_progress.",
+        "operationId": "UnassignPrivateAddress",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The network interface's slug (eni_\u2026) or ID.",
+            "in": "path",
+            "name": "networkInterface",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrivateAddressUnassign"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivateAddressOperation"
+                }
+              }
+            },
+            "description": "Accepted: the operation (also at Location; poll it after Retry-After, 2 seconds), even when it completes at once."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Unassign a secondary private address from a network interface",
+        "x-ezgh-action": "network.networkInterfaces.unassignPrivateAddress"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/network-interfaces/{networkInterface}/private-prefixes/assign": {
+      "post": {
+        "description": "An IPv4 /28 or IPv6 /80 from the interface's own subnet, for addresses the instance routes itself: the prefix given, or a free aligned one. The operation's address holds the prefix in CIDR form, and it succeeds once the interface's host is programmed. Requires an Idempotency-Key (1\u2013200 characters); a retry with it answers the same operation as it is now. 400 invalid_request for a wrong length, a prefix not aligned or outside the subnet, or one overlapping a subnet's reserved addresses. Refused with 409 public_interface, interface_not_available, migration_in_progress, host_unsupported and private_address_limit_exceeded (at most 16 IPv4 and 2 IPv6 prefixes per interface; a VPC's addresses, prefixes and interfaces total at most 5,000); 409 address_in_use for a prefix overlapping any address, prefix or VIP, and 409 prefix_unavailable when no aligned block is free.",
+        "operationId": "AssignPrivatePrefix",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The network interface's slug (eni_\u2026) or ID.",
+            "in": "path",
+            "name": "networkInterface",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrivatePrefixAssign"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivateAddressOperation"
+                }
+              }
+            },
+            "description": "Accepted: the operation (also at Location; poll it after Retry-After, 2 seconds), even when it completes at once."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Assign a delegated prefix to a network interface",
+        "x-ezgh-action": "network.networkInterfaces.assignPrivatePrefix"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/network-interfaces/{networkInterface}/private-prefixes/unassign": {
+      "post": {
+        "description": "expectedGeneration is the prefix's generation from privatePrefixAssignments; the operation advances it. Traffic of the prefix's addresses stops across the VPC before it can be assigned again. Requires an Idempotency-Key (1\u2013200 characters); a retry with it answers the same operation as it is now. Refused with 409 public_interface, interface_not_available, migration_in_progress, address_not_assigned, address_generation_conflict and address_operation_in_progress.",
+        "operationId": "UnassignPrivatePrefix",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The network interface's slug (eni_\u2026) or ID.",
+            "in": "path",
+            "name": "networkInterface",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrivatePrefixUnassign"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivateAddressOperation"
+                }
+              }
+            },
+            "description": "Accepted: the operation (also at Location; poll it after Retry-After, 2 seconds), even when it completes at once."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Unassign a delegated prefix from a network interface",
+        "x-ezgh-action": "network.networkInterfaces.unassignPrivatePrefix"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/private-address-operations": {
+      "get": {
+        "description": "Only operations whose every network interface the caller may get.",
+        "operationId": "ListPrivateAddressOperations",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          },
+          {
+            "description": "Only operations involving this network interface, by its ID (eni_\u2026), deleted ones too. A UUID is 400 invalid_request.",
+            "in": "query",
+            "name": "networkInterface",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivateAddressOperationList"
+                }
+              }
+            },
+            "description": "A page of operations."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "List a project's private address operations, newest first",
+        "x-ezgh-action": "network.networkInterfaces.list"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/private-address-operations/{operationId}": {
+      "get": {
+        "description": "Retry-After is set while it's queued or running. Readable after its network interfaces are deleted.",
+        "operationId": "GetPrivateAddressOperation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The operation's ID (a UUID).",
+            "in": "path",
+            "name": "operationId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivateAddressOperation"
+                }
+              }
+            },
+            "description": "The operation."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Get a private address operation",
+        "x-ezgh-action": "network.networkInterfaces.get"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/route-tables": {
+      "get": {
+        "operationId": "ListRouteTables",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          },
+          {
+            "description": "Only this VPC's tables, by its ID (vpc_\u2026). A UUID is 400 invalid_request (use the VPC's ID); any other value matches nothing.",
+            "in": "query",
+            "name": "vpc"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteTableList"
+                }
+              }
+            },
+            "description": "A page of route tables."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "List a project's route tables, newest first",
+        "x-ezgh-action": "network.routeTables.list"
+      },
+      "post": {
+        "description": "Creates a custom table in a VPC, optionally with routes. Refused with 409 quota_exceeded at network.routeTablesPerVpc (the main table counts) or network.routes.perRouteTable.",
+        "operationId": "CreateRouteTable",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RouteTableCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteTable"
+                }
+              }
+            },
+            "description": "The route table."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Create a route table",
+        "x-ezgh-action": "network.routeTables.create"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/route-tables/{routeTable}": {
+      "delete": {
+        "description": "Refused with 409 route_table_is_main for a VPC's main table (deleted with the VPC), and 409 route_table_in_use while a subnet is associated with it.",
+        "operationId": "DeleteRouteTable",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The route table's ID (rtb_\u2026) or UUID.",
+            "in": "path",
+            "name": "routeTable",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Done; no body."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Delete a route table",
+        "x-ezgh-action": "network.routeTables.delete"
+      },
+      "get": {
+        "description": "Its ETag is the routes' revision: it changes on every route write and on nothing else.",
+        "operationId": "GetRouteTable",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The route table's ID (rtb_\u2026) or UUID.",
+            "in": "path",
+            "name": "routeTable",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteTable"
+                }
+              }
+            },
+            "description": "The route table."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Get a route table",
+        "x-ezgh-action": "network.routeTables.get"
+      },
+      "patch": {
+        "operationId": "UpdateRouteTable",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The route table's ID (rtb_\u2026) or UUID.",
+            "in": "path",
+            "name": "routeTable",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RouteTableUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteTable"
+                }
+              }
+            },
+            "description": "The route table."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Rename, describe or tag a route table",
+        "x-ezgh-action": "network.routeTables.update"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/route-tables/{routeTable}/routes": {
+      "put": {
+        "description": "Replaces the whole customer route set. If-Match is optional; a stale one is 412 precondition_failed. The local routes may be included exactly as GET shows them (they are ignored); a changed one is 400. Only added or changed routes are validated.",
+        "operationId": "ReplaceRoutes",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The route table's ID (rtb_\u2026) or UUID.",
+            "in": "path",
+            "name": "routeTable",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoutesReplace"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteTable"
+                }
+              }
+            },
+            "description": "The route table."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Replace a route table's routes",
+        "x-ezgh-action": "network.routeTables.updateRoutes"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/route-tables/{routeTable}/routes/remove": {
+      "post": {
+        "description": "Removes the given destinations, atomically; an absent one is ignored, so a retry is safe. If-Match is optional (a stale one is 412). Naming a local route is 400.",
+        "operationId": "RemoveRoutes",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The route table's ID (rtb_\u2026) or UUID.",
+            "in": "path",
+            "name": "routeTable",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoutesRemove"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteTable"
+                }
+              }
+            },
+            "description": "The route table."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Remove routes",
+        "x-ezgh-action": "network.routeTables.updateRoutes"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/route-tables/{routeTable}/routes/set": {
+      "post": {
+        "description": "Creates or replaces the route of each given destination, atomically. If-Match is optional (a stale one is 412 precondition_failed); without one, concurrent writers never conflict. Naming a local route is 400.",
+        "operationId": "SetRoutes",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The route table's ID (rtb_\u2026) or UUID.",
+            "in": "path",
+            "name": "routeTable",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoutesSet"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteTable"
+                }
+              }
+            },
+            "description": "The route table."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Create or replace routes",
+        "x-ezgh-action": "network.routeTables.updateRoutes"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/subnets": {
+      "get": {
+        "operationId": "ListSubnets",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          },
+          {
+            "description": "Only this VPC's subnets, by its ID (vpc_\u2026). A UUID is 400 invalid_request; any other value matches nothing.",
+            "in": "query",
+            "name": "vpc",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubnetList"
+                }
+              }
+            },
+            "description": "A page of subnets."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "List a project's subnets, newest first",
+        "x-ezgh-action": "network.subnets.list"
+      },
+      "post": {
+        "description": "Its IPv6 /64 is the VPC's next free one. Refused with 409 subnet_cidr_overlap, 409 vpc_ipv6_exhausted (256 subnets), 409 subnet_addresses_withdrawing (an address the new subnet reserves is still being withdrawn), 409 vpc_deleting, and 409 quota_exceeded at network.subnetsPerProject.",
+        "operationId": "CreateSubnet",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubnetCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Subnet"
+                }
+              }
+            },
+            "description": "The subnet."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Create a subnet in a VPC",
+        "x-ezgh-action": "network.subnets.create",
+        "x-ezgh-quotas": [
+          "network.subnetsPerProject"
+        ]
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/subnets/{subnet}": {
+      "delete": {
+        "description": "Refused with 409 subnet_in_use while network interfaces are in it. Refused with 409 subnet_routed while a route table of the VPC routes the subnet's CIDR.",
+        "operationId": "DeleteSubnet",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The subnet's ID (sbn_\u2026) or UUID.",
+            "in": "path",
+            "name": "subnet",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Done; no body."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Delete a subnet",
+        "x-ezgh-action": "network.subnets.delete"
+      },
+      "get": {
+        "operationId": "GetSubnet",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The subnet's ID (sbn_\u2026) or UUID.",
+            "in": "path",
+            "name": "subnet",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Subnet"
+                }
+              }
+            },
+            "description": "The subnet."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Get a subnet",
+        "x-ezgh-action": "network.subnets.get"
+      },
+      "patch": {
+        "operationId": "UpdateSubnet",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The subnet's ID (sbn_\u2026) or UUID.",
+            "in": "path",
+            "name": "subnet",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubnetUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Subnet"
+                }
+              }
+            },
+            "description": "The subnet."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Rename, describe, tag or set the launch defaults of a subnet",
+        "x-ezgh-action": "network.subnets.update"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/vpcs": {
+      "get": {
+        "operationId": "ListVpcs",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VpcList"
+                }
+              }
+            },
+            "description": "A page of VPCs."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "List a project's VPCs, newest first",
+        "x-ezgh-action": "network.vpcs.list"
+      },
+      "post": {
+        "description": "Creates the VPC with its generated IPv6 /56 and its default firewall. The MTU is 8900 and not settable. Refused with 409 quota_exceeded at network.vpcsPerProject.",
+        "operationId": "CreateVpc",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VpcCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Vpc"
+                }
+              }
+            },
+            "description": "The VPC."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Create a VPC",
+        "x-ezgh-action": "network.vpcs.create",
+        "x-ezgh-quotas": [
+          "network.vpcsPerProject"
+        ]
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/vpcs/{vpc}": {
+      "delete": {
+        "description": "Refused with 409 vpc_in_use while it has subnets, and with 409 vpc_default_firewall_referenced while its default firewall is attached or another firewall's rule names it (the VPC stays available). A 503 leaves it deleting; repeat the request, or the service finishes it. A 204 can leave it deleting (failureReason addresses_withdrawing) while addresses of its deleted network interfaces are withdrawn from hosts; it's then removed without another request.",
+        "operationId": "DeleteVpc",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The VPC's ID (vpc_\u2026) or UUID.",
+            "in": "path",
+            "name": "vpc",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Done; no body."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Delete a VPC and its default firewall",
+        "x-ezgh-action": "network.vpcs.delete"
+      },
+      "get": {
+        "operationId": "GetVpc",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The VPC's ID (vpc_\u2026) or UUID.",
+            "in": "path",
+            "name": "vpc",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Vpc"
+                }
+              }
+            },
+            "description": "The VPC."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Get a VPC",
+        "x-ezgh-action": "network.vpcs.get"
+      },
+      "patch": {
+        "operationId": "UpdateVpc",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The VPC's ID (vpc_\u2026) or UUID.",
+            "in": "path",
+            "name": "vpc",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VpcUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Vpc"
+                }
+              }
+            },
+            "description": "The VPC."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Rename, describe or tag a VPC",
+        "x-ezgh-action": "network.vpcs.update"
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "https://network-api.ezghcloud.com"
+    }
+  ]
+}

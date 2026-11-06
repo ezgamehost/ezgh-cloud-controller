@@ -1,0 +1,16 @@
+[
+  {"name": "the Workflows excerpt as it is", "valid": true},
+  {"name": "record every call, spelled out as the default", "endpoints": {"POST /v1/organizations/:orgId/projects/:projectId/runs/:runId/cancel": {"trail": {"eventName": "CancelRun"}}}, "valid": true},
+  {"name": "refusals on a DELETE, hiding the query's key", "add": [{"method": "DELETE", "path": "/v1/organizations/:orgId/projects/:projectId/apps/:appId/object", "auth": "caller", "action": "workflows.apps.list", "trail": {"eventName": "DeleteObject", "record": "refusals", "sensitive": ["key"]}}], "valid": true},
+  {"name": "refusals on a cancel too", "endpoints": {"POST /v1/organizations/:orgId/projects/:projectId/runs/:runId/cancel": {"trail": {"eventName": "CancelRun", "record": "refusals"}}}, "valid": true},
+  {"name": "an unknown record value", "endpoints": {"POST /v1/organizations/:orgId/projects/:projectId/runs": {"trail": {"eventName": "StartRun", "record": "never"}}}, "valid": false},
+  {"name": "refusals on a read", "endpoints": {"GET /v1/organizations/:orgId/projects/:projectId/apps": {"trail": {"eventName": "ListApps", "record": "refusals"}}}, "valid": false},
+  {"name": "refusals on a content read as a Data event (the Git content-read exception)", "endpoints": {"GET /v1/organizations/:orgId/projects/:projectId/apps": {"trail": {"eventName": "ListApps", "eventCategory": "Data", "record": "refusals"}}}, "valid": true},
+  {"name": "refusals on a computation POST (a declared high-volume data-plane call)", "add": [{"method": "POST", "path": "/v1/organizations/:orgId/projects/:projectId/runs/preview", "auth": "caller", "action": "workflows.apps.list", "idempotencyException": "computation", "trail": {"eventName": "PreviewRun", "record": "refusals"}}], "valid": true},
+  {"name": "refusals on a computation POST as a Data event", "add": [{"method": "POST", "path": "/v1/organizations/:orgId/projects/:projectId/runs/preview", "auth": "caller", "action": "workflows.apps.list", "idempotencyException": "computation", "trail": {"eventName": "PreviewRun", "eventCategory": "Data", "record": "refusals"}}], "valid": false},
+  {"name": "refusals as a Data event", "endpoints": {"POST /v1/organizations/:orgId/projects/:projectId/runs": {"trail": {"eventName": "StartRun", "eventCategory": "Data", "record": "refusals"}}}, "valid": false},
+  {"name": "refusals per JSON-RPC method", "add": [{"method": "POST", "path": "/v1/organizations/:orgId/rpc", "auth": "caller", "action": "workflows.apps.list", "idempotencyKey": true, "trail": {"byRpcMethod": {"start": {"eventName": "StartRpc", "record": "refusals"}}, "otherwise": null}}], "valid": false},
+  {"name": "refusals on a service endpoint", "add": [{"method": "POST", "path": "/internal/v1/runs", "auth": "service", "trail": {"eventName": "InternalStart", "record": "refusals"}}], "valid": false},
+  {"name": "the live poll recording every call", "endpoints": {"POST /v1/organizations/:orgId/projects/:projectId/workers/poll": {"trail": {"eventName": "PollTasks"}}}, "valid": true},
+  {"name": "refusals on the live poll as a Data event", "endpoints": {"POST /v1/organizations/:orgId/projects/:projectId/workers/poll": {"trail": {"eventName": "PollTasks", "eventCategory": "Data", "record": "refusals"}}}, "valid": false}
+]

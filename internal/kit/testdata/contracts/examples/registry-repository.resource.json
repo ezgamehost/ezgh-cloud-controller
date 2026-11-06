@@ -1,0 +1,18 @@
+{
+  "id": "0199b0a1-2c3d-7e4f-8a5b-6c7d8e9f0a1b",
+  "slug": "rep_7m2k9q4x0a1b",
+  "name": "team-a/api",
+  "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:rep_7m2k9q4x0a1b/team-a/api",
+  "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+  "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+  "region": "us-west-1",
+  "tags": {},
+  "status": "active",
+  "visibility": "private",
+  "description": "API server images",
+  "pullUrl": "kd3fwa2x4m7q.registry.ezghcloud.com/team-a/api",
+  "imageCount": 42,
+  "storageBytes": "1288490188",
+  "createdAt": "2026-10-09T09:58:02.114Z",
+  "updatedAt": "2026-10-09T10:42:17.250Z"
+}

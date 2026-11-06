@@ -1,0 +1,2031 @@
+{
+  "description": "SCIM as org-api serves it (contracts/scim.md). filters: the filter subset, parsed, or refused (invalidFilter). patches: a PatchOp request applied to a stored resource, giving the stored result or a SCIM error type. normalize: a POST or PUT body, as stored. Resources are SCIM JSON without id, schemas, meta or groups; ignored attributes never appear. Computed by scripts/lib/scim.mjs; org-api's src/scim/model.ts must give the same answers.",
+  "filters": [
+    {
+      "name": "okta: userName eq",
+      "resourceType": "User",
+      "filter": "userName eq \"ada@acme.test\"",
+      "parsed": {
+        "attribute": "userName",
+        "op": "eq",
+        "value": "ada@acme.test"
+      }
+    },
+    {
+      "name": "entra: different case",
+      "resourceType": "User",
+      "filter": "userName eq \"ADA@Acme.Test\"",
+      "parsed": {
+        "attribute": "userName",
+        "op": "eq",
+        "value": "ADA@Acme.Test"
+      }
+    },
+    {
+      "name": "keywords in any case",
+      "resourceType": "User",
+      "filter": "userName EQ \"ada@acme.test\"",
+      "parsed": {
+        "attribute": "userName",
+        "op": "eq",
+        "value": "ada@acme.test"
+      }
+    },
+    {
+      "name": "core URN prefix",
+      "resourceType": "User",
+      "filter": "urn:ietf:params:scim:schemas:core:2.0:User:userName eq \"ada@acme.test\"",
+      "parsed": {
+        "attribute": "userName",
+        "op": "eq",
+        "value": "ada@acme.test"
+      }
+    },
+    {
+      "name": "externalId",
+      "resourceType": "User",
+      "filter": "externalId eq \"00u1a2b3c4d5e6f7g8h9\"",
+      "parsed": {
+        "attribute": "externalId",
+        "op": "eq",
+        "value": "00u1a2b3c4d5e6f7g8h9"
+      }
+    },
+    {
+      "name": "entra: work email value path",
+      "resourceType": "User",
+      "filter": "emails[type eq \"work\"].value eq \"ada@acme.test\"",
+      "parsed": {
+        "attribute": "emails",
+        "filter": {
+          "attribute": "type",
+          "op": "eq",
+          "value": "work"
+        },
+        "subAttribute": "value",
+        "op": "eq",
+        "value": "ada@acme.test"
+      }
+    },
+    {
+      "name": "emails.value",
+      "resourceType": "User",
+      "filter": "emails.value eq \"ada@acme.test\"",
+      "parsed": {
+        "attribute": "emails",
+        "subAttribute": "value",
+        "op": "eq",
+        "value": "ada@acme.test"
+      }
+    },
+    {
+      "name": "and",
+      "resourceType": "User",
+      "filter": "userName eq \"ada@acme.test\" and active eq true",
+      "parsed": {
+        "and": [
+          {
+            "attribute": "userName",
+            "op": "eq",
+            "value": "ada@acme.test"
+          },
+          {
+            "attribute": "active",
+            "op": "eq",
+            "value": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "escaped quote in a value",
+      "resourceType": "User",
+      "filter": "displayName eq \"Ada \\\"the Countess\\\" Lovelace\"",
+      "parsed": {
+        "attribute": "displayName",
+        "op": "eq",
+        "value": "Ada \"the Countess\" Lovelace"
+      }
+    },
+    {
+      "name": "attribute names are case-insensitive",
+      "resourceType": "User",
+      "filter": "USERNAME eq \"ada@acme.test\"",
+      "parsed": {
+        "attribute": "userName",
+        "op": "eq",
+        "value": "ada@acme.test"
+      }
+    },
+    {
+      "name": "displayName eq",
+      "resourceType": "Group",
+      "filter": "displayName eq \"Engineering\"",
+      "parsed": {
+        "attribute": "displayName",
+        "op": "eq",
+        "value": "Engineering"
+      }
+    },
+    {
+      "name": "entra: membership check",
+      "resourceType": "Group",
+      "filter": "id eq \"0199a3f1-0a1b-7c2d-8e3f-4a5b6c7d8e9f\" and members[value eq \"jtMJXwL0R8aB3cD4eF5gH6iJ\"]",
+      "parsed": {
+        "and": [
+          {
+            "attribute": "id",
+            "op": "eq",
+            "value": "0199a3f1-0a1b-7c2d-8e3f-4a5b6c7d8e9f"
+          },
+          {
+            "attribute": "members",
+            "filter": {
+              "attribute": "value",
+              "op": "eq",
+              "value": "jtMJXwL0R8aB3cD4eF5gH6iJ"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "members.value",
+      "resourceType": "Group",
+      "filter": "members.value eq \"jtMJXwL0R8aB3cD4eF5gH6iJ\"",
+      "parsed": {
+        "attribute": "members",
+        "subAttribute": "value",
+        "op": "eq",
+        "value": "jtMJXwL0R8aB3cD4eF5gH6iJ"
+      }
+    },
+    {
+      "name": "or isn't supported",
+      "resourceType": "User",
+      "filter": "userName eq \"a@acme.test\" or userName eq \"b@acme.test\"",
+      "error": "invalidFilter"
+    },
+    {
+      "name": "co isn't supported",
+      "resourceType": "User",
+      "filter": "userName co \"acme\"",
+      "error": "invalidFilter"
+    },
+    {
+      "name": "pr isn't supported",
+      "resourceType": "User",
+      "filter": "title pr",
+      "error": "invalidFilter"
+    },
+    {
+      "name": "an attribute we don't filter on",
+      "resourceType": "User",
+      "filter": "title eq \"Engineer\"",
+      "error": "invalidFilter"
+    },
+    {
+      "name": "active needs a boolean",
+      "resourceType": "User",
+      "filter": "active eq \"true\"",
+      "error": "invalidFilter"
+    },
+    {
+      "name": "unterminated string",
+      "resourceType": "User",
+      "filter": "userName eq \"ada",
+      "error": "invalidFilter"
+    },
+    {
+      "name": "empty",
+      "resourceType": "User",
+      "filter": "",
+      "error": "invalidFilter"
+    },
+    {
+      "name": "a bare multi-valued attribute",
+      "resourceType": "User",
+      "filter": "emails eq \"ada@acme.test\"",
+      "error": "invalidFilter"
+    },
+    {
+      "name": "a user attribute on groups",
+      "resourceType": "Group",
+      "filter": "userName eq \"ada@acme.test\"",
+      "error": "invalidFilter"
+    }
+  ],
+  "patches": [
+    {
+      "name": "okta: deactivate with a path-less value object",
+      "resourceType": "User",
+      "resource": {
+        "userName": "ada@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "Lovelace"
+        },
+        "displayName": "Ada Lovelace",
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": true
+          }
+        ],
+        "active": true
+      },
+      "request": {
+        "schemas": [
+          "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+        ],
+        "Operations": [
+          {
+            "op": "replace",
+            "value": {
+              "active": false
+            }
+          }
+        ]
+      },
+      "result": {
+        "userName": "ada@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "Lovelace"
+        },
+        "displayName": "Ada Lovelace",
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": true
+          }
+        ],
+        "active": false
+      }
+    },
+    {
+      "name": "entra: capitalised op and active as the string False",
+      "resourceType": "User",
+      "resource": {
+        "userName": "ada@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "Lovelace"
+        },
+        "displayName": "Ada Lovelace",
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": true
+          }
+        ],
+        "active": true
+      },
+      "request": {
+        "schemas": [
+          "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+        ],
+        "Operations": [
+          {
+            "op": "Replace",
+            "path": "active",
+            "value": "False"
+          }
+        ]
+      },
+      "result": {
+        "userName": "ada@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "Lovelace"
+        },
+        "displayName": "Ada Lovelace",
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": true
+          }
+        ],
+        "active": false
+      }
+    },
+    {
+      "name": "entra: active as the string True",
+      "resourceType": "User",
+      "resource": {
+        "userName": "ada@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "Lovelace"
+        },
+        "displayName": "Ada Lovelace",
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": true
+          }
+        ],
+        "active": false
+      },
+      "request": {
+        "schemas": [
+          "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+        ],
+        "Operations": [
+          {
+            "op": "Replace",
+            "path": "active",
+            "value": "True"
+          }
+        ]
+      },
+      "result": {
+        "userName": "ada@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "Lovelace"
+        },
+        "displayName": "Ada Lovelace",
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": true
+          }
+        ],
+        "active": true
+      }
+    },
+    {
+      "name": "entra: replace the work email's value",
+      "resourceType": "User",
+      "resource": {
+        "userName": "ada@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "Lovelace"
+        },
+        "displayName": "Ada Lovelace",
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": true
+          }
+        ],
+        "active": true
+      },
+      "request": {
+        "schemas": [
+          "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+        ],
+        "Operations": [
+          {
+            "op": "Replace",
+            "path": "emails[type eq \"work\"].value",
+            "value": "ada.lovelace@acme.test"
+          }
+        ]
+      },
+      "result": {
+        "userName": "ada@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "Lovelace"
+        },
+        "displayName": "Ada Lovelace",
+        "emails": [
+          {
+            "value": "ada.lovelace@acme.test",
+            "type": "work",
+            "primary": true
+          }
+        ],
+        "active": true
+      }
+    },
+    {
+      "name": "entra: add a work email when there's none",
+      "resourceType": "User",
+      "resource": {
+        "userName": "ada@acme.test",
+        "active": true
+      },
+      "request": {
+        "schemas": [
+          "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+        ],
+        "Operations": [
+          {
+            "op": "Add",
+            "path": "emails[type eq \"work\"].value",
+            "value": "ada@acme.test"
+          }
+        ]
+      },
+      "result": {
+        "userName": "ada@acme.test",
+        "active": true,
+        "emails": [
+          {
+            "type": "work",
+            "value": "ada@acme.test"
+          }
+        ]
+      }
+    },
+    {
+      "name": "entra: name parts and displayName",
+      "resourceType": "User",
+      "resource": {
+        "userName": "ada@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "Lovelace"
+        },
+        "displayName": "Ada Lovelace",
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": true
+          }
+        ],
+        "active": true
+      },
+      "request": {
+        "schemas": [
+          "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+        ],
+        "Operations": [
+          {
+            "op": "Replace",
+            "path": "name.givenName",
+            "value": "Augusta"
+          },
+          {
+            "op": "Replace",
+            "path": "displayName",
+            "value": "Augusta Ada King"
+          }
+        ]
+      },
+      "result": {
+        "userName": "ada@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Augusta",
+          "familyName": "Lovelace"
+        },
+        "displayName": "Augusta Ada King",
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": true
+          }
+        ],
+        "active": true
+      }
+    },
+    {
+      "name": "entra: add the manager by bare ID",
+      "resourceType": "User",
+      "resource": {
+        "userName": "ada@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "Lovelace"
+        },
+        "displayName": "Ada Lovelace",
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": true
+          }
+        ],
+        "active": true
+      },
+      "request": {
+        "schemas": [
+          "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+        ],
+        "Operations": [
+          {
+            "op": "Add",
+            "path": "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:manager",
+            "value": "Xk2mP9qR4sT7uV0wY3zA6bC1"
+          }
+        ]
+      },
+      "result": {
+        "userName": "ada@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "Lovelace"
+        },
+        "displayName": "Ada Lovelace",
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": true
+          }
+        ],
+        "active": true,
+        "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": {
+          "manager": {
+            "value": "Xk2mP9qR4sT7uV0wY3zA6bC1"
+          }
+        }
+      }
+    },
+    {
+      "name": "entra: remove the manager",
+      "resourceType": "User",
+      "resource": {
+        "userName": "ada@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "Lovelace"
+        },
+        "displayName": "Ada Lovelace",
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": true
+          }
+        ],
+        "active": true,
+        "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": {
+          "department": "Research",
+          "manager": {
+            "value": "Xk2mP9qR4sT7uV0wY3zA6bC1"
+          }
+        }
+      },
+      "request": {
+        "schemas": [
+          "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+        ],
+        "Operations": [
+          {
+            "op": "Remove",
+            "path": "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:manager"
+          }
+        ]
+      },
+      "result": {
+        "userName": "ada@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "Lovelace"
+        },
+        "displayName": "Ada Lovelace",
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": true
+          }
+        ],
+        "active": true,
+        "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": {
+          "department": "Research"
+        }
+      }
+    },
+    {
+      "name": "entra: department by URN path",
+      "resourceType": "User",
+      "resource": {
+        "userName": "ada@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "Lovelace"
+        },
+        "displayName": "Ada Lovelace",
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": true
+          }
+        ],
+        "active": true
+      },
+      "request": {
+        "schemas": [
+          "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+        ],
+        "Operations": [
+          {
+            "op": "Add",
+            "path": "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:department",
+            "value": "Engineering"
+          }
+        ]
+      },
+      "result": {
+        "userName": "ada@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "Lovelace"
+        },
+        "displayName": "Ada Lovelace",
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": true
+          }
+        ],
+        "active": true,
+        "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": {
+          "department": "Engineering"
+        }
+      }
+    },
+    {
+      "name": "entra: ignored attributes are skipped",
+      "resourceType": "User",
+      "resource": {
+        "userName": "ada@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "Lovelace"
+        },
+        "displayName": "Ada Lovelace",
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": true
+          }
+        ],
+        "active": true
+      },
+      "request": {
+        "schemas": [
+          "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+        ],
+        "Operations": [
+          {
+            "op": "Add",
+            "path": "title",
+            "value": "Countess"
+          },
+          {
+            "op": "Add",
+            "path": "phoneNumbers[type eq \"work\"].value",
+            "value": "+1 555 0100"
+          },
+          {
+            "op": "Replace",
+            "path": "addresses[type eq \"work\"].formatted",
+            "value": "London"
+          }
+        ]
+      },
+      "result": {
+        "userName": "ada@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "Lovelace"
+        },
+        "displayName": "Ada Lovelace",
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": true
+          }
+        ],
+        "active": true
+      }
+    },
+    {
+      "name": "path-less add with dotted keys and an extension object",
+      "resourceType": "User",
+      "resource": {
+        "userName": "ada@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "Lovelace"
+        },
+        "displayName": "Ada Lovelace",
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": true
+          }
+        ],
+        "active": true
+      },
+      "request": {
+        "schemas": [
+          "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+        ],
+        "Operations": [
+          {
+            "op": "add",
+            "value": {
+              "name.familyName": "King",
+              "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": {
+                "department": "R&D"
+              },
+              "nickName": "Ada"
+            }
+          }
+        ]
+      },
+      "result": {
+        "userName": "ada@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "King"
+        },
+        "displayName": "Ada Lovelace",
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": true
+          }
+        ],
+        "active": true,
+        "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": {
+          "department": "R&D"
+        }
+      }
+    },
+    {
+      "name": "okta: path-less replace of the whole profile",
+      "resourceType": "User",
+      "resource": {
+        "userName": "ada@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "Lovelace"
+        },
+        "displayName": "Ada Lovelace",
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": true
+          }
+        ],
+        "active": true
+      },
+      "request": {
+        "schemas": [
+          "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+        ],
+        "Operations": [
+          {
+            "op": "replace",
+            "value": {
+              "userName": "ada.king@acme.test",
+              "name": {
+                "givenName": "Ada",
+                "familyName": "King"
+              },
+              "active": true
+            }
+          }
+        ]
+      },
+      "result": {
+        "userName": "ada.king@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "King"
+        },
+        "displayName": "Ada Lovelace",
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": true
+          }
+        ],
+        "active": true
+      }
+    },
+    {
+      "name": "replace a complex attribute merges it",
+      "resourceType": "User",
+      "resource": {
+        "userName": "ada@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "Lovelace"
+        },
+        "displayName": "Ada Lovelace",
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": true
+          }
+        ],
+        "active": true
+      },
+      "request": {
+        "schemas": [
+          "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+        ],
+        "Operations": [
+          {
+            "op": "replace",
+            "path": "name",
+            "value": {
+              "familyName": "King"
+            }
+          }
+        ]
+      },
+      "result": {
+        "userName": "ada@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "King"
+        },
+        "displayName": "Ada Lovelace",
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": true
+          }
+        ],
+        "active": true
+      }
+    },
+    {
+      "name": "remove a single-valued attribute",
+      "resourceType": "User",
+      "resource": {
+        "userName": "ada@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "Lovelace"
+        },
+        "displayName": "Ada Lovelace",
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": true
+          }
+        ],
+        "active": true
+      },
+      "request": {
+        "schemas": [
+          "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+        ],
+        "Operations": [
+          {
+            "op": "remove",
+            "path": "displayName"
+          }
+        ]
+      },
+      "result": {
+        "userName": "ada@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "Lovelace"
+        },
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": true
+          }
+        ],
+        "active": true
+      }
+    },
+    {
+      "name": "userName case in the path doesn't matter",
+      "resourceType": "User",
+      "resource": {
+        "userName": "ada@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "Lovelace"
+        },
+        "displayName": "Ada Lovelace",
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": true
+          }
+        ],
+        "active": true
+      },
+      "request": {
+        "schemas": [
+          "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+        ],
+        "Operations": [
+          {
+            "op": "replace",
+            "path": "USERNAME",
+            "value": "ada2@acme.test"
+          }
+        ]
+      },
+      "result": {
+        "userName": "ada2@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "Lovelace"
+        },
+        "displayName": "Ada Lovelace",
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": true
+          }
+        ],
+        "active": true
+      }
+    },
+    {
+      "name": "a new primary email demotes the old one",
+      "resourceType": "User",
+      "resource": {
+        "userName": "ada@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "Lovelace"
+        },
+        "displayName": "Ada Lovelace",
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": true
+          }
+        ],
+        "active": true
+      },
+      "request": {
+        "schemas": [
+          "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+        ],
+        "Operations": [
+          {
+            "op": "add",
+            "path": "emails",
+            "value": [
+              {
+                "value": "ada@home.test",
+                "type": "home",
+                "primary": true
+              }
+            ]
+          }
+        ]
+      },
+      "result": {
+        "userName": "ada@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "Lovelace"
+        },
+        "displayName": "Ada Lovelace",
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": false
+          },
+          {
+            "value": "ada@home.test",
+            "type": "home",
+            "primary": true
+          }
+        ],
+        "active": true
+      }
+    },
+    {
+      "name": "remove an email by filter",
+      "resourceType": "User",
+      "resource": {
+        "userName": "ada@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "Lovelace"
+        },
+        "displayName": "Ada Lovelace",
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": true
+          },
+          {
+            "value": "ada@home.test",
+            "type": "home"
+          }
+        ],
+        "active": true
+      },
+      "request": {
+        "schemas": [
+          "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+        ],
+        "Operations": [
+          {
+            "op": "remove",
+            "path": "emails[type eq \"home\"]"
+          }
+        ]
+      },
+      "result": {
+        "userName": "ada@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "Lovelace"
+        },
+        "displayName": "Ada Lovelace",
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": true
+          }
+        ],
+        "active": true
+      }
+    },
+    {
+      "name": "read-only attributes are skipped",
+      "resourceType": "User",
+      "resource": {
+        "userName": "ada@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "Lovelace"
+        },
+        "displayName": "Ada Lovelace",
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": true
+          }
+        ],
+        "active": true
+      },
+      "request": {
+        "schemas": [
+          "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+        ],
+        "Operations": [
+          {
+            "op": "replace",
+            "path": "id",
+            "value": "x"
+          },
+          {
+            "op": "replace",
+            "value": {
+              "meta": {},
+              "groups": []
+            }
+          }
+        ]
+      },
+      "result": {
+        "userName": "ada@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "Lovelace"
+        },
+        "displayName": "Ada Lovelace",
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": true
+          }
+        ],
+        "active": true
+      }
+    },
+    {
+      "name": "removing userName is refused",
+      "resourceType": "User",
+      "resource": {
+        "userName": "ada@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "Lovelace"
+        },
+        "displayName": "Ada Lovelace",
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": true
+          }
+        ],
+        "active": true
+      },
+      "request": {
+        "schemas": [
+          "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+        ],
+        "Operations": [
+          {
+            "op": "remove",
+            "path": "userName"
+          }
+        ]
+      },
+      "error": "invalidValue"
+    },
+    {
+      "name": "active must be a boolean",
+      "resourceType": "User",
+      "resource": {
+        "userName": "ada@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "Lovelace"
+        },
+        "displayName": "Ada Lovelace",
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": true
+          }
+        ],
+        "active": true
+      },
+      "request": {
+        "schemas": [
+          "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+        ],
+        "Operations": [
+          {
+            "op": "replace",
+            "path": "active",
+            "value": "maybe"
+          }
+        ]
+      },
+      "error": "invalidValue"
+    },
+    {
+      "name": "remove without a path",
+      "resourceType": "User",
+      "resource": {
+        "userName": "ada@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "Lovelace"
+        },
+        "displayName": "Ada Lovelace",
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": true
+          }
+        ],
+        "active": true
+      },
+      "request": {
+        "schemas": [
+          "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+        ],
+        "Operations": [
+          {
+            "op": "remove"
+          }
+        ]
+      },
+      "error": "noTarget"
+    },
+    {
+      "name": "an unknown op",
+      "resourceType": "User",
+      "resource": {
+        "userName": "ada@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "Lovelace"
+        },
+        "displayName": "Ada Lovelace",
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": true
+          }
+        ],
+        "active": true
+      },
+      "request": {
+        "schemas": [
+          "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+        ],
+        "Operations": [
+          {
+            "op": "delete",
+            "path": "active"
+          }
+        ]
+      },
+      "error": "invalidSyntax"
+    },
+    {
+      "name": "no Operations",
+      "resourceType": "User",
+      "resource": {
+        "userName": "ada@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "Lovelace"
+        },
+        "displayName": "Ada Lovelace",
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": true
+          }
+        ],
+        "active": true
+      },
+      "request": {
+        "schemas": [
+          "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+        ]
+      },
+      "error": "invalidSyntax"
+    },
+    {
+      "name": "add without a value",
+      "resourceType": "User",
+      "resource": {
+        "userName": "ada@acme.test",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "Lovelace"
+        },
+        "displayName": "Ada Lovelace",
+        "emails": [
+          {
+            "value": "ada@acme.test",
+            "type": "work",
+            "primary": true
+          }
+        ],
+        "active": true
+      },
+      "request": {
+        "schemas": [
+          "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+        ],
+        "Operations": [
+          {
+            "op": "add",
+            "path": "displayName"
+          }
+        ]
+      },
+      "error": "invalidSyntax"
+    },
+    {
+      "name": "okta: rename with a path-less value object carrying the id",
+      "resourceType": "Group",
+      "resource": {
+        "displayName": "Engineering",
+        "externalId": "00g1",
+        "members": [
+          {
+            "value": "u1"
+          },
+          {
+            "value": "u2"
+          }
+        ]
+      },
+      "request": {
+        "schemas": [
+          "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+        ],
+        "Operations": [
+          {
+            "op": "replace",
+            "value": {
+              "id": "0199a3f1-0a1b-7c2d-8e3f-4a5b6c7d8e9f",
+              "displayName": "Eng"
+            }
+          }
+        ]
+      },
+      "result": {
+        "displayName": "Eng",
+        "externalId": "00g1",
+        "members": [
+          {
+            "value": "u1"
+          },
+          {
+            "value": "u2"
+          }
+        ]
+      }
+    },
+    {
+      "name": "entra: rename by path",
+      "resourceType": "Group",
+      "resource": {
+        "displayName": "Engineering",
+        "externalId": "00g1",
+        "members": [
+          {
+            "value": "u1"
+          },
+          {
+            "value": "u2"
+          }
+        ]
+      },
+      "request": {
+        "schemas": [
+          "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+        ],
+        "Operations": [
+          {
+            "op": "Replace",
+            "path": "displayName",
+            "value": "Platform"
+          }
+        ]
+      },
+      "result": {
+        "displayName": "Platform",
+        "externalId": "00g1",
+        "members": [
+          {
+            "value": "u1"
+          },
+          {
+            "value": "u2"
+          }
+        ]
+      }
+    },
+    {
+      "name": "okta: add members",
+      "resourceType": "Group",
+      "resource": {
+        "displayName": "Engineering",
+        "externalId": "00g1",
+        "members": [
+          {
+            "value": "u1"
+          },
+          {
+            "value": "u2"
+          }
+        ]
+      },
+      "request": {
+        "schemas": [
+          "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+        ],
+        "Operations": [
+          {
+            "op": "add",
+            "path": "members",
+            "value": [
+              {
+                "value": "u3",
+                "display": "c@acme.test"
+              }
+            ]
+          }
+        ]
+      },
+      "result": {
+        "displayName": "Engineering",
+        "externalId": "00g1",
+        "members": [
+          {
+            "value": "u1"
+          },
+          {
+            "value": "u2"
+          },
+          {
+            "value": "u3"
+          }
+        ]
+      }
+    },
+    {
+      "name": "adding a member who's already in changes nothing",
+      "resourceType": "Group",
+      "resource": {
+        "displayName": "Engineering",
+        "externalId": "00g1",
+        "members": [
+          {
+            "value": "u1"
+          },
+          {
+            "value": "u2"
+          }
+        ]
+      },
+      "request": {
+        "schemas": [
+          "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+        ],
+        "Operations": [
+          {
+            "op": "add",
+            "path": "members",
+            "value": [
+              {
+                "value": "u1"
+              }
+            ]
+          }
+        ]
+      },
+      "result": {
+        "displayName": "Engineering",
+        "externalId": "00g1",
+        "members": [
+          {
+            "value": "u1"
+          },
+          {
+            "value": "u2"
+          }
+        ]
+      }
+    },
+    {
+      "name": "okta: remove a member by filter",
+      "resourceType": "Group",
+      "resource": {
+        "displayName": "Engineering",
+        "externalId": "00g1",
+        "members": [
+          {
+            "value": "u1"
+          },
+          {
+            "value": "u2"
+          }
+        ]
+      },
+      "request": {
+        "schemas": [
+          "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+        ],
+        "Operations": [
+          {
+            "op": "remove",
+            "path": "members[value eq \"u1\"]"
+          }
+        ]
+      },
+      "result": {
+        "displayName": "Engineering",
+        "externalId": "00g1",
+        "members": [
+          {
+            "value": "u2"
+          }
+        ]
+      }
+    },
+    {
+      "name": "entra: remove members by value",
+      "resourceType": "Group",
+      "resource": {
+        "displayName": "Engineering",
+        "externalId": "00g1",
+        "members": [
+          {
+            "value": "u1"
+          },
+          {
+            "value": "u2"
+          }
+        ]
+      },
+      "request": {
+        "schemas": [
+          "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+        ],
+        "Operations": [
+          {
+            "op": "Remove",
+            "path": "members",
+            "value": [
+              {
+                "value": "u2"
+              },
+              {
+                "value": "u9"
+              }
+            ]
+          }
+        ]
+      },
+      "result": {
+        "displayName": "Engineering",
+        "externalId": "00g1",
+        "members": [
+          {
+            "value": "u1"
+          }
+        ]
+      }
+    },
+    {
+      "name": "entra: add and remove in one request",
+      "resourceType": "Group",
+      "resource": {
+        "displayName": "Engineering",
+        "externalId": "00g1",
+        "members": [
+          {
+            "value": "u1"
+          },
+          {
+            "value": "u2"
+          }
+        ]
+      },
+      "request": {
+        "schemas": [
+          "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+        ],
+        "Operations": [
+          {
+            "op": "Add",
+            "path": "members",
+            "value": [
+              {
+                "value": "u3"
+              }
+            ]
+          },
+          {
+            "op": "Remove",
+            "path": "members",
+            "value": [
+              {
+                "value": "u1"
+              }
+            ]
+          }
+        ]
+      },
+      "result": {
+        "displayName": "Engineering",
+        "externalId": "00g1",
+        "members": [
+          {
+            "value": "u2"
+          },
+          {
+            "value": "u3"
+          }
+        ]
+      }
+    },
+    {
+      "name": "replace all members",
+      "resourceType": "Group",
+      "resource": {
+        "displayName": "Engineering",
+        "externalId": "00g1",
+        "members": [
+          {
+            "value": "u1"
+          },
+          {
+            "value": "u2"
+          }
+        ]
+      },
+      "request": {
+        "schemas": [
+          "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+        ],
+        "Operations": [
+          {
+            "op": "replace",
+            "path": "members",
+            "value": [
+              {
+                "value": "u9"
+              }
+            ]
+          }
+        ]
+      },
+      "result": {
+        "displayName": "Engineering",
+        "externalId": "00g1",
+        "members": [
+          {
+            "value": "u9"
+          }
+        ]
+      }
+    },
+    {
+      "name": "remove all members",
+      "resourceType": "Group",
+      "resource": {
+        "displayName": "Engineering",
+        "externalId": "00g1",
+        "members": [
+          {
+            "value": "u1"
+          },
+          {
+            "value": "u2"
+          }
+        ]
+      },
+      "request": {
+        "schemas": [
+          "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+        ],
+        "Operations": [
+          {
+            "op": "remove",
+            "path": "members"
+          }
+        ]
+      },
+      "result": {
+        "displayName": "Engineering",
+        "externalId": "00g1"
+      }
+    },
+    {
+      "name": "a member of type Group is refused",
+      "resourceType": "Group",
+      "resource": {
+        "displayName": "Engineering",
+        "externalId": "00g1",
+        "members": [
+          {
+            "value": "u1"
+          },
+          {
+            "value": "u2"
+          }
+        ]
+      },
+      "request": {
+        "schemas": [
+          "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+        ],
+        "Operations": [
+          {
+            "op": "add",
+            "path": "members",
+            "value": [
+              {
+                "value": "0199a3f1-0a1b-7c2d-8e3f-4a5b6c7d8e9f",
+                "type": "Group"
+              }
+            ]
+          }
+        ]
+      },
+      "error": "invalidValue"
+    },
+    {
+      "name": "a member without a value is refused",
+      "resourceType": "Group",
+      "resource": {
+        "displayName": "Engineering",
+        "externalId": "00g1",
+        "members": [
+          {
+            "value": "u1"
+          },
+          {
+            "value": "u2"
+          }
+        ]
+      },
+      "request": {
+        "schemas": [
+          "urn:ietf:params:scim:api:messages:2.0:PatchOp"
+        ],
+        "Operations": [
+          {
+            "op": "add",
+            "path": "members",
+            "value": [
+              {
+                "display": "x"
+              }
+            ]
+          }
+        ]
+      },
+      "error": "invalidValue"
+    }
+  ],
+  "normalize": [
+    {
+      "name": "okta: a create",
+      "resourceType": "User",
+      "body": {
+        "schemas": [
+          "urn:ietf:params:scim:schemas:core:2.0:User"
+        ],
+        "userName": "ada@acme.test",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "Lovelace"
+        },
+        "emails": [
+          {
+            "primary": true,
+            "value": "ada@acme.test",
+            "type": "work"
+          }
+        ],
+        "displayName": "Ada Lovelace",
+        "locale": "en-US",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "groups": [],
+        "password": "hunter2",
+        "active": true
+      },
+      "result": {
+        "userName": "ada@acme.test",
+        "name": {
+          "givenName": "Ada",
+          "familyName": "Lovelace"
+        },
+        "emails": [
+          {
+            "primary": true,
+            "value": "ada@acme.test",
+            "type": "work"
+          }
+        ],
+        "displayName": "Ada Lovelace",
+        "externalId": "00u1a2b3c4d5e6f7g8h9",
+        "active": true
+      }
+    },
+    {
+      "name": "entra: a create with the enterprise extension and ignored attributes",
+      "resourceType": "User",
+      "body": {
+        "schemas": [
+          "urn:ietf:params:scim:schemas:core:2.0:User",
+          "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"
+        ],
+        "externalId": "e1",
+        "userName": "Test_User_1@acme.test",
+        "active": "True",
+        "displayName": "Test User",
+        "title": "Engineer",
+        "preferredLanguage": "en",
+        "emails": [
+          {
+            "primary": true,
+            "type": "work",
+            "value": "Test_User_1@acme.test"
+          }
+        ],
+        "phoneNumbers": [
+          {
+            "type": "work",
+            "value": "1"
+          }
+        ],
+        "addresses": [
+          {
+            "type": "work",
+            "formatted": "x"
+          }
+        ],
+        "name": {
+          "givenName": "Test",
+          "familyName": "User",
+          "formatted": "Test User"
+        },
+        "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": {
+          "employeeNumber": "1",
+          "department": "Eng",
+          "manager": {
+            "value": "m1",
+            "displayName": "Boss"
+          }
+        }
+      },
+      "result": {
+        "externalId": "e1",
+        "userName": "Test_User_1@acme.test",
+        "active": true,
+        "displayName": "Test User",
+        "emails": [
+          {
+            "primary": true,
+            "type": "work",
+            "value": "Test_User_1@acme.test"
+          }
+        ],
+        "name": {
+          "givenName": "Test",
+          "familyName": "User",
+          "formatted": "Test User"
+        },
+        "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": {
+          "department": "Eng",
+          "manager": {
+            "value": "m1"
+          }
+        }
+      }
+    },
+    {
+      "name": "active defaults to true",
+      "resourceType": "User",
+      "body": {
+        "userName": "ada@acme.test"
+      },
+      "result": {
+        "userName": "ada@acme.test",
+        "active": true
+      }
+    },
+    {
+      "name": "only the first primary email stays primary",
+      "resourceType": "User",
+      "body": {
+        "userName": "ada@acme.test",
+        "emails": [
+          {
+            "value": "a@acme.test",
+            "primary": true
+          },
+          {
+            "value": "b@acme.test",
+            "primary": "True"
+          }
+        ]
+      },
+      "result": {
+        "userName": "ada@acme.test",
+        "emails": [
+          {
+            "value": "a@acme.test",
+            "primary": true
+          },
+          {
+            "value": "b@acme.test",
+            "primary": false
+          }
+        ],
+        "active": true
+      }
+    },
+    {
+      "name": "userName is required",
+      "resourceType": "User",
+      "body": {
+        "displayName": "Ada"
+      },
+      "error": "invalidValue"
+    },
+    {
+      "name": "userName must be a string",
+      "resourceType": "User",
+      "body": {
+        "userName": 42
+      },
+      "error": "invalidValue"
+    },
+    {
+      "name": "an email without a value",
+      "resourceType": "User",
+      "body": {
+        "userName": "ada@acme.test",
+        "emails": [
+          {
+            "type": "work"
+          }
+        ]
+      },
+      "error": "invalidValue"
+    },
+    {
+      "name": "a create",
+      "resourceType": "Group",
+      "body": {
+        "schemas": [
+          "urn:ietf:params:scim:schemas:core:2.0:Group"
+        ],
+        "displayName": "Engineering",
+        "externalId": "00g1",
+        "members": [
+          {
+            "value": "u1",
+            "display": "a"
+          },
+          {
+            "value": "u1"
+          }
+        ]
+      },
+      "result": {
+        "displayName": "Engineering",
+        "externalId": "00g1",
+        "members": [
+          {
+            "value": "u1"
+          }
+        ]
+      }
+    },
+    {
+      "name": "displayName is required",
+      "resourceType": "Group",
+      "body": {
+        "members": []
+      },
+      "error": "invalidValue"
+    }
+  ]
+}

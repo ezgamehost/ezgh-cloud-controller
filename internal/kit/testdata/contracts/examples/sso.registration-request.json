@@ -1,0 +1,63 @@
+{
+  "registrationVersion": 1,
+  "namespace": "sso",
+  "displayName": "EZGH SSO",
+  "description": "A workforce directory and identity provider.",
+  "directoryUsable": false,
+  "orgApi": { "operations": ["principals.deleted", "namespaces.directoryUsable"] },
+  "resourceTypes": [
+    {
+      "name": "directory",
+      "prefix": "dir",
+      "parent": "organization",
+      "regional": true,
+      "description": "The organization-wide directory."
+    },
+    {
+      "name": "user",
+      "prefix": "usr",
+      "parent": "directory",
+      "regional": true,
+      "description": "A directory user."
+    },
+    {
+      "name": "group",
+      "prefix": "dgp",
+      "parent": "directory",
+      "regional": true,
+      "description": "A directory group."
+    },
+    {
+      "name": "application",
+      "prefix": "app",
+      "parent": "directory",
+      "regional": true,
+      "description": "An application people sign in to."
+    },
+    {
+      "name": "identityProvider",
+      "prefix": "idp",
+      "parent": "directory",
+      "regional": true,
+      "description": "An upstream identity provider."
+    }
+  ],
+  "managedPolicies": [
+    {
+      "name": "SsoFullAccess",
+      "description": "Manage the directory."
+    }
+  ],
+  "actions": [
+    {
+      "id": "sso.directories.get",
+      "description": "Read the directory",
+      "resource": "directory",
+      "accessLevel": "read",
+      "managedPolicies": [
+        "ReadOnlyAccess",
+        "SsoFullAccess"
+      ]
+    }
+  ]
+}

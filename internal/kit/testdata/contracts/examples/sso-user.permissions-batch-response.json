@@ -1,0 +1,43 @@
+{
+  "organization": {
+    "id": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+    "name": "Acme",
+    "slug": "org_k3f9a0x2m7qp",
+    "resourceName": "ezgh::org_k3f9a0x2m7qp",
+    "createdAt": "2026-09-01T08:00:00.000Z",
+    "updatedAt": "2026-09-01T08:00:00.000Z",
+    "isRoot": false
+  },
+  "principal": {
+    "type": "ssoUser",
+    "id": "0199a3f1-1a2b-7c3d-8e4f-5a6b7c8d9e0f"
+  },
+  "apiKeyId": null,
+  "userIdentity": {
+    "type": "SsoUser",
+    "principalId": "0199a3f1-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+    "userName": "ada@acme.test",
+    "isRoot": false,
+    "accessKeyId": null,
+    "sessionContext": {
+      "credential": "ssoOauth",
+      "sessionIssuedAt": "2026-09-30T08:00:00.000Z",
+      "ssoProviderId": null,
+      "mfaAuthenticated": true,
+      "directoryId": "0199a3f0-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+      "clientId": "https://client.acme.test/oauth-client.json",
+      "resource": "https://acme.mcp.ezgh.app/central"
+    },
+    "invokedBy": null
+  },
+  "results": [
+    { "action": "mcpcentral.gateways.connect", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:mgw_4k2m9x0a7qpe", "allowed": true },
+    { "action": "mcpcentral.tools.call", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:mcs_8a1b2c3d4e5f/tools/create_issue", "allowed": false },
+    {
+      "action": "mcpcentral.nope.nope",
+      "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:mgw_4k2m9x0a7qpe",
+      "allowed": null,
+      "error": { "code": "unknown_action", "message": "mcpcentral.nope.nope isn't a registered action" }
+    }
+  ]
+}

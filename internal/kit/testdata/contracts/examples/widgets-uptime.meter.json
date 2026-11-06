@@ -1,0 +1,21 @@
+{
+  "id": "widgets.widget.uptime",
+  "version": 1,
+  "service": "widgets",
+  "displayName": "Widget uptime",
+  "producers": ["widgets"],
+  "kind": "interval",
+  "unit": "second",
+  "aggregation": "sum",
+  "window": "hour",
+  "resourceType": "wgt",
+  "global": false,
+  "dimensions": {
+    "size": { "pricing": true, "required": true, "values": ["small", "large"] }
+  },
+  "maxQuantity": "3600",
+  "expectedCadence": "PT1H",
+  "lossTolerant": false,
+  "reconciliationTolerance": "0",
+  "status": "shadow"
+}

@@ -1,0 +1,72 @@
+{
+  "description": "[being built] Which catalog entry a call records (contracts/trails.md, \"JSON-RPC endpoints\"): a trail per JSON-RPC method picks the method's entry when the method is listed (null: not recorded), else otherwise; a plain trail is its own entry; null records nothing. method null: the call's JSON-RPC method couldn't be told (not a JSON object, or no string method), which is otherwise. Reference: scripts/lib/manifest.mjs trailFor.",
+  "trail": {
+    "byRpcMethod": {
+      "tools/call": {
+        "eventName": "CallTool",
+        "eventCategory": "Data",
+        "sensitive": [
+          "arguments"
+        ]
+      },
+      "initialize": null,
+      "tools/list": null
+    },
+    "otherwise": {
+      "eventName": "UseGateway"
+    }
+  },
+  "cases": [
+    {
+      "name": "tools/call is CallTool, a Data event",
+      "method": "tools/call",
+      "expected": {
+        "eventName": "CallTool",
+        "eventCategory": "Data",
+        "sensitive": [
+          "arguments"
+        ]
+      }
+    },
+    {
+      "name": "a method listed as null isn't recorded",
+      "method": "tools/list",
+      "expected": null
+    },
+    {
+      "name": "initialize isn't recorded",
+      "method": "initialize",
+      "expected": null
+    },
+    {
+      "name": "another method is otherwise",
+      "method": "resources/read",
+      "expected": {
+        "eventName": "UseGateway"
+      }
+    },
+    {
+      "name": "method names are case-sensitive",
+      "method": "Tools/Call",
+      "expected": {
+        "eventName": "UseGateway"
+      }
+    },
+    {
+      "name": "no method is otherwise",
+      "method": null,
+      "expected": {
+        "eventName": "UseGateway"
+      }
+    }
+  ],
+  "plain": {
+    "trail": {
+      "eventName": "ConnectServer"
+    },
+    "method": "tools/call",
+    "expected": {
+      "eventName": "ConnectServer"
+    }
+  }
+}

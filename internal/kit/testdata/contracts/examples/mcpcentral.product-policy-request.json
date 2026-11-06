@@ -1,0 +1,21 @@
+{
+  "name": "MCP Central: Engineering",
+  "description": "Granted by MCP Central's mapping of the Engineering directory group.",
+  "document": {
+    "statements": [
+      {
+        "effect": "allow",
+        "actions": [
+          "mcpcentral.gateways.connect",
+          "mcpcentral.servers.use",
+          "mcpcentral.tools.call",
+          "mcpcentral.connections.connect",
+          "mcpcentral.connections.disconnect"
+        ],
+        "resources": [
+          "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:*"
+        ]
+      }
+    ]
+  }
+}

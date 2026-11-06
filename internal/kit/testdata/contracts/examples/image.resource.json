@@ -1,0 +1,33 @@
+{
+  "id": "019a1c2e-7b3f-7d10-9a2b-4c5d6e7f8a90",
+  "slug": "img_4k2m9x0a7qpe",
+  "name": "ubuntu-24.04-amd64-20261008",
+  "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:img_4k2m9x0a7qpe",
+  "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+  "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+  "region": "us-west-1",
+  "tags": {},
+  "owner": { "kind": "platform", "label": "EZGH Cloud" },
+  "alias": "linux/ubuntu:24.04",
+  "architecture": "amd64",
+  "visibility": "public",
+  "status": "available",
+  "format": "qcow2",
+  "sizeBytes": "612368384",
+  "minDiskBytes": "3758096384",
+  "sha256": "9f2c4be1d7a05c3e8b6f2a9d4c7e1b0a5f3d8c2e6b9a4f7d1c0e3b8a5f2d9c6e",
+  "bootMode": "uefi",
+  "defaultUser": "ubuntu",
+  "provenance": {
+    "kind": "upstream",
+    "sourceUrl": "https://cloud-images.ubuntu.com/releases/noble/release-20261008/ubuntu-24.04-server-cloudimg-amd64.img",
+    "upstreamSerial": "20261008",
+    "upstreamChecksum": { "algorithm": "sha256", "value": "9f2c4be1d7a05c3e8b6f2a9d4c7e1b0a5f3d8c2e6b9a4f7d1c0e3b8a5f2d9c6e" },
+    "verification": "signed",
+    "publisher": { "pipeline": "linux-ubuntu-24.04", "run": "2026-10-13T06:00:00Z" }
+  },
+  "failureReason": null,
+  "lastTargetedAt": null,
+  "createdAt": "2026-10-13T06:02:11.000Z",
+  "updatedAt": "2026-10-13T06:09:47.000Z"
+}

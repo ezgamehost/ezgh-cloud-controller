@@ -1,0 +1,27 @@
+{
+  "organization": {
+    "id": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+    "name": "Acme",
+    "slug": "org_k3f9a0x2m7qp",
+    "resourceName": "ezgh::org_k3f9a0x2m7qp",
+    "createdAt": "2026-09-01T08:00:00.000Z",
+    "updatedAt": "2026-09-01T08:00:00.000Z",
+    "isRoot": false
+  },
+  "principal": { "type": "user", "id": "jtMJXwL0R8aB3cD4eF5gH6iJ", "slug": null },
+  "apiKeyId": null,
+  "userIdentity": {
+    "type": "User",
+    "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ",
+    "userName": "ada@acme.test",
+    "isRoot": false,
+    "accessKeyId": null,
+    "sessionContext": { "credential": "session", "sessionIssuedAt": "2026-10-15T07:30:00.000Z", "ssoProviderId": null, "mfaAuthenticated": false },
+    "invokedBy": "compute.ezghcloud.com"
+  },
+  "results": [
+    { "action": "blockstore.volumes.create", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:vol_8d2f6h1j4k9m", "allowed": true },
+    { "action": "blockstore.volumes.attach", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:vol_8d2f6h1j4k9m", "allowed": true }
+  ],
+  "credential": { "kind": "session", "id": "Qm7cXw2KpL9sTn4vBd8yRf3h" }
+}

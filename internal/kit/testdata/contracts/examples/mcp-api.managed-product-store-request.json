@@ -1,0 +1,20 @@
+{
+  "objectId": "0199a402-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+  "kind": "mcpcentral.connection",
+  "version": 3,
+  "binding": {
+    "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+    "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+    "region": "us-west-1",
+    "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:mcn_5d7f9b1c3e8a",
+    "principalType": "ssoUser",
+    "principalId": "0199a3f1-1a2b-7c3d-8e4f-5a6b7c8d9e0f"
+  },
+  "fields": {
+    "header.Authorization": "Bearer upstream-token-example"
+  },
+  "invokedFor": {
+    "type": "ssoUser",
+    "principalId": "0199a3f1-1a2b-7c3d-8e4f-5a6b7c8d9e0f"
+  }
+}

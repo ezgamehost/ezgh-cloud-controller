@@ -1,0 +1,37 @@
+{
+  "eventVersion": "1.0",
+  "eventId": "0199a3f8-4d5e-7f60-8a71-9b0c1d2e3f40",
+  "eventTime": "2026-10-31T09:05:00.000Z",
+  "eventType": "ApiCall",
+  "eventCategory": "Management",
+  "eventSource": "objects.ezghcloud.com",
+  "eventName": "CreateBucket",
+  "readOnly": false,
+  "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+  "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+  "userIdentity": {
+    "type": "User",
+    "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ",
+    "userName": "ada@acme.test",
+    "isRoot": false,
+    "accessKeyId": "oak_3n8q1w5z0k2r",
+    "sessionContext": { "credential": "s3AccessKey", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false },
+    "invokedBy": null
+  },
+  "sourceIpAddress": "203.0.113.9",
+  "userAgent": "aws-cli/2.31.0 md/awscrt#0.28.0 cfg/retry-mode#standard",
+  "requestParameters": { "name": "acme-backups" },
+  "responseElements": {
+    "id": "0199a3f8-5e6f-7071-8b82-0c1d2e3f4051",
+    "slug": "bkt_4k2m9x0a7qpe",
+    "name": "acme-backups",
+    "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:bkt_4k2m9x0a7qpe"
+  },
+  "additionalEventData": null,
+  "errorCode": null,
+  "errorMessage": null,
+  "resources": [
+    { "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:bkt_4k2m9x0a7qpe", "type": "Bucket" }
+  ],
+  "requestId": "0199a3f8-6f70-7182-9c93-1d2e3f405162"
+}

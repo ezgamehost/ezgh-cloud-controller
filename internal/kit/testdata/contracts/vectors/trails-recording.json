@@ -1,0 +1,1213 @@
+{
+  "description": "What a Trails event records from a request: requestParameters (path, query, then the parameters an endpoint sets; secrets hidden) and, when an endpoint sets none, defaultRequestParameters (path and query values, then only the body's top-level field names with their values hidden, and nothing from the body of a refused call) and a successful write's responseElements (identifiers id, slug, name, resourceName, prefix, expiresAt at the top level or one object down, plus the fields the endpoint's catalog entry lists). [being built] directoryActivity: the SSO IdP's scoped exception. grantedInternalCalls: the /internal/* calls served through a customer's grant, recorded by the serving product as a ServiceEvent invoked by the calling namespace, once a customer's grant authorized and the product served the call; null means not recorded. grantedInvokedFor: what such an event keeps of a consumer-supplied invokedFor (only the string keys principalId and type; null means left out). ingestKeyInternalCalls: the only other recorded /internal/* call, obs-api's ensure when it creates a dataset for a project ingest key, recorded by obs-api as an ApiCall with the key's IngestKey identity, or [being built] for an internal producer (producer, a namespace obs allows, instead of ingestKeyId), recorded as a ServiceEvent invoked by the producer's namespace; null means not recorded. [being built] The cases with a job: obs-worker's servicesync cataloging a service key obs ingest saw, recorded as an ApiCall with the sending key's IngestKey identity, or as a ServiceEvent invoked by obs itself when that key is no longer known or isn't a valid key ID; null means not recorded. [being built] readOnly: whether an endpoint's events are readOnly: a GET (and HEAD), and a computation POST (idempotencyException computation) unless it records per JSON-RPC method, whose methods may act. A computation still records its successful answer's identifiers in responseElements. [being built] acmeBinding: Private CA's ACME identity (contracts/trails.md, \"ACME bindings\"): identities builds it from the binding owner's identity, as org-api's principal-batch answer names it, and the binding's eab_ slug (null: no identity, the owner isn't a user, the root user or a bot, or the slug isn't one); valid and invalid are userIdentity values the schema accepts and refuses. [being built] s3AccessKey: Object Storage's S3 identity (contracts/trails.md, \"S3 access keys\"), shaped like acmeBinding, with key the access key's oak_ ID. [being built] delegatedCalls: a receiver's delegated call (contracts/trails.md, \"Delegated calls\"): orgApi is org-api's answer to the delegated check (as delegated-checks.json receiverMapping), receiverStatus the receiver's answer, recorded whether the receiver records it, and, when it does, userIdentity (org-api's answerIdentity with invokedBy <caller>.ezghcloud.com, as the delegated answer gives it) and userAgent. A case with earlier lists the org-api answers of the call's earlier delegated checks (each allowed): a refusal of the delegation itself after them is still not recorded; whether the call is recorded is decided by the answer that ended it.",
+  "hidden": "HIDDEN_DUE_TO_SECURITY_REASONS",
+  "secretKeyPattern": "token|secret|password|passwd|passphrase|authorization|cookie|credential|signature|api[-_]?key|private[-_]?key|(signing|encryption|access|application)[-_]?key$|card[-_]?number|cvc|cvv|otp$|pem$",
+  "requestParameters": [
+    {
+      "name": "path, query and the parameters an endpoint sets merge; later ones win",
+      "input": {
+        "path": {
+          "orgId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+          "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81"
+        },
+        "query": {
+          "limit": "20"
+        },
+        "body": {
+          "name": "build-runner",
+          "size": "small",
+          "tags": {
+            "team": "platform"
+          }
+        }
+      },
+      "sensitive": [],
+      "expected": {
+        "orgId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "limit": "20",
+        "name": "build-runner",
+        "size": "small",
+        "tags": {
+          "team": "platform"
+        }
+      }
+    },
+    {
+      "name": "secret-looking keys are hidden at any depth",
+      "input": {
+        "path": {
+          "orgId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70"
+        },
+        "body": {
+          "name": "x",
+          "config": {
+            "apiKey": "k",
+            "nested": {
+              "clientSecret": "s",
+              "passwordHint": "p",
+              "Authorization": "a"
+            }
+          },
+          "sessionToken": "t"
+        }
+      },
+      "sensitive": [],
+      "expected": {
+        "orgId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "name": "x",
+        "config": {
+          "apiKey": "HIDDEN_DUE_TO_SECURITY_REASONS",
+          "nested": {
+            "clientSecret": "HIDDEN_DUE_TO_SECURITY_REASONS",
+            "passwordHint": "HIDDEN_DUE_TO_SECURITY_REASONS",
+            "Authorization": "HIDDEN_DUE_TO_SECURITY_REASONS"
+          }
+        },
+        "sessionToken": "HIDDEN_DUE_TO_SECURITY_REASONS"
+      }
+    },
+    {
+      "name": "an endpoint's sensitive fields are hidden wherever they appear",
+      "input": {
+        "body": {
+          "name": "x",
+          "seed": "123",
+          "inner": {
+            "seed": "456"
+          }
+        }
+      },
+      "sensitive": [
+        "seed"
+      ],
+      "expected": {
+        "name": "x",
+        "seed": "HIDDEN_DUE_TO_SECURITY_REASONS",
+        "inner": {
+          "seed": "HIDDEN_DUE_TO_SECURITY_REASONS"
+        }
+      }
+    },
+    {
+      "name": "arrays keep their items; depth past 6 is cut",
+      "input": {
+        "body": {
+          "list": [
+            {
+              "token": "a"
+            },
+            "b"
+          ],
+          "a": {
+            "b": {
+              "c": {
+                "d": {
+                  "e": {
+                    "f": {
+                      "g": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "sensitive": [],
+      "expected": {
+        "list": [
+          {
+            "token": "HIDDEN_DUE_TO_SECURITY_REASONS"
+          },
+          "b"
+        ],
+        "a": {
+          "b": {
+            "c": {
+              "d": {
+                "e": {
+                  "f": "[truncated]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "nothing → null",
+      "input": {
+        "path": {},
+        "query": {}
+      },
+      "sensitive": [],
+      "expected": null
+    },
+    {
+      "name": "a non-object body is ignored",
+      "input": {
+        "path": {
+          "orgId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70"
+        },
+        "body": [
+          "a",
+          "b"
+        ]
+      },
+      "sensitive": [],
+      "expected": {
+        "orgId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70"
+      }
+    },
+    {
+      "name": "SSO activity hides unknown username and every authentication secret",
+      "input": {
+        "body": {
+          "userName": "unrecognized@acme.test",
+          "password": "p",
+          "totpCode": "123456",
+          "webauthnAssertion": {
+            "authenticatorData": "a"
+          },
+          "code": "oauth-code",
+          "accessToken": "ezgh_sat_test",
+          "refreshToken": "ezgh_srt_test",
+          "clientSecret": "ezgh_scs_test",
+          "scimToken": "ezgh_dsc_test",
+          "upstreamScimToken": "secret",
+          "SAMLResponse": "assertion",
+          "idToken": "jwt",
+          "sessionToken": "secret",
+          "Cookie": "secret",
+          "serviceCredential": "secret"
+        }
+      },
+      "sensitive": [
+        "userName",
+        "totpCode",
+        "webauthnAssertion",
+        "code",
+        "SAMLResponse"
+      ],
+      "expected": {
+        "userName": "HIDDEN_DUE_TO_SECURITY_REASONS",
+        "password": "HIDDEN_DUE_TO_SECURITY_REASONS",
+        "totpCode": "HIDDEN_DUE_TO_SECURITY_REASONS",
+        "webauthnAssertion": "HIDDEN_DUE_TO_SECURITY_REASONS",
+        "code": "HIDDEN_DUE_TO_SECURITY_REASONS",
+        "accessToken": "HIDDEN_DUE_TO_SECURITY_REASONS",
+        "refreshToken": "HIDDEN_DUE_TO_SECURITY_REASONS",
+        "clientSecret": "HIDDEN_DUE_TO_SECURITY_REASONS",
+        "scimToken": "HIDDEN_DUE_TO_SECURITY_REASONS",
+        "upstreamScimToken": "HIDDEN_DUE_TO_SECURITY_REASONS",
+        "SAMLResponse": "HIDDEN_DUE_TO_SECURITY_REASONS",
+        "idToken": "HIDDEN_DUE_TO_SECURITY_REASONS",
+        "sessionToken": "HIDDEN_DUE_TO_SECURITY_REASONS",
+        "Cookie": "HIDDEN_DUE_TO_SECURITY_REASONS",
+        "serviceCredential": "HIDDEN_DUE_TO_SECURITY_REASONS"
+      }
+    }
+  ],
+  "defaultRequestParameters": [
+    {
+      "name": "path and query values, then the body's top-level field names, each hidden",
+      "input": {
+        "path": {
+          "orgId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+          "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81"
+        },
+        "query": {
+          "limit": "20"
+        },
+        "body": {
+          "name": "build-runner",
+          "size": "small",
+          "tags": {
+            "team": "platform"
+          }
+        }
+      },
+      "sensitive": [],
+      "expected": {
+        "orgId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "limit": "20",
+        "name": "HIDDEN_DUE_TO_SECURITY_REASONS",
+        "size": "HIDDEN_DUE_TO_SECURITY_REASONS",
+        "tags": "HIDDEN_DUE_TO_SECURITY_REASONS"
+      }
+    },
+    {
+      "name": "no body value is recorded, however its key is spelled or nested",
+      "input": {
+        "body": {
+          "privateKey": "k1",
+          "private_key": "k2",
+          "keyPem": "k3",
+          "key_pem": "k4",
+          "passphrase": "k5",
+          "nested": {
+            "privateKey": "k6",
+            "deeper": {
+              "value": "k7"
+            }
+          },
+          "list": [
+            {
+              "passphrase": "k8"
+            },
+            "k9"
+          ],
+          "pem": "k10"
+        }
+      },
+      "sensitive": [],
+      "expected": {
+        "privateKey": "HIDDEN_DUE_TO_SECURITY_REASONS",
+        "private_key": "HIDDEN_DUE_TO_SECURITY_REASONS",
+        "keyPem": "HIDDEN_DUE_TO_SECURITY_REASONS",
+        "key_pem": "HIDDEN_DUE_TO_SECURITY_REASONS",
+        "passphrase": "HIDDEN_DUE_TO_SECURITY_REASONS",
+        "nested": "HIDDEN_DUE_TO_SECURITY_REASONS",
+        "list": "HIDDEN_DUE_TO_SECURITY_REASONS",
+        "pem": "HIDDEN_DUE_TO_SECURITY_REASONS"
+      }
+    },
+    {
+      "name": "a body field never replaces a path or query value",
+      "input": {
+        "path": {
+          "orgId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70"
+        },
+        "query": {
+          "limit": "20"
+        },
+        "body": {
+          "orgId": "someone-else",
+          "limit": "99"
+        }
+      },
+      "sensitive": [],
+      "expected": {
+        "orgId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "limit": "20"
+      }
+    },
+    {
+      "name": "a refused call records nothing from its body",
+      "input": {
+        "path": {
+          "orgId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70"
+        },
+        "body": {
+          "name": "x",
+          "unknownField": "-----BEGIN PRIVATE KEY-----"
+        },
+        "refused": true
+      },
+      "sensitive": [],
+      "expected": {
+        "orgId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70"
+      }
+    },
+    {
+      "name": "the backstop catches key material in a query however it's spelled",
+      "input": {
+        "query": {
+          "private_key": "k1",
+          "privateKey": "k2",
+          "keyPem": "k3",
+          "key_pem": "k4",
+          "passphrase": "k5",
+          "passwd": "k6",
+          "x-api-key": "k7",
+          "signingKey": "k8",
+          "access_key": "k9",
+          "cardNumber": "k10",
+          "certificatePem": "k11",
+          "name": "kept",
+          "accessKeyId": "oak_kept",
+          "tempEmail": "kept@example.test"
+        }
+      },
+      "sensitive": [],
+      "expected": {
+        "private_key": "HIDDEN_DUE_TO_SECURITY_REASONS",
+        "privateKey": "HIDDEN_DUE_TO_SECURITY_REASONS",
+        "keyPem": "HIDDEN_DUE_TO_SECURITY_REASONS",
+        "key_pem": "HIDDEN_DUE_TO_SECURITY_REASONS",
+        "passphrase": "HIDDEN_DUE_TO_SECURITY_REASONS",
+        "passwd": "HIDDEN_DUE_TO_SECURITY_REASONS",
+        "x-api-key": "HIDDEN_DUE_TO_SECURITY_REASONS",
+        "signingKey": "HIDDEN_DUE_TO_SECURITY_REASONS",
+        "access_key": "HIDDEN_DUE_TO_SECURITY_REASONS",
+        "cardNumber": "HIDDEN_DUE_TO_SECURITY_REASONS",
+        "certificatePem": "HIDDEN_DUE_TO_SECURITY_REASONS",
+        "name": "kept",
+        "accessKeyId": "oak_kept",
+        "tempEmail": "kept@example.test"
+      }
+    },
+    {
+      "name": "a query's secret-looking keys are hidden",
+      "input": {
+        "query": {
+          "token": "t",
+          "limit": "5"
+        }
+      },
+      "sensitive": [],
+      "expected": {
+        "token": "HIDDEN_DUE_TO_SECURITY_REASONS",
+        "limit": "5"
+      }
+    },
+    {
+      "name": "nothing → null",
+      "input": {
+        "path": {},
+        "query": {},
+        "body": {}
+      },
+      "sensitive": [],
+      "expected": null
+    }
+  ],
+  "responseElements": [
+    {
+      "name": "an operation (202): its id, plus the listed target",
+      "body": {
+        "id": "0199a3d0-2b3c-7d4e-9f50-6b7c8d9e0f1a",
+        "status": "queued",
+        "target": {
+          "id": "0199a3d0-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+          "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+          "type": "Widget"
+        },
+        "createdBy": {
+          "type": "user",
+          "id": "u1"
+        }
+      },
+      "extra": [
+        "target"
+      ],
+      "expected": {
+        "id": "0199a3d0-2b3c-7d4e-9f50-6b7c8d9e0f1a",
+        "target": {
+          "id": "0199a3d0-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+          "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+          "type": "Widget"
+        }
+      }
+    },
+    {
+      "name": "a resource: identifiers only",
+      "body": {
+        "id": "0199a3d0-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+        "slug": "wgt_4k2m9x0a7qpe",
+        "name": "build-runner",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "size": "small",
+        "status": "running"
+      },
+      "extra": [],
+      "expected": {
+        "id": "0199a3d0-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+        "slug": "wgt_4k2m9x0a7qpe",
+        "name": "build-runner",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe"
+      }
+    },
+    {
+      "name": "nothing identifying at the top: one object down",
+      "body": {
+        "apiKey": {
+          "id": "k1",
+          "prefix": "ezgh_AbC1",
+          "expiresAt": null
+        },
+        "token": "ezgh_secret"
+      },
+      "extra": [],
+      "expected": {
+        "apiKey": {
+          "id": "k1",
+          "prefix": "ezgh_AbC1",
+          "expiresAt": null
+        }
+      }
+    },
+    {
+      "name": "no identifiers anywhere",
+      "body": {
+        "ok": true
+      },
+      "extra": [],
+      "expected": null
+    }
+  ],
+  "directoryActivity": [
+    {
+      "name": "known user SignIn",
+      "input": {
+        "eventSource": "sso.ezghcloud.com",
+        "eventName": "SignIn",
+        "directory": {
+          "id": "0199a3f0-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+          "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70"
+        },
+        "user": {
+          "id": "0199a3f1-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+          "userName": "ada@acme.test"
+        }
+      },
+      "expected": {
+        "type": "SsoUser",
+        "principalId": "0199a3f1-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+        "userName": "ada@acme.test",
+        "isRoot": false,
+        "accessKeyId": null,
+        "sessionContext": null,
+        "invokedBy": null
+      }
+    },
+    {
+      "name": "known user SignInFailed",
+      "input": {
+        "eventSource": "sso.ezghcloud.com",
+        "eventName": "SignInFailed",
+        "directory": {
+          "id": "0199a3f0-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+          "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70"
+        },
+        "user": {
+          "id": "0199a3f1-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+          "userName": "ada@acme.test"
+        }
+      },
+      "expected": {
+        "type": "SsoUser",
+        "principalId": "0199a3f1-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+        "userName": "ada@acme.test",
+        "isRoot": false,
+        "accessKeyId": null,
+        "sessionContext": null,
+        "invokedBy": null
+      }
+    },
+    {
+      "name": "known user Federate",
+      "input": {
+        "eventSource": "sso.ezghcloud.com",
+        "eventName": "Federate",
+        "directory": {
+          "id": "0199a3f0-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+          "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70"
+        },
+        "user": {
+          "id": "0199a3f1-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+          "userName": "ada@acme.test"
+        }
+      },
+      "expected": {
+        "type": "SsoUser",
+        "principalId": "0199a3f1-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+        "userName": "ada@acme.test",
+        "isRoot": false,
+        "accessKeyId": null,
+        "sessionContext": null,
+        "invokedBy": null
+      }
+    },
+    {
+      "name": "known user MfaChallenge",
+      "input": {
+        "eventSource": "sso.ezghcloud.com",
+        "eventName": "MfaChallenge",
+        "directory": {
+          "id": "0199a3f0-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+          "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70"
+        },
+        "user": {
+          "id": "0199a3f1-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+          "userName": "ada@acme.test"
+        }
+      },
+      "expected": {
+        "type": "SsoUser",
+        "principalId": "0199a3f1-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+        "userName": "ada@acme.test",
+        "isRoot": false,
+        "accessKeyId": null,
+        "sessionContext": null,
+        "invokedBy": null
+      }
+    },
+    {
+      "name": "known user AuthorizeApplication",
+      "input": {
+        "eventSource": "sso.ezghcloud.com",
+        "eventName": "AuthorizeApplication",
+        "directory": {
+          "id": "0199a3f0-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+          "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70"
+        },
+        "user": {
+          "id": "0199a3f1-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+          "userName": "ada@acme.test"
+        }
+      },
+      "expected": {
+        "type": "SsoUser",
+        "principalId": "0199a3f1-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+        "userName": "ada@acme.test",
+        "isRoot": false,
+        "accessKeyId": null,
+        "sessionContext": null,
+        "invokedBy": null
+      }
+    },
+    {
+      "name": "known user SignOut",
+      "input": {
+        "eventSource": "sso.ezghcloud.com",
+        "eventName": "SignOut",
+        "directory": {
+          "id": "0199a3f0-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+          "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70"
+        },
+        "user": {
+          "id": "0199a3f1-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+          "userName": "ada@acme.test"
+        }
+      },
+      "expected": {
+        "type": "SsoUser",
+        "principalId": "0199a3f1-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+        "userName": "ada@acme.test",
+        "isRoot": false,
+        "accessKeyId": null,
+        "sessionContext": null,
+        "invokedBy": null
+      }
+    },
+    {
+      "name": "unknown user sign-in failure is recorded without its submitted username",
+      "input": {
+        "eventSource": "sso.ezghcloud.com",
+        "eventName": "SignInFailed",
+        "directory": {
+          "id": "0199a3f0-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+          "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70"
+        },
+        "user": null,
+        "submittedUserName": "unrecognized@acme.test"
+      },
+      "expected": {
+        "type": "SsoUser",
+        "principalId": null,
+        "userName": "HIDDEN_DUE_TO_SECURITY_REASONS",
+        "isRoot": false,
+        "accessKeyId": null,
+        "sessionContext": null,
+        "invokedBy": null
+      }
+    },
+    {
+      "name": "other event source",
+      "input": {
+        "eventSource": "widgets.ezghcloud.com",
+        "eventName": "SignInFailed",
+        "directory": {
+          "id": "0199a3f0-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+          "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70"
+        },
+        "user": {
+          "id": "0199a3f1-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+          "userName": "ada@acme.test"
+        }
+      },
+      "expected": null
+    },
+    {
+      "name": "lookalike event source",
+      "input": {
+        "eventSource": "sso.ezgh.app",
+        "eventName": "SignInFailed",
+        "directory": {
+          "id": "0199a3f0-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+          "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70"
+        },
+        "user": {
+          "id": "0199a3f1-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+          "userName": "ada@acme.test"
+        }
+      },
+      "expected": null
+    },
+    {
+      "name": "unregistered activity event",
+      "input": {
+        "eventSource": "sso.ezghcloud.com",
+        "eventName": "ResolveToken",
+        "directory": {
+          "id": "0199a3f0-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+          "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70"
+        },
+        "user": {
+          "id": "0199a3f1-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+          "userName": "ada@acme.test"
+        }
+      },
+      "expected": null
+    },
+    {
+      "name": "no directory attribution",
+      "input": {
+        "eventSource": "sso.ezghcloud.com",
+        "eventName": "SignInFailed",
+        "directory": null,
+        "user": {
+          "id": "0199a3f1-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+          "userName": "ada@acme.test"
+        }
+      },
+      "expected": null
+    },
+    {
+      "name": "unknown user successful sign-in",
+      "input": {
+        "eventSource": "sso.ezghcloud.com",
+        "eventName": "SignIn",
+        "directory": {
+          "id": "0199a3f0-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+          "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70"
+        },
+        "user": null
+      },
+      "expected": null
+    },
+    {
+      "name": "directory missing organization",
+      "input": {
+        "eventSource": "sso.ezghcloud.com",
+        "eventName": "SignInFailed",
+        "directory": {
+          "id": "0199a3f0-1a2b-7c3d-8e4f-5a6b7c8d9e0f"
+        },
+        "user": {
+          "id": "0199a3f1-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+          "userName": "ada@acme.test"
+        }
+      },
+      "expected": null
+    }
+  ],
+  "grantedInternalCalls": [
+    {
+      "name": "resolve through the customer's grant is recorded, invoked by the consumer",
+      "input": {
+        "eventSource": "secrets.ezghcloud.com",
+        "eventName": "ResolveSecret",
+        "path": "/internal/v1/resolve",
+        "caller": "mcpcentral",
+        "grant": {
+          "id": "0199a3f6-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+          "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+          "consumer": "mcpcentral"
+        },
+        "served": true
+      },
+      "expected": {
+        "type": "EzghService",
+        "principalId": null,
+        "userName": null,
+        "isRoot": false,
+        "accessKeyId": null,
+        "sessionContext": null,
+        "invokedBy": "mcpcentral.ezghcloud.com"
+      }
+    },
+    {
+      "name": "no grant matched (unknown secret, another organization or consumer resource)",
+      "input": {
+        "eventSource": "secrets.ezghcloud.com",
+        "eventName": "ResolveSecret",
+        "path": "/internal/v1/resolve",
+        "caller": "mcpcentral",
+        "grant": null,
+        "served": true
+      },
+      "expected": null
+    },
+    {
+      "name": "a grant for another consumer",
+      "input": {
+        "eventSource": "secrets.ezghcloud.com",
+        "eventName": "ResolveSecret",
+        "path": "/internal/v1/resolve",
+        "caller": "mcpcentral",
+        "grant": {
+          "id": "0199a3f6-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+          "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+          "consumer": "ocr"
+        },
+        "served": true
+      },
+      "expected": null
+    },
+    {
+      "name": "grant matched but the call was refused (wrong or destroyed version, unknown field)",
+      "input": {
+        "eventSource": "secrets.ezghcloud.com",
+        "eventName": "ResolveSecret",
+        "path": "/internal/v1/resolve",
+        "caller": "mcpcentral",
+        "grant": {
+          "id": "0199a3f6-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+          "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+          "consumer": "mcpcentral"
+        },
+        "served": false
+      },
+      "expected": null
+    },
+    {
+      "name": "no verified service credential (the shared X-Internal-Token is not a consumer)",
+      "input": {
+        "eventSource": "secrets.ezghcloud.com",
+        "eventName": "ResolveSecret",
+        "path": "/internal/v1/resolve",
+        "caller": null,
+        "grant": {
+          "id": "0199a3f6-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+          "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+          "consumer": "mcpcentral"
+        },
+        "served": true
+      },
+      "expected": null
+    },
+    {
+      "name": "a caller that isn't a bare namespace",
+      "input": {
+        "eventSource": "secrets.ezghcloud.com",
+        "eventName": "ResolveSecret",
+        "path": "/internal/v1/resolve",
+        "caller": "mcpcentral.ezghcloud.com",
+        "grant": {
+          "id": "0199a3f6-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+          "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+          "consumer": "mcpcentral"
+        },
+        "served": true
+      },
+      "expected": null
+    },
+    {
+      "name": "grant without an organization isn't attributable",
+      "input": {
+        "eventSource": "secrets.ezghcloud.com",
+        "eventName": "ResolveSecret",
+        "path": "/internal/v1/resolve",
+        "caller": "mcpcentral",
+        "grant": {
+          "id": "0199a3f6-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+          "consumer": "mcpcentral"
+        },
+        "served": true
+      },
+      "expected": null
+    },
+    {
+      "name": "another internal call by the same consumer stays unrecorded",
+      "input": {
+        "eventSource": "secrets.ezghcloud.com",
+        "eventName": "DeleteGrantsForResource",
+        "path": "/internal/v1/grants/delete-for-resource",
+        "caller": "mcpcentral",
+        "grant": {
+          "id": "0199a3f6-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+          "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+          "consumer": "mcpcentral"
+        },
+        "served": true
+      },
+      "expected": null
+    },
+    {
+      "name": "another product can't claim the exception",
+      "input": {
+        "eventSource": "widgets.ezghcloud.com",
+        "eventName": "ResolveSecret",
+        "path": "/internal/v1/resolve",
+        "caller": "mcpcentral",
+        "grant": {
+          "id": "0199a3f6-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+          "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+          "consumer": "mcpcentral"
+        },
+        "served": true
+      },
+      "expected": null
+    },
+    {
+      "name": "lookalike event source",
+      "input": {
+        "eventSource": "secrets.ezgh.app",
+        "eventName": "ResolveSecret",
+        "path": "/internal/v1/resolve",
+        "caller": "mcpcentral",
+        "grant": {
+          "id": "0199a3f6-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+          "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+          "consumer": "mcpcentral"
+        },
+        "served": true
+      },
+      "expected": null
+    },
+    {
+      "name": "a public path is an ApiCall, not this exception",
+      "input": {
+        "eventSource": "secrets.ezghcloud.com",
+        "eventName": "ResolveSecret",
+        "path": "/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/secrets/0199a3f5-1a2b-7c3d-8e4f-5a6b7c8d9e0f/versions/latest",
+        "caller": "mcpcentral",
+        "grant": {
+          "id": "0199a3f6-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+          "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+          "consumer": "mcpcentral"
+        },
+        "served": true
+      },
+      "expected": null
+    }
+  ],
+  "grantedInvokedFor": [
+    {
+      "name": "principalId and type are kept",
+      "input": {
+        "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ",
+        "type": "user"
+      },
+      "expected": {
+        "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ",
+        "type": "user"
+      }
+    },
+    {
+      "name": "any other key is dropped",
+      "input": {
+        "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ",
+        "type": "user",
+        "note": "free-form consumer text",
+        "headers": {
+          "authorization": "Bearer x"
+        }
+      },
+      "expected": {
+        "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ",
+        "type": "user"
+      }
+    },
+    {
+      "name": "a non-string principalId is dropped",
+      "input": {
+        "principalId": {
+          "nested": "x"
+        },
+        "type": "user"
+      },
+      "expected": {
+        "type": "user"
+      }
+    },
+    {
+      "name": "only one key present",
+      "input": {
+        "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ"
+      },
+      "expected": {
+        "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ"
+      }
+    },
+    {
+      "name": "nothing left is left out",
+      "input": {
+        "note": "free-form consumer text"
+      },
+      "expected": null
+    },
+    {
+      "name": "not an object is left out",
+      "input": "jtMJXwL0R8aB3cD4eF5gH6iJ",
+      "expected": null
+    },
+    {
+      "name": "an array is left out",
+      "input": [
+        {
+          "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ",
+          "type": "user"
+        }
+      ],
+      "expected": null
+    },
+    {
+      "name": "absent is left out",
+      "input": null,
+      "expected": null
+    }
+  ],
+  "ingestKeyInternalCalls": [
+    {
+      "name": "ensure creating a dataset for the key's new environment is recorded with the key's identity",
+      "input": { "eventSource": "obs.ezghcloud.com", "eventName": "CreateDataset", "path": "/internal/v1/datasets/ensure", "caller": "obs-ingest", "ingestKeyId": "0199a3c4-2f30-7b42-8c5d-6e7f8091a2b3", "created": true },
+      "expected": { "type": "IngestKey", "principalId": "0199a3c4-2f30-7b42-8c5d-6e7f8091a2b3", "userName": null, "isRoot": false, "accessKeyId": "0199a3c4-2f30-7b42-8c5d-6e7f8091a2b3", "sessionContext": null, "invokedBy": null }
+    },
+    {
+      "name": "ensure that found the dataset, or refused to create one, records nothing",
+      "input": { "eventSource": "obs.ezghcloud.com", "eventName": "CreateDataset", "path": "/internal/v1/datasets/ensure", "caller": "obs-ingest", "ingestKeyId": "0199a3c4-2f30-7b42-8c5d-6e7f8091a2b3", "created": false },
+      "expected": null
+    },
+    {
+      "name": "another caller of obs-api's internal routes",
+      "input": { "eventSource": "obs.ezghcloud.com", "eventName": "CreateDataset", "path": "/internal/v1/datasets/ensure", "caller": "quotas-api", "ingestKeyId": "0199a3c4-2f30-7b42-8c5d-6e7f8091a2b3", "created": true },
+      "expected": null
+    },
+    {
+      "name": "no verified service credential (the shared X-Internal-Token is not a caller)",
+      "input": { "eventSource": "obs.ezghcloud.com", "eventName": "CreateDataset", "path": "/internal/v1/datasets/ensure", "caller": null, "ingestKeyId": "0199a3c4-2f30-7b42-8c5d-6e7f8091a2b3", "created": true },
+      "expected": null
+    },
+    {
+      "name": "without the ingest key's ID nothing is attributable",
+      "input": { "eventSource": "obs.ezghcloud.com", "eventName": "CreateDataset", "path": "/internal/v1/datasets/ensure", "caller": "obs-ingest", "ingestKeyId": null, "created": true },
+      "expected": null
+    },
+    {
+      "name": "the key's slug isn't its ID",
+      "input": { "eventSource": "obs.ezghcloud.com", "eventName": "CreateDataset", "path": "/internal/v1/datasets/ensure", "caller": "obs-ingest", "ingestKeyId": "igk_4k2m9x0a7qpe", "created": true },
+      "expected": null
+    },
+    {
+      "name": "another product can't claim the exception",
+      "input": { "eventSource": "widgets.ezghcloud.com", "eventName": "CreateDataset", "path": "/internal/v1/datasets/ensure", "caller": "obs-ingest", "ingestKeyId": "0199a3c4-2f30-7b42-8c5d-6e7f8091a2b3", "created": true },
+      "expected": null
+    },
+    {
+      "name": "the public create is an ordinary ApiCall from the catalog, not this exception",
+      "input": { "eventSource": "obs.ezghcloud.com", "eventName": "CreateDataset", "path": "/v1/organizations/0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70/projects/0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81/obs/datasets", "caller": null, "ingestKeyId": "0199a3c4-2f30-7b42-8c5d-6e7f8091a2b3", "created": true },
+      "expected": null
+    },
+    {
+      "name": "[being built] ensure creating a dataset for an internal producer is a service event invoked by the producer's namespace",
+      "input": { "eventSource": "obs.ezghcloud.com", "eventName": "CreateDataset", "path": "/internal/v1/datasets/ensure", "caller": "obs-ingest", "ingestKeyId": null, "producer": "workflows", "created": true },
+      "expected": { "type": "EzghService", "principalId": null, "userName": null, "isRoot": false, "accessKeyId": null, "sessionContext": null, "invokedBy": "workflows.ezghcloud.com" }
+    },
+    {
+      "name": "[being built] Trails delivery's producer (caller audit-delivery) is namespace trails: invoked by trails.ezghcloud.com",
+      "input": { "eventSource": "obs.ezghcloud.com", "eventName": "CreateDataset", "path": "/internal/v1/datasets/ensure", "caller": "obs-ingest", "ingestKeyId": null, "producer": "trails", "created": true },
+      "expected": { "type": "EzghService", "principalId": null, "userName": null, "isRoot": false, "accessKeyId": null, "sessionContext": null, "invokedBy": "trails.ezghcloud.com" }
+    },
+    {
+      "name": "[being built] the calling service's name audit-delivery is never the producer",
+      "input": { "eventSource": "obs.ezghcloud.com", "eventName": "CreateDataset", "path": "/internal/v1/datasets/ensure", "caller": "obs-ingest", "ingestKeyId": null, "producer": "audit-delivery", "created": true },
+      "expected": null
+    },
+    {
+      "name": "[being built] a producer's ensure that found the dataset, or refused to create one, records nothing",
+      "input": { "eventSource": "obs.ezghcloud.com", "eventName": "CreateDataset", "path": "/internal/v1/datasets/ensure", "caller": "obs-ingest", "ingestKeyId": null, "producer": "workflows", "created": false },
+      "expected": null
+    },
+    {
+      "name": "[being built] ensure names exactly one of ingestKeyId and producer",
+      "input": { "eventSource": "obs.ezghcloud.com", "eventName": "CreateDataset", "path": "/internal/v1/datasets/ensure", "caller": "obs-ingest", "ingestKeyId": "0199a3c4-2f30-7b42-8c5d-6e7f8091a2b3", "producer": "workflows", "created": true },
+      "expected": null
+    },
+    {
+      "name": "[being built] a producer obs doesn't allow isn't attributable",
+      "input": { "eventSource": "obs.ezghcloud.com", "eventName": "CreateDataset", "path": "/internal/v1/datasets/ensure", "caller": "obs-ingest", "ingestKeyId": null, "producer": "widgets", "created": true },
+      "expected": null
+    },
+    {
+      "name": "[being built] the producer is a namespace, never the calling service's name",
+      "input": { "eventSource": "obs.ezghcloud.com", "eventName": "CreateDataset", "path": "/internal/v1/datasets/ensure", "caller": "obs-ingest", "ingestKeyId": null, "producer": "workflows-engine", "created": true },
+      "expected": null
+    },
+    {
+      "name": "[being built] only obs-ingest relays a producer's ensure",
+      "input": { "eventSource": "obs.ezghcloud.com", "eventName": "CreateDataset", "path": "/internal/v1/datasets/ensure", "caller": "quotas-api", "ingestKeyId": null, "producer": "workflows", "created": true },
+      "expected": null
+    },
+    {
+      "name": "[being built] ensure creating a dataset for an API key's new environment records the identity org-api answered, unchanged",
+      "input": { "eventSource": "obs.ezghcloud.com", "eventName": "CreateDataset", "path": "/internal/v1/datasets/ensure", "caller": "obs-ingest", "ingestKeyId": null, "userIdentity": { "type": "Bot", "principalId": "0199a3c5-1e2f-7a31-9b4c-5d6e7f8091a2", "userName": "queue-worker", "isRoot": false, "accessKeyId": "0199a430-1a2b-7c3d-8e4f-5a6b7c8d9e0f", "sessionContext": { "credential": "apiKey", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false, "sourceIdentity": { "type": "ComputeInstance", "principalId": "0199a4b1-3c4d-7e5f-8a6b-7c8d9e0f1a2b", "userName": "web-1" } }, "invokedBy": null }, "created": true },
+      "expected": { "type": "Bot", "principalId": "0199a3c5-1e2f-7a31-9b4c-5d6e7f8091a2", "userName": "queue-worker", "isRoot": false, "accessKeyId": "0199a430-1a2b-7c3d-8e4f-5a6b7c8d9e0f", "sessionContext": { "credential": "apiKey", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false, "sourceIdentity": { "type": "ComputeInstance", "principalId": "0199a4b1-3c4d-7e5f-8a6b-7c8d9e0f1a2b", "userName": "web-1" } }, "invokedBy": null }
+    },
+    {
+      "name": "[being built] an API key's ensure that found the dataset, or refused to create one, records nothing",
+      "input": { "eventSource": "obs.ezghcloud.com", "eventName": "CreateDataset", "path": "/internal/v1/datasets/ensure", "caller": "obs-ingest", "ingestKeyId": null, "userIdentity": { "type": "Bot", "principalId": "0199a3c5-1e2f-7a31-9b4c-5d6e7f8091a2", "userName": "queue-worker", "isRoot": false, "accessKeyId": "0199a430-1a2b-7c3d-8e4f-5a6b7c8d9e0f", "sessionContext": { "credential": "apiKey", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false, "sourceIdentity": { "type": "ComputeInstance", "principalId": "0199a4b1-3c4d-7e5f-8a6b-7c8d9e0f1a2b", "userName": "web-1" } }, "invokedBy": null }, "created": false },
+      "expected": null
+    },
+    {
+      "name": "[being built] ensure names exactly one of ingestKeyId, producer and userIdentity: not a key and an identity",
+      "input": { "eventSource": "obs.ezghcloud.com", "eventName": "CreateDataset", "path": "/internal/v1/datasets/ensure", "caller": "obs-ingest", "ingestKeyId": "0199a3c4-2f30-7b42-8c5d-6e7f8091a2b3", "userIdentity": { "type": "Bot", "principalId": "0199a3c5-1e2f-7a31-9b4c-5d6e7f8091a2", "userName": "queue-worker", "isRoot": false, "accessKeyId": "0199a430-1a2b-7c3d-8e4f-5a6b7c8d9e0f", "sessionContext": { "credential": "apiKey", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false, "sourceIdentity": { "type": "ComputeInstance", "principalId": "0199a4b1-3c4d-7e5f-8a6b-7c8d9e0f1a2b", "userName": "web-1" } }, "invokedBy": null }, "created": true },
+      "expected": null
+    },
+    {
+      "name": "[being built] ensure names exactly one of ingestKeyId, producer and userIdentity: not a producer and an identity",
+      "input": { "eventSource": "obs.ezghcloud.com", "eventName": "CreateDataset", "path": "/internal/v1/datasets/ensure", "caller": "obs-ingest", "ingestKeyId": null, "producer": "workflows", "userIdentity": { "type": "Bot", "principalId": "0199a3c5-1e2f-7a31-9b4c-5d6e7f8091a2", "userName": "queue-worker", "isRoot": false, "accessKeyId": "0199a430-1a2b-7c3d-8e4f-5a6b7c8d9e0f", "sessionContext": { "credential": "apiKey", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false, "sourceIdentity": { "type": "ComputeInstance", "principalId": "0199a4b1-3c4d-7e5f-8a6b-7c8d9e0f1a2b", "userName": "web-1" } }, "invokedBy": null }, "created": true },
+      "expected": null
+    },
+    {
+      "name": "[being built] only obs-ingest relays an API key's identity",
+      "input": { "eventSource": "obs.ezghcloud.com", "eventName": "CreateDataset", "path": "/internal/v1/datasets/ensure", "caller": "quotas-api", "ingestKeyId": null, "userIdentity": { "type": "Bot", "principalId": "0199a3c5-1e2f-7a31-9b4c-5d6e7f8091a2", "userName": "queue-worker", "isRoot": false, "accessKeyId": "0199a430-1a2b-7c3d-8e4f-5a6b7c8d9e0f", "sessionContext": { "credential": "apiKey", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false, "sourceIdentity": { "type": "ComputeInstance", "principalId": "0199a4b1-3c4d-7e5f-8a6b-7c8d9e0f1a2b", "userName": "web-1" } }, "invokedBy": null }, "created": true },
+      "expected": null
+    },
+    {
+      "name": "[being built] servicesync cataloging a key an API key sent is a service event by obs itself: the sighting holds no ingest key ID",
+      "input": { "eventSource": "obs.ezghcloud.com", "eventName": "CreateService", "path": null, "caller": null, "job": "servicesync", "ingestKeyId": "", "created": true },
+      "expected": { "type": "EzghService", "principalId": null, "userName": null, "isRoot": false, "accessKeyId": null, "sessionContext": null, "invokedBy": "obs.ezghcloud.com" }
+    },
+    {
+      "name": "servicesync cataloging a new service key is recorded with the identity of the key that sent it",
+      "input": { "eventSource": "obs.ezghcloud.com", "eventName": "CreateService", "path": null, "caller": null, "job": "servicesync", "ingestKeyId": "0199a3c4-2f30-7b42-8c5d-6e7f8091a2b3", "created": true },
+      "expected": { "type": "IngestKey", "principalId": "0199a3c4-2f30-7b42-8c5d-6e7f8091a2b3", "userName": null, "isRoot": false, "accessKeyId": "0199a3c4-2f30-7b42-8c5d-6e7f8091a2b3", "sessionContext": null, "invokedBy": null }
+    },
+    {
+      "name": "servicesync cataloging a key whose sending key is no longer known is a service event by obs itself",
+      "input": { "eventSource": "obs.ezghcloud.com", "eventName": "CreateService", "path": null, "caller": null, "job": "servicesync", "ingestKeyId": null, "created": true },
+      "expected": { "type": "EzghService", "principalId": null, "userName": null, "isRoot": false, "accessKeyId": null, "sessionContext": null, "invokedBy": "obs.ezghcloud.com" }
+    },
+    {
+      "name": "a malformed sending key ID isn't attributable either, so obs records it itself",
+      "input": { "eventSource": "obs.ezghcloud.com", "eventName": "CreateService", "path": null, "caller": null, "job": "servicesync", "ingestKeyId": "igk_4k2m9x0a7qpe", "created": true },
+      "expected": { "type": "EzghService", "principalId": null, "userName": null, "isRoot": false, "accessKeyId": null, "sessionContext": null, "invokedBy": "obs.ezghcloud.com" }
+    },
+    {
+      "name": "servicesync finding the service already cataloged, or the quota refusing it, records nothing",
+      "input": { "eventSource": "obs.ezghcloud.com", "eventName": "CreateService", "path": null, "caller": null, "job": "servicesync", "ingestKeyId": "0199a3c4-2f30-7b42-8c5d-6e7f8091a2b3", "created": false },
+      "expected": null
+    },
+    {
+      "name": "another job can't claim the exception",
+      "input": { "eventSource": "obs.ezghcloud.com", "eventName": "CreateService", "path": null, "caller": null, "job": "servicesweep", "ingestKeyId": "0199a3c4-2f30-7b42-8c5d-6e7f8091a2b3", "created": true },
+      "expected": null
+    },
+    {
+      "name": "servicesync doesn't create datasets",
+      "input": { "eventSource": "obs.ezghcloud.com", "eventName": "CreateDataset", "path": null, "caller": null, "job": "servicesync", "ingestKeyId": "0199a3c4-2f30-7b42-8c5d-6e7f8091a2b3", "created": true },
+      "expected": null
+    },
+    {
+      "name": "another product can't claim the exception",
+      "input": { "eventSource": "widgets.ezghcloud.com", "eventName": "CreateService", "path": null, "caller": null, "job": "servicesync", "ingestKeyId": "0199a3c4-2f30-7b42-8c5d-6e7f8091a2b3", "created": true },
+      "expected": null
+    },
+    {
+      "name": "a job has no request: a case with a path isn't the job",
+      "input": { "eventSource": "obs.ezghcloud.com", "eventName": "CreateService", "path": "/internal/v1/services/ensure", "caller": "obs-ingest", "job": "servicesync", "ingestKeyId": "0199a3c4-2f30-7b42-8c5d-6e7f8091a2b3", "created": true },
+      "expected": null
+    },
+    {
+      "name": "services aren't created through an internal call",
+      "input": { "eventSource": "obs.ezghcloud.com", "eventName": "CreateService", "path": "/internal/v1/services/ensure", "caller": "obs-ingest", "job": null, "ingestKeyId": "0199a3c4-2f30-7b42-8c5d-6e7f8091a2b3", "created": true },
+      "expected": null
+    }
+  ],
+  "readOnly": [
+    { "name": "a GET is a read", "endpoint": { "method": "GET", "trail": { "eventName": "ListDatasets" } }, "readOnly": true },
+    { "name": "a POST that keeps Idempotency-Key is a write", "endpoint": { "method": "POST", "idempotencyKey": true, "trail": { "eventName": "CreateDataset" } }, "readOnly": false },
+    { "name": "a computation POST is a read", "endpoint": { "method": "POST", "idempotencyException": "computation", "trail": { "eventName": "SearchLogs" } }, "readOnly": true },
+    {"name": "a computation POST that records refusals only is a write: its refusals are always kept", "endpoint": {"method": "POST", "idempotencyException": "computation", "trail": {"eventName": "CreateEmbeddings", "record": "refusals"}}, "readOnly": false},
+    {"name": "a GET that records refusals only (EZGH Git's content reads) is a write: its refusals are always kept", "endpoint": {"method": "GET", "trail": {"eventName": "GetContents", "eventCategory": "Data", "record": "refusals"}}, "readOnly": false},
+    { "name": "a Prometheus form POST is a read", "endpoint": { "method": "POST", "idempotencyException": "computation", "errorModel": "prometheus", "trail": { "eventName": "QueryMetrics", "eventCategory": "Data" } }, "readOnly": true },
+    { "name": "a JSON-RPC computation POST is a write: its methods may act", "endpoint": { "method": "POST", "idempotencyException": "computation", "trail": { "byRpcMethod": { "tools/call": { "eventName": "CallTool", "eventCategory": "Data" } }, "otherwise": null } }, "readOnly": false },
+    { "name": "DELETE is a write", "endpoint": { "method": "DELETE", "trail": { "eventName": "DeleteDataset" } }, "readOnly": false }
+  ],
+  "acmeBinding": {
+    "identities": [
+      { "name": "a user owner, as principal-batch answers it: the binding is the access key", "owner": { "type": "User", "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "ada@acme.test", "isRoot": false, "accessKeyId": null, "sessionContext": null, "invokedBy": null }, "binding": "eab_0123456789ab", "expected": { "type": "User", "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "ada@acme.test", "isRoot": false, "accessKeyId": "eab_0123456789ab", "sessionContext": { "credential": "acmeBinding", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false }, "invokedBy": null } },
+      { "name": "the organization's root user", "owner": { "type": "Root", "principalId": "rtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "owner@acme.test", "isRoot": true, "accessKeyId": null, "sessionContext": null, "invokedBy": null }, "binding": "eab_0123456789ab", "expected": { "type": "Root", "principalId": "rtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "owner@acme.test", "isRoot": true, "accessKeyId": "eab_0123456789ab", "sessionContext": { "credential": "acmeBinding", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false }, "invokedBy": null } },
+      { "name": "a bot owner", "owner": { "type": "Bot", "principalId": "0199a3c4-0d1e-7f20-8a3b-4c5d6e7f8091", "userName": "deployer", "isRoot": false, "accessKeyId": null, "sessionContext": null, "invokedBy": null }, "binding": "eab_0123456789ab", "expected": { "type": "Bot", "principalId": "0199a3c4-0d1e-7f20-8a3b-4c5d6e7f8091", "userName": "deployer", "isRoot": false, "accessKeyId": "eab_0123456789ab", "sessionContext": { "credential": "acmeBinding", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false }, "invokedBy": null } },
+      { "name": "an owner identity that came with an API key keeps none of it", "owner": { "type": "Bot", "principalId": "0199a3c4-0d1e-7f20-8a3b-4c5d6e7f8091", "userName": "deployer", "isRoot": false, "accessKeyId": "0199a3c4-1e2f-7a31-9b4c-5d6e7f809102", "sessionContext": { "credential": "apiKey", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false }, "invokedBy": null }, "binding": "eab_0123456789ab", "expected": { "type": "Bot", "principalId": "0199a3c4-0d1e-7f20-8a3b-4c5d6e7f8091", "userName": "deployer", "isRoot": false, "accessKeyId": "eab_0123456789ab", "sessionContext": { "credential": "acmeBinding", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false }, "invokedBy": null } },
+      { "name": "a person's OAuth session is dropped too", "owner": { "type": "User", "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "ada@acme.test", "isRoot": false, "accessKeyId": null, "sessionContext": { "credential": "oauth", "sessionIssuedAt": "2026-09-29T08:00:00.000Z", "ssoProviderId": null, "mfaAuthenticated": true, "clientId": "ezgh-cli" }, "invokedBy": null }, "binding": "eab_0123456789ab", "expected": { "type": "User", "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "ada@acme.test", "isRoot": false, "accessKeyId": "eab_0123456789ab", "sessionContext": { "credential": "acmeBinding", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false }, "invokedBy": null } },
+      { "name": "a directory user never owns a binding", "owner": { "type": "SsoUser", "principalId": "0199a3c4-3a4b-7c5d-8e6f-7a8b9c0d1e2f", "userName": "ada@acme.example", "isRoot": false, "accessKeyId": null, "sessionContext": null, "invokedBy": null }, "binding": "eab_0123456789ab", "expected": null },
+      { "name": "an ingest key never owns a binding", "owner": { "type": "IngestKey", "principalId": "0199a3c4-2f30-7b42-8c5d-6e7f8091a2b3", "userName": null, "isRoot": false, "accessKeyId": "0199a3c4-2f30-7b42-8c5d-6e7f8091a2b3", "sessionContext": null, "invokedBy": null }, "binding": "eab_0123456789ab", "expected": null },
+      { "name": "the platform never owns a binding", "owner": { "type": "EzghService", "principalId": null, "userName": null, "isRoot": false, "accessKeyId": null, "sessionContext": null, "invokedBy": "certificates.ezghcloud.com" }, "binding": "eab_0123456789ab", "expected": null },
+      { "name": "the access key is an eab_ slug", "owner": { "type": "User", "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "ada@acme.test", "isRoot": false, "accessKeyId": null, "sessionContext": null, "invokedBy": null }, "binding": "0199a3c4-1e2f-7a31-9b4c-5d6e7f809102", "expected": null },
+      { "name": "an eab_ slug has 12 characters", "owner": { "type": "User", "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "ada@acme.test", "isRoot": false, "accessKeyId": null, "sessionContext": null, "invokedBy": null }, "binding": "eab_0123456789abc", "expected": null }
+    ],
+    "valid": [
+      { "name": "a user's binding", "userIdentity": { "type": "User", "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "ada@acme.test", "isRoot": false, "accessKeyId": "eab_0123456789ab", "sessionContext": { "credential": "acmeBinding", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false }, "invokedBy": null } },
+      { "name": "the root user's binding", "userIdentity": { "type": "Root", "principalId": "rtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "owner@acme.test", "isRoot": true, "accessKeyId": "eab_0123456789ab", "sessionContext": { "credential": "acmeBinding", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false }, "invokedBy": null } },
+      { "name": "a bot's binding", "userIdentity": { "type": "Bot", "principalId": "0199a3c4-0d1e-7f20-8a3b-4c5d6e7f8091", "userName": "deployer", "isRoot": false, "accessKeyId": "eab_0123456789ab", "sessionContext": { "credential": "acmeBinding", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false }, "invokedBy": null } },
+      { "name": "clientId may be null", "userIdentity": { "type": "User", "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "ada@acme.test", "isRoot": false, "accessKeyId": "eab_0123456789ab", "sessionContext": { "credential": "acmeBinding", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false, "clientId": null }, "invokedBy": null } }
+    ],
+    "invalid": [
+      { "name": "an ACME binding names its binding", "userIdentity": { "type": "User", "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "ada@acme.test", "isRoot": false, "accessKeyId": null, "sessionContext": { "credential": "acmeBinding", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false }, "invokedBy": null } },
+      { "name": "the binding, not an API key", "userIdentity": { "type": "User", "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "ada@acme.test", "isRoot": false, "accessKeyId": "ezgh_0123456789abcdefghijABCDEFGHIJklmnopqrst", "sessionContext": { "credential": "acmeBinding", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false }, "invokedBy": null } },
+      { "name": "another type's slug", "userIdentity": { "type": "User", "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "ada@acme.test", "isRoot": false, "accessKeyId": "pca_0123456789ab", "sessionContext": { "credential": "acmeBinding", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false }, "invokedBy": null } },
+      { "name": "an ingest key isn't a binding owner", "userIdentity": { "type": "IngestKey", "principalId": "0199a3c4-2f30-7b42-8c5d-6e7f8091a2b3", "userName": null, "isRoot": false, "accessKeyId": "eab_0123456789ab", "sessionContext": { "credential": "acmeBinding", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false }, "invokedBy": null } },
+      { "name": "a directory user isn't a binding owner", "userIdentity": { "type": "SsoUser", "principalId": "0199a3c4-3a4b-7c5d-8e6f-7a8b9c0d1e2f", "userName": "ada@acme.example", "isRoot": false, "accessKeyId": "eab_0123456789ab", "sessionContext": { "credential": "acmeBinding", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false }, "invokedBy": null } },
+      { "name": "the platform isn't a binding owner", "userIdentity": { "type": "EzghService", "principalId": null, "userName": null, "isRoot": false, "accessKeyId": "eab_0123456789ab", "sessionContext": { "credential": "acmeBinding", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false }, "invokedBy": "certificates.ezghcloud.com" } },
+      { "name": "no one is behind a binding but its owner", "userIdentity": { "type": "Bot", "principalId": "0199a3c4-0d1e-7f20-8a3b-4c5d6e7f8091", "userName": "deployer", "isRoot": false, "accessKeyId": "eab_0123456789ab", "sessionContext": { "credential": "acmeBinding", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false, "sourceIdentity": { "type": "SsoUser", "principalId": "0199a3c4-3a4b-7c5d-8e6f-7a8b9c0d1e2f", "userName": "ada@acme.example" } }, "invokedBy": null } },
+      { "name": "a binding has no directory", "userIdentity": { "type": "User", "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "ada@acme.test", "isRoot": false, "accessKeyId": "eab_0123456789ab", "sessionContext": { "credential": "acmeBinding", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false, "directoryId": "0199a3c4-4b5c-7d6e-8f70-8a9b0c1d2e3f" }, "invokedBy": null } },
+      { "name": "a binding has no session", "userIdentity": { "type": "User", "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "ada@acme.test", "isRoot": false, "accessKeyId": "eab_0123456789ab", "sessionContext": { "credential": "acmeBinding", "sessionIssuedAt": "2026-09-29T08:00:00.000Z", "ssoProviderId": null, "mfaAuthenticated": false }, "invokedBy": null } },
+      { "name": "a binding isn't an OAuth client", "userIdentity": { "type": "User", "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "ada@acme.test", "isRoot": false, "accessKeyId": "eab_0123456789ab", "sessionContext": { "credential": "acmeBinding", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false, "clientId": "ezgh-cli" }, "invokedBy": null } },
+      { "name": "a binding has no MFA", "userIdentity": { "type": "User", "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "ada@acme.test", "isRoot": false, "accessKeyId": "eab_0123456789ab", "sessionContext": { "credential": "acmeBinding", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": true }, "invokedBy": null } }
+    ]
+  },
+  "s3AccessKey": {
+    "identities": [
+      { "name": "a user owner, as principal-batch answers it: the key names itself", "owner": { "type": "User", "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "ada@acme.test", "isRoot": false, "accessKeyId": null, "sessionContext": null, "invokedBy": null }, "key": "oak_0123456789ab", "expected": { "type": "User", "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "ada@acme.test", "isRoot": false, "accessKeyId": "oak_0123456789ab", "sessionContext": { "credential": "s3AccessKey", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false }, "invokedBy": null } },
+      { "name": "the organization's root user", "owner": { "type": "Root", "principalId": "rtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "owner@acme.test", "isRoot": true, "accessKeyId": null, "sessionContext": null, "invokedBy": null }, "key": "oak_0123456789ab", "expected": { "type": "Root", "principalId": "rtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "owner@acme.test", "isRoot": true, "accessKeyId": "oak_0123456789ab", "sessionContext": { "credential": "s3AccessKey", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false }, "invokedBy": null } },
+      { "name": "a bot owner", "owner": { "type": "Bot", "principalId": "0199a3c4-0d1e-7f20-8a3b-4c5d6e7f8091", "userName": "deployer", "isRoot": false, "accessKeyId": null, "sessionContext": null, "invokedBy": null }, "key": "oak_0123456789ab", "expected": { "type": "Bot", "principalId": "0199a3c4-0d1e-7f20-8a3b-4c5d6e7f8091", "userName": "deployer", "isRoot": false, "accessKeyId": "oak_0123456789ab", "sessionContext": { "credential": "s3AccessKey", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false }, "invokedBy": null } },
+      { "name": "an owner identity that came with an API key keeps none of it", "owner": { "type": "Bot", "principalId": "0199a3c4-0d1e-7f20-8a3b-4c5d6e7f8091", "userName": "deployer", "isRoot": false, "accessKeyId": "0199a3c4-1e2f-7a31-9b4c-5d6e7f809102", "sessionContext": { "credential": "apiKey", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false }, "invokedBy": null }, "key": "oak_0123456789ab", "expected": { "type": "Bot", "principalId": "0199a3c4-0d1e-7f20-8a3b-4c5d6e7f8091", "userName": "deployer", "isRoot": false, "accessKeyId": "oak_0123456789ab", "sessionContext": { "credential": "s3AccessKey", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false }, "invokedBy": null } },
+      { "name": "a person's OAuth session is dropped too", "owner": { "type": "User", "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "ada@acme.test", "isRoot": false, "accessKeyId": null, "sessionContext": { "credential": "oauth", "sessionIssuedAt": "2026-09-29T08:00:00.000Z", "ssoProviderId": null, "mfaAuthenticated": true, "clientId": "ezgh-cli" }, "invokedBy": null }, "key": "oak_0123456789ab", "expected": { "type": "User", "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "ada@acme.test", "isRoot": false, "accessKeyId": "oak_0123456789ab", "sessionContext": { "credential": "s3AccessKey", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false }, "invokedBy": null } },
+      { "name": "a directory user never owns an access key", "owner": { "type": "SsoUser", "principalId": "0199a3c4-3a4b-7c5d-8e6f-7a8b9c0d1e2f", "userName": "ada@acme.example", "isRoot": false, "accessKeyId": null, "sessionContext": null, "invokedBy": null }, "key": "oak_0123456789ab", "expected": null },
+      { "name": "an ingest key never owns an access key", "owner": { "type": "IngestKey", "principalId": "0199a3c4-2f30-7b42-8c5d-6e7f8091a2b3", "userName": null, "isRoot": false, "accessKeyId": "0199a3c4-2f30-7b42-8c5d-6e7f8091a2b3", "sessionContext": null, "invokedBy": null }, "key": "oak_0123456789ab", "expected": null },
+      { "name": "the platform never owns an access key", "owner": { "type": "EzghService", "principalId": null, "userName": null, "isRoot": false, "accessKeyId": null, "sessionContext": null, "invokedBy": "certificates.ezghcloud.com" }, "key": "oak_0123456789ab", "expected": null },
+      { "name": "the access key is an oak_ slug", "owner": { "type": "User", "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "ada@acme.test", "isRoot": false, "accessKeyId": null, "sessionContext": null, "invokedBy": null }, "key": "0199a3c4-1e2f-7a31-9b4c-5d6e7f809102", "expected": null },
+      { "name": "an oak_ slug has 12 characters", "owner": { "type": "User", "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "ada@acme.test", "isRoot": false, "accessKeyId": null, "sessionContext": null, "invokedBy": null }, "key": "oak_0123456789abc", "expected": null }
+    ],
+    "valid": [
+      { "name": "a user's access key", "userIdentity": { "type": "User", "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "ada@acme.test", "isRoot": false, "accessKeyId": "oak_0123456789ab", "sessionContext": { "credential": "s3AccessKey", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false }, "invokedBy": null } },
+      { "name": "the root user's access key", "userIdentity": { "type": "Root", "principalId": "rtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "owner@acme.test", "isRoot": true, "accessKeyId": "oak_0123456789ab", "sessionContext": { "credential": "s3AccessKey", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false }, "invokedBy": null } },
+      { "name": "a bot's access key", "userIdentity": { "type": "Bot", "principalId": "0199a3c4-0d1e-7f20-8a3b-4c5d6e7f8091", "userName": "deployer", "isRoot": false, "accessKeyId": "oak_0123456789ab", "sessionContext": { "credential": "s3AccessKey", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false }, "invokedBy": null } },
+      { "name": "clientId may be null", "userIdentity": { "type": "User", "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "ada@acme.test", "isRoot": false, "accessKeyId": "oak_0123456789ab", "sessionContext": { "credential": "s3AccessKey", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false, "clientId": null }, "invokedBy": null } }
+    ],
+    "invalid": [
+      { "name": "an S3 access key names itself", "userIdentity": { "type": "User", "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "ada@acme.test", "isRoot": false, "accessKeyId": null, "sessionContext": { "credential": "s3AccessKey", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false }, "invokedBy": null } },
+      { "name": "the access key, not an API key", "userIdentity": { "type": "User", "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "ada@acme.test", "isRoot": false, "accessKeyId": "ezgh_0123456789abcdefghijABCDEFGHIJklmnopqrst", "sessionContext": { "credential": "s3AccessKey", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false }, "invokedBy": null } },
+      { "name": "another type's slug", "userIdentity": { "type": "User", "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "ada@acme.test", "isRoot": false, "accessKeyId": "pca_0123456789ab", "sessionContext": { "credential": "s3AccessKey", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false }, "invokedBy": null } },
+      { "name": "an ingest key isn't an access key owner", "userIdentity": { "type": "IngestKey", "principalId": "0199a3c4-2f30-7b42-8c5d-6e7f8091a2b3", "userName": null, "isRoot": false, "accessKeyId": "oak_0123456789ab", "sessionContext": { "credential": "s3AccessKey", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false }, "invokedBy": null } },
+      { "name": "a directory user isn't an access key owner", "userIdentity": { "type": "SsoUser", "principalId": "0199a3c4-3a4b-7c5d-8e6f-7a8b9c0d1e2f", "userName": "ada@acme.example", "isRoot": false, "accessKeyId": "oak_0123456789ab", "sessionContext": { "credential": "s3AccessKey", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false }, "invokedBy": null } },
+      { "name": "the platform isn't an access key owner", "userIdentity": { "type": "EzghService", "principalId": null, "userName": null, "isRoot": false, "accessKeyId": "oak_0123456789ab", "sessionContext": { "credential": "s3AccessKey", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false }, "invokedBy": "certificates.ezghcloud.com" } },
+      { "name": "no one is behind an access key but its owner", "userIdentity": { "type": "Bot", "principalId": "0199a3c4-0d1e-7f20-8a3b-4c5d6e7f8091", "userName": "deployer", "isRoot": false, "accessKeyId": "oak_0123456789ab", "sessionContext": { "credential": "s3AccessKey", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false, "sourceIdentity": { "type": "SsoUser", "principalId": "0199a3c4-3a4b-7c5d-8e6f-7a8b9c0d1e2f", "userName": "ada@acme.example" } }, "invokedBy": null } },
+      { "name": "an access key has no directory", "userIdentity": { "type": "User", "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "ada@acme.test", "isRoot": false, "accessKeyId": "oak_0123456789ab", "sessionContext": { "credential": "s3AccessKey", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false, "directoryId": "0199a3c4-4b5c-7d6e-8f70-8a9b0c1d2e3f" }, "invokedBy": null } },
+      { "name": "an access key has no session", "userIdentity": { "type": "User", "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "ada@acme.test", "isRoot": false, "accessKeyId": "oak_0123456789ab", "sessionContext": { "credential": "s3AccessKey", "sessionIssuedAt": "2026-09-29T08:00:00.000Z", "ssoProviderId": null, "mfaAuthenticated": false }, "invokedBy": null } },
+      { "name": "an access key isn't an OAuth client", "userIdentity": { "type": "User", "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "ada@acme.test", "isRoot": false, "accessKeyId": "oak_0123456789ab", "sessionContext": { "credential": "s3AccessKey", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": false, "clientId": "ezgh-cli" }, "invokedBy": null } },
+      { "name": "an access key has no MFA", "userIdentity": { "type": "User", "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "ada@acme.test", "isRoot": false, "accessKeyId": "oak_0123456789ab", "sessionContext": { "credential": "s3AccessKey", "sessionIssuedAt": null, "ssoProviderId": null, "mfaAuthenticated": true }, "invokedBy": null } }
+    ]
+  },
+  "delegatedCalls": [
+    {"name": "allowed: recorded with the customer's identity, invokedBy and userAgent the calling service", "orgApi": {"status": 200, "results": [true]}, "caller": "compute", "answerIdentity": {"type": "User", "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "ada@acme.test", "isRoot": false, "accessKeyId": null, "sessionContext": {"credential": "session", "sessionIssuedAt": "2026-10-15T07:30:00.000Z", "ssoProviderId": null, "mfaAuthenticated": false}, "invokedBy": null}, "receiverStatus": 200, "recorded": true, "userIdentity": {"type": "User", "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "ada@acme.test", "isRoot": false, "accessKeyId": null, "sessionContext": {"credential": "session", "sessionIssuedAt": "2026-10-15T07:30:00.000Z", "ssoProviderId": null, "mfaAuthenticated": false}, "invokedBy": "compute.ezghcloud.com"}, "userAgent": "compute.ezghcloud.com"},
+    {"name": "refused by IAM: recorded", "orgApi": {"status": 200, "results": [false]}, "caller": "compute", "answerIdentity": {"type": "User", "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "ada@acme.test", "isRoot": false, "accessKeyId": null, "sessionContext": {"credential": "session", "sessionIssuedAt": "2026-10-15T07:30:00.000Z", "ssoProviderId": null, "mfaAuthenticated": false}, "invokedBy": null}, "receiverStatus": 403, "recorded": true, "userIdentity": {"type": "User", "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "ada@acme.test", "isRoot": false, "accessKeyId": null, "sessionContext": {"credential": "session", "sessionIssuedAt": "2026-10-15T07:30:00.000Z", "ssoProviderId": null, "mfaAuthenticated": false}, "invokedBy": "compute.ezghcloud.com"}, "userAgent": "compute.ezghcloud.com"},
+    {"name": "relayed: invokedBy is the service that called the receiver", "orgApi": {"status": 200, "results": [true]}, "caller": "blockstore", "answerIdentity": {"type": "User", "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "ada@acme.test", "isRoot": false, "accessKeyId": null, "sessionContext": {"credential": "session", "sessionIssuedAt": "2026-10-15T07:30:00.000Z", "ssoProviderId": null, "mfaAuthenticated": false}, "invokedBy": null}, "receiverStatus": 200, "recorded": true, "userIdentity": {"type": "User", "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "ada@acme.test", "isRoot": false, "accessKeyId": null, "sessionContext": {"credential": "session", "sessionIssuedAt": "2026-10-15T07:30:00.000Z", "ssoProviderId": null, "mfaAuthenticated": false}, "invokedBy": "blockstore.ezghcloud.com"}, "userAgent": "blockstore.ezghcloud.com"},
+    {"name": "a check not delegable: not recorded", "orgApi": {"status": 200, "results": [null]}, "caller": "compute", "receiverStatus": 403, "recorded": false},
+    {"name": "the credential ended: not recorded", "orgApi": {"status": 401, "code": "caller_unauthenticated"}, "caller": "compute", "receiverStatus": 401, "recorded": false},
+    {"name": "an organization probe: not recorded", "orgApi": {"status": 404, "code": "not_found"}, "caller": "compute", "receiverStatus": 404, "recorded": false},
+    {"name": "a bad reference: not recorded", "orgApi": {"status": 400, "code": "invalid_request", "issues": ["reference"]}, "caller": "compute", "receiverStatus": 400, "recorded": false},
+    {"name": "the allowlist refuses: not recorded", "orgApi": {"status": 403, "code": "delegation_forbidden"}, "caller": "compute", "receiverStatus": 403, "recorded": false},
+    {"name": "org-api unavailable: not recorded", "orgApi": {"status": 503, "code": "unavailable"}, "caller": "compute", "receiverStatus": 503, "recorded": false},
+    {"name": "an earlier check allowed, then the credential ended: not recorded", "earlier": [{"status": 200, "results": [true]}], "orgApi": {"status": 401, "code": "caller_unauthenticated"}, "caller": "compute", "receiverStatus": 401, "recorded": false},
+    {"name": "an earlier check allowed, then one not delegable: not recorded", "earlier": [{"status": 200, "results": [true]}], "orgApi": {"status": 200, "results": [null]}, "caller": "compute", "receiverStatus": 403, "recorded": false},
+    {"name": "an earlier check allowed, then org-api unavailable: not recorded", "earlier": [{"status": 200, "results": [true]}], "orgApi": {"status": 503, "code": "unavailable"}, "caller": "compute", "receiverStatus": 503, "recorded": false},
+    {"name": "an earlier check allowed, then one refused by IAM: recorded", "earlier": [{"status": 200, "results": [true]}], "orgApi": {"status": 200, "results": [false]}, "caller": "compute", "answerIdentity": {"type": "User", "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "ada@acme.test", "isRoot": false, "accessKeyId": null, "sessionContext": {"credential": "session", "sessionIssuedAt": "2026-10-15T07:30:00.000Z", "ssoProviderId": null, "mfaAuthenticated": false}, "invokedBy": null}, "receiverStatus": 403, "recorded": true, "userIdentity": {"type": "User", "principalId": "jtMJXwL0R8aB3cD4eF5gH6iJ", "userName": "ada@acme.test", "isRoot": false, "accessKeyId": null, "sessionContext": {"credential": "session", "sessionIssuedAt": "2026-10-15T07:30:00.000Z", "ssoProviderId": null, "mfaAuthenticated": false}, "invokedBy": "compute.ezghcloud.com"}, "userAgent": "compute.ezghcloud.com"}
+  ]
+}

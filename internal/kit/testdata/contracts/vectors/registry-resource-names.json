@@ -1,0 +1,21 @@
+{
+  "description": "Scope patterns on registry repositories. Repository names are exactly <scope>/<image>, which is what keeps a scope grant inside its scope. A pull-through cache repository (\"cache\": true) is named <prefix>/<namespace>/<repository>, three components for Docker Hub; a scope pattern also matches a cached upstream namespace of the same name, which the owner accepted (2026-10-23).",
+  "cases": [
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:rep_*/team-a/*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:rep_7m2k9q4x0a1b/team-a/api", "matches": true },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:rep_*/team-a/*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:rep_7m2k9q4x0a1b/team-ab/api", "matches": false },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:rep_*/team-a/*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:rep_7m2k9q4x0a1b/team-b/team-a", "matches": false },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:rep_*/team-a/*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:rep_7m2k9q4x0a1b/x-team-a/api", "matches": false },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:rep_*/team-a/api", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:rep_7m2k9q4x0a1b/team-a/api", "matches": true },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:rep_*/team-a/api", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:rep_7m2k9q4x0a1b/team-a/api-v2", "matches": false },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:rep_7m2k9q4x0a1b/team-b/api", "matches": true },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_zzzzzzzzzzzz:rep_*/team-a/*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:rep_7m2k9q4x0a1b/team-a/api", "matches": false },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:rep_*/docker-hub/*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:rep_7m2k9q4x0a1b/docker-hub/library/nginx", "matches": true, "cache": true },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:rep_*/docker-hub/library/*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:rep_7m2k9q4x0a1b/docker-hub/library/nginx", "matches": true, "cache": true },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:rep_*/docker-hub/library/*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:rep_7m2k9q4x0a1b/docker-hub/bitnami/redis", "matches": false, "cache": true },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:rep_*/docker-hub/bitnami/redis", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:rep_7m2k9q4x0a1b/docker-hub/bitnami/redis", "matches": true, "cache": true },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:rep_*/team-a/*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:rep_7m2k9q4x0a1b/docker-hub/team-a/x", "matches": true, "cache": true, "note": "accepted: cache namespace equal to a scope" },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:rep_*/team-a/*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:rep_7m2k9q4x0a1b/docker-hub/team-ab/x", "matches": false, "cache": true },
+    { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:rep_*/team-a/*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:rep_7m2k9q4x0a1b/docker-hub/team-b/team-a", "matches": false, "cache": true }
+  ],
+  "unsafeIfDeeperNames": { "pattern": "ezgh:*:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:rep_*/team-a/*", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:rep_7m2k9q4x0a1b/team-b/x/team-a/y", "matches": true }
+}

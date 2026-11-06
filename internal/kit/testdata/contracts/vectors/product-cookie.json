@@ -1,0 +1,84 @@
+{
+  "description": "[being built] A product's own edge cookie (contracts/identity-and-authz.md, \"Product cookies\"): with the cookie named cookieName, the credential is that cookie's EZGH SSO resource token, forwarded as authorization (\"Bearer <token>\"); every other cookie and the request's Authorization header are ignored. null: 401 without asking org-api. Reference: scripts/lib/customer-credentials.mjs productCookieCredential.",
+  "cookieName": "__Host-mcp_portal",
+  "cases": [
+    {
+      "name": "the portal's cookie",
+      "cookie": "__Host-mcp_portal=ezgh_sat_0123456789abcdefghijABCDEFGHIJklmnopqrstuvw",
+      "authorization": null,
+      "expected": "Bearer ezgh_sat_0123456789abcdefghijABCDEFGHIJklmnopqrstuvw"
+    },
+    {
+      "name": "among other cookies",
+      "cookie": "theme=dark; __Host-mcp_portal=ezgh_sat_0123456789abcdefghijABCDEFGHIJklmnopqrstuvw; __Host-mcp_portal_state=abc",
+      "authorization": null,
+      "expected": "Bearer ezgh_sat_0123456789abcdefghijABCDEFGHIJklmnopqrstuvw"
+    },
+    {
+      "name": "an Authorization header is ignored",
+      "cookie": "__Host-mcp_portal=ezgh_sat_0123456789abcdefghijABCDEFGHIJklmnopqrstuvw",
+      "authorization": "Bearer ezgh_0123456789abcdefghijABCDEFGHIJklmnopqrst",
+      "expected": "Bearer ezgh_sat_0123456789abcdefghijABCDEFGHIJklmnopqrstuvw"
+    },
+    {
+      "name": "an Authorization header alone isn't the cookie",
+      "cookie": null,
+      "authorization": "Bearer ezgh_sat_0123456789abcdefghijABCDEFGHIJklmnopqrstuvw",
+      "expected": null
+    },
+    {
+      "name": "no cookie",
+      "cookie": "theme=dark",
+      "authorization": null,
+      "expected": null
+    },
+    {
+      "name": "the platform's session cookie isn't the product's",
+      "cookie": "__Secure-better-auth.session_token=abc.def",
+      "authorization": null,
+      "expected": null
+    },
+    {
+      "name": "an API key in the cookie",
+      "cookie": "__Host-mcp_portal=ezgh_0123456789abcdefghijABCDEFGHIJklmnopqrst",
+      "authorization": null,
+      "expected": null
+    },
+    {
+      "name": "an OAuth access token in the cookie",
+      "cookie": "__Host-mcp_portal=ezgh_at_0123456789abcdefghijABCDEFGHIJklmnopqrstuvw",
+      "authorization": null,
+      "expected": null
+    },
+    {
+      "name": "a truncated token",
+      "cookie": "__Host-mcp_portal=ezgh_sat_0123456789abcdefghijABCDEFGHIJklmnopqrstuv",
+      "authorization": null,
+      "expected": null
+    },
+    {
+      "name": "Bearer in the cookie",
+      "cookie": "__Host-mcp_portal=Bearer%20ezgh_sat_0123456789abcdefghijABCDEFGHIJklmnopqrstuvw",
+      "authorization": null,
+      "expected": null
+    },
+    {
+      "name": "the cookie twice",
+      "cookie": "__Host-mcp_portal=ezgh_sat_0123456789abcdefghijABCDEFGHIJklmnopqrstuvw; __Host-mcp_portal=ezgh_sat_0123456789abcdefghijABCDEFGHIJklmnopqrstuvw",
+      "authorization": null,
+      "expected": null
+    },
+    {
+      "name": "another product's cookie name",
+      "cookie": "__Host-other_portal=ezgh_sat_0123456789abcdefghijABCDEFGHIJklmnopqrstuvw",
+      "authorization": null,
+      "expected": null
+    },
+    {
+      "name": "the name without __Host-",
+      "cookie": "mcp_portal=ezgh_sat_0123456789abcdefghijABCDEFGHIJklmnopqrstuvw",
+      "authorization": null,
+      "expected": null
+    }
+  ]
+}

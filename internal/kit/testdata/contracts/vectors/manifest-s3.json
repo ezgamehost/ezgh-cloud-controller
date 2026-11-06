@@ -1,0 +1,58 @@
+{
+  "description": "[being built] The S3 host: S3's protocol on s3.<region>.ezghapps.com and its virtual-hosted buckets, reserved to namespace objects (contracts/registration.md, \"The S3 host\"). manifest is a valid excerpt (Object Storage, its API on objects.ezghcloud.com, with the plan's IAM table, principal checks and bot lookups); each case changes it as scripts/lib/manifest-cases.mjs does, and an invalid case's issue is a path both scripts/lib/manifest.mjs and the Go kit's manifest.Check report.",
+  "manifest": {
+    "manifestVersion": 1,
+    "namespace": "objects",
+    "displayName": "Object Storage",
+    "description": "S3-compatible object storage.",
+    "orgApi": { "operations": ["permissions.batch", "permissions.principalBatch", "instanceBots.lookup"] },
+    "api": { "hostname": "objects.ezghcloud.com", "port": 8400 },
+    "s3": { "domain": "s3.us-west-1.ezghapps.com", "port": 8401 },
+    "resourceTypes": [
+      { "name": "bucket", "prefix": "bkt", "parent": "project", "regional": true, "description": "A bucket of objects." },
+      { "name": "accessKey", "prefix": "oak", "parent": "project", "regional": true, "description": "An S3 access key." }
+    ],
+    "managedPolicies": [
+      { "name": "ObjectsFullAccess", "description": "Manage buckets, objects and access keys." },
+      { "name": "ObjectsReadWriteAccess", "description": "Read and write objects." },
+      { "name": "ObjectsReadOnlyAccess", "description": "View buckets and access keys." }
+    ],
+    "actions": [
+      { "id": "objects.buckets.list", "description": "List buckets", "resource": "project", "accessLevel": "list", "managedPolicies": ["ReadOnlyAccess", "ObjectsFullAccess", "ObjectsReadWriteAccess", "ObjectsReadOnlyAccess"] },
+      { "id": "objects.buckets.create", "description": "Create buckets", "resource": "project", "accessLevel": "write", "managedPolicies": ["ObjectsFullAccess"] },
+      { "id": "objects.buckets.get", "description": "View buckets", "resource": "bucket", "accessLevel": "read", "managedPolicies": ["ReadOnlyAccess", "ObjectsFullAccess", "ObjectsReadWriteAccess", "ObjectsReadOnlyAccess"] },
+      { "id": "objects.buckets.update", "description": "Change bucket settings", "resource": "bucket", "accessLevel": "write", "managedPolicies": ["ObjectsFullAccess"] },
+      { "id": "objects.buckets.delete", "description": "Delete buckets", "resource": "bucket", "accessLevel": "write", "managedPolicies": ["ObjectsFullAccess"] },
+      { "id": "objects.objects.list", "description": "List objects", "resource": "bucket", "accessLevel": "list", "managedPolicies": ["ReadOnlyAccess", "ObjectsFullAccess", "ObjectsReadWriteAccess", "ObjectsReadOnlyAccess"] },
+      { "id": "objects.objects.upload", "description": "Upload objects", "resource": "bucket", "accessLevel": "write", "managedPolicies": ["ObjectsFullAccess", "ObjectsReadWriteAccess"] },
+      { "id": "objects.objects.download", "description": "Download objects", "resource": "bucket", "accessLevel": "write", "managedPolicies": ["ObjectsFullAccess", "ObjectsReadWriteAccess"] },
+      { "id": "objects.objects.delete", "description": "Delete objects", "resource": "bucket", "accessLevel": "write", "managedPolicies": ["ObjectsFullAccess", "ObjectsReadWriteAccess"] },
+      { "id": "objects.accessKeys.list", "description": "List access keys", "resource": "project", "accessLevel": "list", "managedPolicies": ["ReadOnlyAccess", "ObjectsFullAccess", "ObjectsReadWriteAccess", "ObjectsReadOnlyAccess"] },
+      { "id": "objects.accessKeys.get", "description": "View access keys", "resource": "accessKey", "accessLevel": "read", "managedPolicies": ["ReadOnlyAccess", "ObjectsFullAccess", "ObjectsReadWriteAccess", "ObjectsReadOnlyAccess"] },
+      { "id": "objects.accessKeys.create", "description": "Create access keys", "resource": "project", "accessLevel": "write", "managedPolicies": ["ObjectsFullAccess"] },
+      { "id": "objects.accessKeys.revoke", "description": "Revoke access keys", "resource": "accessKey", "accessLevel": "write", "managedPolicies": ["ObjectsFullAccess"] }
+    ],
+    "endpoints": [
+      { "method": "GET", "path": "/health", "auth": "none", "trail": null },
+      { "method": "GET", "path": "/ready", "auth": "none", "trail": null },
+      { "method": "GET", "path": "/openapi.json", "auth": "none", "trail": null }
+    ],
+    "quotas": []
+  },
+  "cases": [
+    { "name": "the base is valid", "valid": true },
+    { "name": "no S3 host: the block is optional", "manifest": { "s3": null }, "valid": true },
+    { "name": "another region's S3 host", "manifest": { "s3": { "domain": "s3.eu-central-1.ezghapps.com", "port": 8401 } }, "valid": true },
+
+    { "name": "the S3 host stays off ezghcloud.com", "manifest": { "s3": { "domain": "s3.us-west-1.ezghcloud.com", "port": 8401 } }, "issue": "s3.domain", "valid": false },
+    { "name": "the S3 host stays off ezgh.app", "manifest": { "s3": { "domain": "s3.us-west-1.ezgh.app", "port": 8401 } }, "issue": "s3.domain", "valid": false },
+    { "name": "the S3 host names its region", "manifest": { "s3": { "domain": "s3.ezghapps.com", "port": 8401 } }, "issue": "s3.domain", "valid": false },
+    { "name": "the domain is the S3 endpoint, not a bucket's host", "manifest": { "s3": { "domain": "photos.s3.us-west-1.ezghapps.com", "port": 8401 } }, "issue": "s3.domain", "valid": false },
+    { "name": "S3 port must differ from the API port", "manifest": { "s3": { "domain": "s3.us-west-1.ezghapps.com", "port": 8400 } }, "issue": "s3.port", "valid": false },
+    { "name": "S3 port is 1024-65535", "manifest": { "s3": { "domain": "s3.us-west-1.ezghapps.com", "port": 443 } }, "issue": "s3.port", "valid": false },
+    { "name": "the S3 host is reserved to namespace objects", "manifest": { "namespace": "widgets", "api": { "hostname": "widgets.ezghcloud.com", "port": 8400 } }, "issue": "s3", "valid": false },
+    { "name": "no endpoint is on the S3 host: its operations are S3's", "add": [{ "method": "GET", "path": "/buckets", "host": "s3", "auth": "none", "trail": null }], "issue": "endpoints.3.host", "valid": false },
+    { "name": "only namespaces certificates and objects declare principal checks", "manifest": { "namespace": "widgets", "api": { "hostname": "widgets.ezghcloud.com", "port": 8400 }, "s3": null }, "issue": "orgApi.operations.1", "valid": false },
+    { "name": "namespace objects looks bots up but never mints their keys", "manifest": { "orgApi": { "operations": ["instanceBots.mint"] } }, "issue": "orgApi.operations.0", "valid": false }
+  ]
+}

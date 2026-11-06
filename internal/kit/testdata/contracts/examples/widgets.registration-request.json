@@ -1,0 +1,23 @@
+{
+  "registrationVersion": 1,
+  "namespace": "widgets",
+  "displayName": "Widgets",
+  "description": "The example product: widgets that run inside a project and are billed by the second they run.",
+  "resourceTypes": [
+    { "name": "widget", "prefix": "wgt", "parent": "project", "regional": true, "description": "A widget: small or large, running or stopped." }
+  ],
+  "managedPolicies": [
+    { "name": "WidgetsFullAccess", "description": "Create, change, start, stop and delete widgets." },
+    { "name": "WidgetsReadOnlyAccess", "description": "View widgets and their operations." }
+  ],
+  "actions": [
+    { "id": "widgets.widgets.list", "description": "List widgets", "resource": "project", "accessLevel": "list", "managedPolicies": ["ReadOnlyAccess", "WidgetsFullAccess", "WidgetsReadOnlyAccess"] },
+    { "id": "widgets.widgets.get", "description": "View widgets and their operations", "resource": "widget", "accessLevel": "read", "managedPolicies": ["ReadOnlyAccess", "WidgetsFullAccess", "WidgetsReadOnlyAccess"] },
+    { "id": "widgets.widgets.create", "description": "Create widgets", "resource": "project", "accessLevel": "write", "managedPolicies": ["WidgetsFullAccess"] },
+    { "id": "widgets.widgets.update", "description": "Rename, resize and tag widgets", "resource": "widget", "accessLevel": "write", "managedPolicies": ["WidgetsFullAccess"] },
+    { "id": "widgets.widgets.start", "description": "Start widgets", "resource": "widget", "accessLevel": "write", "managedPolicies": ["WidgetsFullAccess"] },
+    { "id": "widgets.widgets.stop", "description": "Stop widgets", "resource": "widget", "accessLevel": "write", "managedPolicies": ["WidgetsFullAccess"] },
+    { "id": "widgets.widgets.delete", "description": "Delete widgets", "resource": "widget", "accessLevel": "write", "managedPolicies": ["WidgetsFullAccess"] },
+    { "id": "widgets.operations.list", "description": "List widget operations", "resource": "organization", "accessLevel": "list", "managedPolicies": ["ReadOnlyAccess", "WidgetsFullAccess", "WidgetsReadOnlyAccess"] }
+  ]
+}

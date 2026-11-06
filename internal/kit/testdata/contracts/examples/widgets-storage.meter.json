@@ -1,0 +1,22 @@
+{
+  "id": "widgets.widget.storage",
+  "version": 1,
+  "service": "widgets",
+  "displayName": "Widget storage",
+  "producers": [
+    "widgets"
+  ],
+  "kind": "gauge",
+  "unit": "byte",
+  "aggregation": "twa",
+  "window": "hour",
+  "resourceType": "wgt",
+  "global": false,
+  "dimensions": {},
+  "maxQuantity": "1000000000000000",
+  "maxGap": "PT3H",
+  "expectedCadence": "PT1H",
+  "lossTolerant": false,
+  "reconciliationTolerance": "0",
+  "status": "shadow"
+}

@@ -1,0 +1,3739 @@
+{
+  "components": {
+    "headers": {
+      "Retry-After": {
+        "description": "Whole seconds to wait before retrying. Never on quota_exceeded.",
+        "schema": {
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "X-Request-Id": {
+        "description": "The request's ID, in every log line and its Trails event.",
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "parameters": {
+      "Cursor": {
+        "description": "The previous page's nextCursor. Bound to the organization, the list and its filters.",
+        "in": "query",
+        "name": "cursor",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "IdempotencyKey": {
+        "description": "Makes a retry safe: the same key and request get the stored response.",
+        "in": "header",
+        "name": "Idempotency-Key",
+        "required": false,
+        "schema": {
+          "pattern": "^[\\x21-\\x7e]{1,200}$",
+          "type": "string"
+        }
+      },
+      "Limit": {
+        "description": "The page size. Out of range is 400, never a clamp.",
+        "in": "query",
+        "name": "limit",
+        "required": false,
+        "schema": {
+          "default": 20,
+          "maximum": 100,
+          "minimum": 1,
+          "type": "integer"
+        }
+      }
+    },
+    "responses": {
+      "AccessDenied": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "access_denied: the caller's policies don't allow the action; forbidden_origin: a cookie-authenticated write from an origin that isn't allowed; spend_limit_reached.",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        }
+      },
+      "Conflict": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "quota_exceeded (an allocation quota, with quota), idempotency_conflict, idempotency_in_progress (with Retry-After), organization_deletion_pending, operation_in_progress, or the endpoint's own 409 codes.",
+        "headers": {
+          "Retry-After": {
+            "$ref": "#/components/headers/Retry-After"
+          },
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        }
+      },
+      "InternalError": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "internal_error: a bug; the details are in the logs, under the request ID.",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        }
+      },
+      "InvalidRequest": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "invalid_request (with issues), invalid_cursor, or the endpoint's own 400 codes.",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        }
+      },
+      "NotFound": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "not_found: unknown, malformed, or in an organization the caller isn't in.",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        }
+      },
+      "Operation": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Operation"
+            }
+          }
+        },
+        "description": "The operation, which Location names; poll it until it finishes.",
+        "headers": {
+          "Location": {
+            "description": "The operation's path.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "Retry-After": {
+            "$ref": "#/components/headers/Retry-After"
+          }
+        }
+      },
+      "PayloadTooLarge": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "payload_too_large: the body is over the endpoint's limit (1 MiB unless it says otherwise).",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        }
+      },
+      "TooManyRequests": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "too_many_requests, with Retry-After; or quota_exceeded (a rate, usage or concurrency quota, with quota), never with Retry-After.",
+        "headers": {
+          "Retry-After": {
+            "$ref": "#/components/headers/Retry-After"
+          },
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        }
+      },
+      "Unauthenticated": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "unauthenticated: no credential, or one that doesn't check out.",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        }
+      },
+      "Unavailable": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "unavailable: a dependency the request needs is down. Retry after Retry-After.",
+        "headers": {
+          "Retry-After": {
+            "$ref": "#/components/headers/Retry-After"
+          },
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Action": {
+        "additionalProperties": false,
+        "description": "type names the one of forward, redirect and fixedResponse that is set; the others are null.",
+        "properties": {
+          "fixedResponse": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/FixedResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "forward": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Forward"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "redirect": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Redirect"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "type": {
+            "enum": [
+              "forward",
+              "redirect",
+              "fixedResponse"
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "forward",
+          "redirect",
+          "fixedResponse"
+        ],
+        "type": "object"
+      },
+      "ActionInput": {
+        "additionalProperties": false,
+        "description": "type names the one of forward, redirect and fixedResponse that is set; the others are null.",
+        "properties": {
+          "fixedResponse": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/FixedResponseInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "forward": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ForwardInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "redirect": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/RedirectInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "type": {
+            "enum": [
+              "forward",
+              "redirect",
+              "fixedResponse"
+            ]
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "type": "object"
+      },
+      "Error": {
+        "additionalProperties": false,
+        "description": "Every non-2xx answer. Clients branch on code, never on message.",
+        "properties": {
+          "error": {
+            "additionalProperties": true,
+            "properties": {
+              "code": {
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9_]*$",
+                "type": "string"
+              },
+              "issues": {
+                "description": "invalid_request: one entry per problem, at a dotted path.",
+                "items": {
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "path": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "path",
+                    "message"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "message": {
+                "maxLength": 1024,
+                "type": "string"
+              },
+              "quota": {
+                "$ref": "#/components/schemas/QuotaExceeded"
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "type": "object"
+      },
+      "FixedResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "description": "UTF-8, at most 1024 bytes. Default empty.",
+            "type": "string"
+          },
+          "contentType": {
+            "description": "Default text/plain.",
+            "enum": [
+              "text/plain",
+              "text/html",
+              "application/json"
+            ]
+          },
+          "statusCode": {
+            "maximum": 599,
+            "minimum": 200,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "statusCode",
+          "contentType",
+          "body"
+        ],
+        "type": "object"
+      },
+      "FixedResponseInput": {
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "description": "UTF-8, at most 1024 bytes. Default empty.",
+            "type": "string"
+          },
+          "contentType": {
+            "description": "Default text/plain.",
+            "enum": [
+              "text/plain",
+              "text/html",
+              "application/json"
+            ]
+          },
+          "statusCode": {
+            "maximum": 599,
+            "minimum": 200,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "statusCode"
+        ],
+        "type": "object"
+      },
+      "Forward": {
+        "additionalProperties": false,
+        "properties": {
+          "targetGroups": {
+            "description": "Each request picks a group by weight; the sum of weights is above 0.",
+            "items": {
+              "$ref": "#/components/schemas/WeightedTargetGroup"
+            },
+            "maxItems": 5,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "targetGroups"
+        ],
+        "type": "object"
+      },
+      "ForwardInput": {
+        "additionalProperties": false,
+        "properties": {
+          "targetGroups": {
+            "description": "Each request picks a group by weight; the sum of weights is above 0.",
+            "items": {
+              "$ref": "#/components/schemas/WeightedTargetGroupInput"
+            },
+            "maxItems": 5,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "targetGroups"
+        ],
+        "type": "object"
+      },
+      "HealthCheck": {
+        "additionalProperties": false,
+        "properties": {
+          "healthyThreshold": {
+            "type": "integer"
+          },
+          "intervalSeconds": {
+            "type": "integer"
+          },
+          "matcher": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "port": {
+            "description": "Null is the target's own port.",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "protocol": {
+            "enum": [
+              "tcp",
+              "http",
+              "https"
+            ]
+          },
+          "timeoutSeconds": {
+            "type": "integer"
+          },
+          "unhealthyThreshold": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "protocol",
+          "port",
+          "path",
+          "intervalSeconds",
+          "timeoutSeconds",
+          "healthyThreshold",
+          "unhealthyThreshold",
+          "matcher"
+        ],
+        "type": "object"
+      },
+      "HealthCheckInput": {
+        "additionalProperties": false,
+        "properties": {
+          "healthyThreshold": {
+            "type": "integer"
+          },
+          "intervalSeconds": {
+            "type": "integer"
+          },
+          "matcher": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "port": {
+            "description": "Null is the target's own port.",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "protocol": {
+            "enum": [
+              "tcp",
+              "http",
+              "https"
+            ]
+          },
+          "timeoutSeconds": {
+            "type": "integer"
+          },
+          "unhealthyThreshold": {
+            "type": "integer"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "LastChange": {
+        "additionalProperties": false,
+        "properties": {
+          "generation": {
+            "type": "integer"
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "state": {
+            "enum": [
+              "applying",
+              "applied",
+              "not_applied"
+            ]
+          }
+        },
+        "required": [
+          "generation",
+          "state",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "Listener": {
+        "additionalProperties": false,
+        "properties": {
+          "additionalCertificates": {
+            "description": "A tls or https listener's certificates beyond the default, picked by the client's SNI. A list replaces the list.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 24,
+            "type": "array"
+          },
+          "allowedSourceCidrs": {
+            "description": "CIDRs allowed to connect: IPv4, and IPv6 where IPv6 is available. Each family admits only the clients its own ranges cover: a list with no IPv6 range admits no IPv6 client. Defaults to everyone: [\"0.0.0.0/0\"], with \"::/0\" where IPv6 is available.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "type": "array"
+          },
+          "certificate": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "defaultAction": {
+            "description": "An http or https listener's action for a request no rule matches. Null on tcp and tls.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Action"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "idleTimeoutSeconds": {
+            "type": "integer"
+          },
+          "loadBalancer": {
+            "type": "string"
+          },
+          "port": {
+            "type": "integer"
+          },
+          "protocol": {
+            "enum": [
+              "tcp",
+              "tls",
+              "http",
+              "https"
+            ]
+          },
+          "rules": {
+            "description": "Ordered: the first rule that matches a request acts on it, and the default action takes the rest. At most 100. Sent, it replaces the whole list. Empty on tcp and tls.",
+            "items": {
+              "$ref": "#/components/schemas/Rule"
+            },
+            "type": "array"
+          },
+          "targetGroup": {
+            "description": "A tcp or tls listener's target group, and an http or https listener's when its default action forwards to exactly one; else null.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "loadBalancer",
+          "protocol",
+          "port",
+          "targetGroup",
+          "defaultAction",
+          "rules",
+          "idleTimeoutSeconds",
+          "certificate",
+          "allowedSourceCidrs",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "ListenerCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "additionalCertificates": {
+            "description": "A tls or https listener's certificates beyond the default, picked by the client's SNI. A list replaces the list.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 24,
+            "type": "array"
+          },
+          "allowedSourceCidrs": {
+            "description": "CIDRs allowed to connect: IPv4, and IPv6 where IPv6 is available. Each family admits only the clients its own ranges cover: a list with no IPv6 range admits no IPv6 client. Defaults to everyone: [\"0.0.0.0/0\"], with \"::/0\" where IPv6 is available.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "type": "array"
+          },
+          "certificate": {
+            "description": "Required on tls and https.",
+            "type": "string"
+          },
+          "defaultAction": {
+            "$ref": "#/components/schemas/ActionInput",
+            "description": "Required on http and https, unless targetGroup is given. Only http and https listeners take one."
+          },
+          "idleTimeoutSeconds": {
+            "description": "tcp and tls: 60-6000 seconds, default 350. http and https: 1-4000, default 60: the client keep-alive, the server timeout and the WebSocket tunnel timeout.",
+            "type": "integer"
+          },
+          "port": {
+            "type": "integer"
+          },
+          "protocol": {
+            "enum": [
+              "tcp",
+              "tls",
+              "http",
+              "https"
+            ]
+          },
+          "rules": {
+            "description": "Ordered: the first rule that matches a request acts on it, and the default action takes the rest. At most 100. Sent, it replaces the whole list. Only http and https listeners take them.",
+            "items": {
+              "$ref": "#/components/schemas/RuleInput"
+            },
+            "type": "array"
+          },
+          "targetGroup": {
+            "description": "Required on tcp and tls. On http and https, alone, a default action forwarding to it.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "protocol",
+          "port"
+        ],
+        "type": "object"
+      },
+      "ListenerList": {
+        "additionalProperties": false,
+        "properties": {
+          "listeners": {
+            "items": {
+              "$ref": "#/components/schemas/Listener"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "listeners",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "ListenerUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "additionalCertificates": {
+            "description": "A tls or https listener's certificates beyond the default, picked by the client's SNI. A list replaces the list.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 24,
+            "type": "array"
+          },
+          "allowedSourceCidrs": {
+            "description": "CIDRs allowed to connect: IPv4, and IPv6 where IPv6 is available. Each family admits only the clients its own ranges cover: a list with no IPv6 range admits no IPv6 client. Defaults to everyone: [\"0.0.0.0/0\"], with \"::/0\" where IPv6 is available.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "type": "array"
+          },
+          "certificate": {
+            "description": "Required on tls and https.",
+            "type": "string"
+          },
+          "defaultAction": {
+            "$ref": "#/components/schemas/ActionInput",
+            "description": "Only http and https listeners take one."
+          },
+          "idleTimeoutSeconds": {
+            "description": "tcp and tls: 60-6000 seconds, default 350. http and https: 1-4000, default 60: the client keep-alive, the server timeout and the WebSocket tunnel timeout.",
+            "type": "integer"
+          },
+          "port": {
+            "type": "integer"
+          },
+          "protocol": {
+            "description": "Changes only within a layer: tcp and tls, or http and https. To tls or https, a certificate is required; to tcp or http, the certificate goes.",
+            "enum": [
+              "tcp",
+              "tls",
+              "http",
+              "https"
+            ]
+          },
+          "rules": {
+            "description": "Ordered: the first rule that matches a request acts on it, and the default action takes the rest. At most 100. Sent, it replaces the whole list. Only http and https listeners take them.",
+            "items": {
+              "$ref": "#/components/schemas/RuleInput"
+            },
+            "type": "array"
+          },
+          "targetGroup": {
+            "description": "On http and https, alone, a default action forwarding to it.",
+            "type": "string"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "LoadBalancer": {
+        "additionalProperties": false,
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "ipv4Address": {
+            "description": "The load balancer's public IPv4 address, null when it has only IPv6.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ipv6": {
+            "description": "Whether the load balancer answers on IPv6.",
+            "type": "boolean"
+          },
+          "ipv6Address": {
+            "description": "The address IPv6 clients connect to, null while IPv6 is off or being turned on.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lastChange": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/LastChange"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "organizationId": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "resourceName": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "provisioning",
+              "active",
+              "deleting",
+              "deleted"
+            ]
+          },
+          "subnet": {
+            "type": "string"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "vpc": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "resourceName",
+          "organizationId",
+          "projectId",
+          "region",
+          "name",
+          "description",
+          "tags",
+          "vpc",
+          "subnet",
+          "ipv4Address",
+          "ipv6",
+          "ipv6Address",
+          "status",
+          "lastChange",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "LoadBalancerCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "ipv4Address": {
+            "description": "A public IPv4 address (pip_). Required when ipv6 is false or IPv6 isn't available; otherwise optional, and a load balancer without one has only IPv6.",
+            "type": "string"
+          },
+          "ipv6": {
+            "description": "Whether the load balancer answers on IPv6, where IPv6 is available. Left out, it does when the subnet has an active ::/0 route to its Network Gateway, or when there's no ipv4Address.",
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "subnet": {
+            "type": "string"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          }
+        },
+        "required": [
+          "name",
+          "subnet"
+        ],
+        "type": "object"
+      },
+      "LoadBalancerList": {
+        "additionalProperties": false,
+        "properties": {
+          "loadBalancers": {
+            "items": {
+              "$ref": "#/components/schemas/LoadBalancer"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "loadBalancers",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "LoadBalancerUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ipv6": {
+            "description": "Turns IPv6 on or off. A load balancer with no IPv4 address keeps IPv6. Turning it off drains IPv6 connections for each listener's idle timeout first.",
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "Match": {
+        "additionalProperties": false,
+        "description": "Fields AND together and entries within a field OR; an empty field matches anything.",
+        "properties": {
+          "headers": {
+            "items": {
+              "$ref": "#/components/schemas/NameValue"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "hosts": {
+            "description": "Exact names, or *.example.com for any name ending in .example.com. Lowercase; the port is ignored.",
+            "items": {
+              "maxLength": 253,
+              "type": "string"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "methods": {
+            "description": "Uppercase.",
+            "items": {
+              "maxLength": 32,
+              "type": "string"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "paths": {
+            "items": {
+              "$ref": "#/components/schemas/PathMatch"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "queryParams": {
+            "items": {
+              "$ref": "#/components/schemas/NameValue"
+            },
+            "maxItems": 5,
+            "type": "array"
+          }
+        },
+        "required": [
+          "hosts",
+          "paths",
+          "methods",
+          "headers",
+          "queryParams"
+        ],
+        "type": "object"
+      },
+      "MatchInput": {
+        "additionalProperties": false,
+        "description": "Fields AND together and entries within a field OR; an empty field matches anything.",
+        "properties": {
+          "headers": {
+            "items": {
+              "$ref": "#/components/schemas/NameValue"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "hosts": {
+            "description": "Exact names, or *.example.com for any name ending in .example.com. Lowercase; the port is ignored.",
+            "items": {
+              "maxLength": 253,
+              "type": "string"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "methods": {
+            "description": "Uppercase.",
+            "items": {
+              "maxLength": 32,
+              "type": "string"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "paths": {
+            "items": {
+              "$ref": "#/components/schemas/PathMatch"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "queryParams": {
+            "items": {
+              "$ref": "#/components/schemas/NameValue"
+            },
+            "maxItems": 5,
+            "type": "array"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "NameValue": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "description": "An HTTP token; header names match case-insensitively.",
+            "maxLength": 128,
+            "type": "string"
+          },
+          "value": {
+            "description": "Printable ASCII, matched exactly.",
+            "maxLength": 256,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "value"
+        ],
+        "type": "object"
+      },
+      "Operation": {
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "cancellable": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdBy": {
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "type": {
+                "enum": [
+                  "user",
+                  "bot"
+                ]
+              }
+            },
+            "required": [
+              "type",
+              "id"
+            ],
+            "type": "object"
+          },
+          "error": {
+            "description": "A failed operation's error, { code, message }.",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "finishedAt": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "organizationId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "projectId": {
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/OperationStatus"
+          },
+          "target": {
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "resourceName": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "resourceName",
+              "type"
+            ],
+            "type": "object"
+          },
+          "type": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "organizationId",
+          "projectId",
+          "type",
+          "action",
+          "status",
+          "target",
+          "cancellable",
+          "createdBy",
+          "createdAt",
+          "updatedAt",
+          "startedAt",
+          "finishedAt",
+          "error"
+        ],
+        "type": "object"
+      },
+      "OperationList": {
+        "properties": {
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "operations": {
+            "items": {
+              "$ref": "#/components/schemas/Operation"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "operations",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "OperationStatus": {
+        "enum": [
+          "queued",
+          "running",
+          "succeeded",
+          "failed",
+          "cancelled"
+        ]
+      },
+      "PathMatch": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "description": "prefix matches on segment boundaries: /api matches /api and /api/x, not /apix.",
+            "enum": [
+              "exact",
+              "prefix"
+            ]
+          },
+          "value": {
+            "description": "Starts with /; printable ASCII without space, # or ?.",
+            "maxLength": 1024,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "value"
+        ],
+        "type": "object"
+      },
+      "QuotaExceeded": {
+        "additionalProperties": false,
+        "description": "quota_exceeded: the quota that refused the request. Never with Retry-After.",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "inFlight": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "kind": {
+            "enum": [
+              "allocation",
+              "rate",
+              "usage",
+              "concurrency"
+            ]
+          },
+          "limit": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "periodStart": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "resetsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "scope": {
+            "enum": [
+              "organization",
+              "project",
+              "resource"
+            ]
+          },
+          "scopeResourceName": {
+            "type": "string"
+          },
+          "used": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "window": {
+            "description": "rate only: an ISO 8601 duration, PT1S to PT1H.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "scope",
+          "limit"
+        ],
+        "type": "object"
+      },
+      "Redirect": {
+        "additionalProperties": false,
+        "description": "Each part set replaces the request's, and null keeps it; the query is always kept. At least one of scheme, host, port and path is set.",
+        "properties": {
+          "host": {
+            "maxLength": 253,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "path": {
+            "maxLength": 1024,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "port": {
+            "maximum": 65535,
+            "minimum": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "scheme": {
+            "enum": [
+              "http",
+              "https",
+              null
+            ],
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "statusCode": {
+            "description": "Default 302.",
+            "enum": [
+              301,
+              302,
+              307,
+              308
+            ]
+          }
+        },
+        "required": [
+          "scheme",
+          "host",
+          "port",
+          "path",
+          "statusCode"
+        ],
+        "type": "object"
+      },
+      "RedirectInput": {
+        "additionalProperties": false,
+        "description": "Each part set replaces the request's, and null keeps it; the query is always kept. At least one of scheme, host, port and path is set.",
+        "properties": {
+          "host": {
+            "maxLength": 253,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "path": {
+            "maxLength": 1024,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "port": {
+            "maximum": 65535,
+            "minimum": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "scheme": {
+            "enum": [
+              "http",
+              "https",
+              null
+            ],
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "statusCode": {
+            "description": "Default 302.",
+            "enum": [
+              301,
+              302,
+              307,
+              308
+            ]
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "Rule": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "$ref": "#/components/schemas/Action"
+          },
+          "match": {
+            "$ref": "#/components/schemas/Match"
+          },
+          "name": {
+            "maxLength": 64,
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "match",
+          "action"
+        ],
+        "type": "object"
+      },
+      "RuleInput": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "$ref": "#/components/schemas/ActionInput"
+          },
+          "match": {
+            "$ref": "#/components/schemas/MatchInput"
+          },
+          "name": {
+            "maxLength": 64,
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "action"
+        ],
+        "type": "object"
+      },
+      "Tags": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "description": "At most 50; keys 1-128 characters, values at most 256, keys starting with ezgh: are reserved.",
+        "type": "object"
+      },
+      "Target": {
+        "additionalProperties": false,
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "instance": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "networkInterface": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "port": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "privateIpv4": {
+            "type": "string"
+          },
+          "reason": {
+            "enum": [
+              null,
+              "health_check_timed_out",
+              "connection_refused",
+              "bad_response",
+              "instance_stopped",
+              "deregistering"
+            ]
+          },
+          "state": {
+            "enum": [
+              "initial",
+              "healthy",
+              "unhealthy",
+              "unused",
+              "draining"
+            ]
+          },
+          "targetGroup": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "targetGroup",
+          "networkInterface",
+          "privateIpv4",
+          "port",
+          "instance",
+          "state",
+          "reason",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "TargetCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "networkInterface": {
+            "type": "string"
+          },
+          "port": {
+            "type": "integer"
+          },
+          "privateIpv4": {
+            "type": "string"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "TargetGroup": {
+        "additionalProperties": false,
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "deregistrationDelaySeconds": {
+            "type": "integer"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "healthCheck": {
+            "$ref": "#/components/schemas/HealthCheck"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "loadBalancer": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "organizationId": {
+            "type": "string"
+          },
+          "port": {
+            "type": "integer"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "protocol": {
+            "enum": [
+              "tcp",
+              "http"
+            ]
+          },
+          "proxyProtocol": {
+            "enum": [
+              "none",
+              "v2"
+            ]
+          },
+          "region": {
+            "type": "string"
+          },
+          "resourceName": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "active"
+            ]
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "vpc": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "resourceName",
+          "organizationId",
+          "projectId",
+          "region",
+          "name",
+          "description",
+          "tags",
+          "vpc",
+          "loadBalancer",
+          "protocol",
+          "port",
+          "deregistrationDelaySeconds",
+          "proxyProtocol",
+          "healthCheck",
+          "createdAt",
+          "updatedAt",
+          "status"
+        ],
+        "type": "object"
+      },
+      "TargetGroupCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "deregistrationDelaySeconds": {
+            "type": "integer"
+          },
+          "description": {
+            "type": "string"
+          },
+          "healthCheck": {
+            "$ref": "#/components/schemas/HealthCheckInput"
+          },
+          "name": {
+            "type": "string"
+          },
+          "port": {
+            "type": "integer"
+          },
+          "protocol": {
+            "description": "Set at create, and can't change. Default tcp. An http group serves http and https listeners: its proxyProtocol is none, and its default health check is http, GET / on the traffic port, 200-399.",
+            "enum": [
+              "tcp",
+              "http"
+            ]
+          },
+          "proxyProtocol": {
+            "enum": [
+              "none",
+              "v2"
+            ]
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          },
+          "vpc": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "vpc",
+          "port"
+        ],
+        "type": "object"
+      },
+      "TargetGroupList": {
+        "additionalProperties": false,
+        "properties": {
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "targetGroups": {
+            "items": {
+              "$ref": "#/components/schemas/TargetGroup"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "targetGroups",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "TargetGroupUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "deregistrationDelaySeconds": {
+            "type": "integer"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "healthCheck": {
+            "$ref": "#/components/schemas/HealthCheckInput"
+          },
+          "name": {
+            "type": "string"
+          },
+          "port": {
+            "type": "integer"
+          },
+          "proxyProtocol": {
+            "enum": [
+              "none",
+              "v2"
+            ]
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "TargetList": {
+        "additionalProperties": false,
+        "properties": {
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "targets": {
+            "items": {
+              "$ref": "#/components/schemas/Target"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "targets",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "WeightedTargetGroup": {
+        "additionalProperties": false,
+        "properties": {
+          "targetGroup": {
+            "description": "An http target group of the listener's load balancer.",
+            "type": "string"
+          },
+          "weight": {
+            "description": "Required with more than one group; 0 never receives.",
+            "maximum": 999,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "targetGroup",
+          "weight"
+        ],
+        "type": "object"
+      },
+      "WeightedTargetGroupInput": {
+        "additionalProperties": false,
+        "properties": {
+          "targetGroup": {
+            "description": "An http target group of the listener's load balancer.",
+            "type": "string"
+          },
+          "weight": {
+            "description": "Required with more than one group; 0 never receives.",
+            "maximum": 999,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "targetGroup"
+        ],
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "apiKey": {
+        "description": "A customer API key: Bearer ezgh_\u2026",
+        "scheme": "bearer",
+        "type": "http"
+      },
+      "oauth": {
+        "description": "An OAuth access token (Bearer ezgh_at_\u2026) or an EZGH SSO resource token (Bearer ezgh_sat_\u2026)",
+        "scheme": "bearer",
+        "type": "http"
+      },
+      "sessionCookie": {
+        "description": "A signed-in person's session, set by login.ezghcloud.com.",
+        "in": "cookie",
+        "name": "__Secure-better-auth.session_token",
+        "type": "apiKey"
+      }
+    }
+  },
+  "info": {
+    "description": "One public IPv4 address in front of a VPC's instances, with TCP, TLS, HTTP and HTTPS listeners and target groups. Every path is under an organization; lists are paged with limit, cursor and nextCursor.",
+    "title": "Load Balancers API",
+    "version": "1.0.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/v1/organizations/{orgId}/operations": {
+      "get": {
+        "operationId": "ListOperations",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/OperationStatus"
+            }
+          },
+          {
+            "description": "Only operations on this resource.",
+            "in": "query",
+            "name": "targetResourceName",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationList"
+                }
+              }
+            },
+            "description": "A page of operations."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "List the organization's operations, newest first",
+        "x-ezgh-action": "lb.operations.list"
+      }
+    },
+    "/v1/organizations/{orgId}/operations/{operationId}": {
+      "delete": {
+        "description": "409 operation_finished or operation_not_cancellable when it can't be cancelled.",
+        "operationId": "CancelOperation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "operationId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "$ref": "#/components/responses/Operation"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Cancel an operation"
+      },
+      "get": {
+        "description": "While it's queued or running, Retry-After suggests when to poll again. Not recorded in Trails.",
+        "operationId": "GetOperation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "operationId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Operation"
+                }
+              }
+            },
+            "description": "The operation.",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/Retry-After"
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Get an operation (poll it until it finishes)"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/load-balancers": {
+      "get": {
+        "operationId": "ListLoadBalancers",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoadBalancerList"
+                }
+              }
+            },
+            "description": "A page of load balancers."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "List a project's load balancers, newest first",
+        "x-ezgh-action": "lb.loadBalancers.list"
+      },
+      "post": {
+        "description": "Asynchronous: answers 202 with the operation that creates it, which takes minutes. With ipv6: true, or with no ipv4Address, the operation fails with 409 ipv6_unavailable if IPv6 can't be given to the load balancer; one with an ipv4Address that left ipv6 out is made with IPv4 only instead. It fails with 409 subnet_has_no_gateway_route without each family's route to the subnet's Network Gateway.",
+        "operationId": "CreateLoadBalancer",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoadBalancerCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "$ref": "#/components/responses/Operation"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Create a load balancer",
+        "x-ezgh-action": "lb.loadBalancers.create",
+        "x-ezgh-quotas": [
+          "lb.loadBalancersPerProject",
+          "lb.writesPerMinute"
+        ]
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/load-balancers/{loadBalancer}": {
+      "delete": {
+        "description": "Asynchronous. Removes its listeners and leaves its target groups unused. 409 load_balancer_referenced while a firewall rule names it.",
+        "operationId": "DeleteLoadBalancer",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "loadBalancer",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "202": {
+            "$ref": "#/components/responses/Operation"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Delete a load balancer",
+        "x-ezgh-action": "lb.loadBalancers.delete",
+        "x-ezgh-quotas": [
+          "lb.writesPerMinute"
+        ]
+      },
+      "get": {
+        "operationId": "GetLoadBalancer",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "loadBalancer",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoadBalancer"
+                }
+              }
+            },
+            "description": "The load balancer."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Get a load balancer",
+        "x-ezgh-action": "lb.loadBalancers.get"
+      },
+      "patch": {
+        "description": "409 load_balancer_provisioning while it isn't active yet, for a change of ipv6. lastChange tracks IPv6 being turned on or off.",
+        "operationId": "UpdateLoadBalancer",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "loadBalancer",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoadBalancerUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoadBalancer"
+                }
+              }
+            },
+            "description": "The load balancer, changed."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Change a load balancer's name, description, tags or IPv6",
+        "x-ezgh-action": "lb.loadBalancers.update",
+        "x-ezgh-quotas": [
+          "lb.writesPerMinute"
+        ]
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/load-balancers/{loadBalancer}/listeners": {
+      "get": {
+        "operationId": "ListListeners",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "loadBalancer",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListenerList"
+                }
+              }
+            },
+            "description": "A page of listeners."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "List a load balancer's listeners, newest first",
+        "x-ezgh-action": "lb.loadBalancers.get"
+      },
+      "post": {
+        "description": "409 protocol_mismatch when a target group's protocol doesn't suit the listener (http groups for http and https listeners, tcp groups for tcp and tls), 409 rule_limit past 100 rules, and 409 target_group_not_found when an action names a target group that isn't this load balancer's or doesn't exist.",
+        "operationId": "CreateListener",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "loadBalancer",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListenerCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Listener"
+                }
+              }
+            },
+            "description": "The listener. lastChange on the load balancer tracks it reaching service.",
+            "headers": {
+              "ETag": {
+                "description": "The listener's entity tag, for If-Match.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Create a listener",
+        "x-ezgh-action": "lb.loadBalancers.update",
+        "x-ezgh-quotas": [
+          "lb.writesPerMinute"
+        ]
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/load-balancers/{loadBalancer}/listeners/{listener}": {
+      "delete": {
+        "operationId": "DeleteListener",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "loadBalancer",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "listener",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Done."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Delete a listener",
+        "x-ezgh-action": "lb.loadBalancers.update",
+        "x-ezgh-quotas": [
+          "lb.writesPerMinute"
+        ]
+      },
+      "get": {
+        "operationId": "GetListener",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "loadBalancer",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "listener",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Listener"
+                }
+              }
+            },
+            "description": "The listener.",
+            "headers": {
+              "ETag": {
+                "description": "The listener's entity tag, for If-Match.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Get a listener",
+        "x-ezgh-action": "lb.loadBalancers.get"
+      },
+      "patch": {
+        "description": "Takes If-Match (optional): 412 precondition_failed when the listener has changed since. 409 protocol_mismatch, rule_limit and target_group_not_found as for a create.",
+        "operationId": "UpdateListener",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "loadBalancer",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "listener",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "description": "The ETag read, or *: the change is refused with 412 precondition_failed if the listener has changed since.",
+            "in": "header",
+            "name": "If-Match",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListenerUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Listener"
+                }
+              }
+            },
+            "description": "The listener, changed.",
+            "headers": {
+              "ETag": {
+                "description": "The listener's entity tag, for If-Match.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Change a listener",
+        "x-ezgh-action": "lb.loadBalancers.update",
+        "x-ezgh-quotas": [
+          "lb.writesPerMinute"
+        ]
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/target-groups": {
+      "get": {
+        "operationId": "ListTargetGroups",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TargetGroupList"
+                }
+              }
+            },
+            "description": "A page of target groups."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "List a project's target groups, newest first",
+        "x-ezgh-action": "lb.targetGroups.list"
+      },
+      "post": {
+        "operationId": "CreateTargetGroup",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TargetGroupCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TargetGroup"
+                }
+              }
+            },
+            "description": "The target group."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Create a target group",
+        "x-ezgh-action": "lb.targetGroups.create",
+        "x-ezgh-quotas": [
+          "lb.targetGroupsPerProject",
+          "lb.writesPerMinute"
+        ]
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/target-groups/{targetGroup}": {
+      "delete": {
+        "description": "409 target_group_in_use while a listener uses it.",
+        "operationId": "DeleteTargetGroup",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "targetGroup",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Done."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Delete a target group",
+        "x-ezgh-action": "lb.targetGroups.delete",
+        "x-ezgh-quotas": [
+          "lb.writesPerMinute"
+        ]
+      },
+      "get": {
+        "operationId": "GetTargetGroup",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "targetGroup",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TargetGroup"
+                }
+              }
+            },
+            "description": "The target group."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Get a target group",
+        "x-ezgh-action": "lb.targetGroups.get"
+      },
+      "patch": {
+        "operationId": "UpdateTargetGroup",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "targetGroup",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TargetGroupUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TargetGroup"
+                }
+              }
+            },
+            "description": "The target group, changed."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Change a target group",
+        "x-ezgh-action": "lb.targetGroups.update",
+        "x-ezgh-quotas": [
+          "lb.writesPerMinute"
+        ]
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/target-groups/{targetGroup}/targets": {
+      "get": {
+        "operationId": "ListTargets",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "targetGroup",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TargetList"
+                }
+              }
+            },
+            "description": "A page of targets."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "List a target group's targets, newest first",
+        "x-ezgh-action": "lb.targetGroups.get"
+      },
+      "post": {
+        "operationId": "RegisterTarget",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "targetGroup",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TargetCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Target"
+                }
+              }
+            },
+            "description": "The target, initial."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Register a target",
+        "x-ezgh-action": "lb.targetGroups.registerTargets",
+        "x-ezgh-quotas": [
+          "lb.writesPerMinute"
+        ]
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/target-groups/{targetGroup}/targets/{target}": {
+      "delete": {
+        "description": "The target drains, and goes when the group's deregistration delay ends.",
+        "operationId": "DeregisterTarget",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "targetGroup",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "target",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Target"
+                }
+              }
+            },
+            "description": "The target, draining."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Deregister a target",
+        "x-ezgh-action": "lb.targetGroups.deregisterTargets",
+        "x-ezgh-quotas": [
+          "lb.writesPerMinute"
+        ]
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "https://lb-api.ezghcloud.com"
+    }
+  ]
+}

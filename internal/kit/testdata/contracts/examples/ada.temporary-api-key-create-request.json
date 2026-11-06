@@ -1,0 +1,9 @@
+{
+  "botId": "0199a3c4-0d1e-7f20-8a3b-4c5d6e7f8091",
+  "directoryId": "0199a3f0-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+  "userId": "0199a3f1-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+  "ssoSessionId": "0199a3f6-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+  "name": "Temporary key for ada@acme.test",
+  "expiresAt": "2026-10-02T20:00:00.000Z",
+  "clientId": "ezgh-cli"
+}

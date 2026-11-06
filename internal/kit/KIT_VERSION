@@ -1,0 +1,7 @@
+# Vendored by scripts/sync-kit.sh; don't edit the kit here. Change it in service-template and sync.
+source: https://github.com/ezgamehost/service-template.git
+path: kit/go
+commit: bf2a9c8a7375f152f4f6fd2ffbefa13b417bc158
+synced: 2026-11-06T22:17:35Z
+ent: v0.14.6
+pgx: v5.11.0

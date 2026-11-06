@@ -1,0 +1,8 @@
+{
+  "caller": "compute",
+  "reference": "v=1;org=0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70;principal=user:jtMJXwL0R8aB3cD4eF5gH6iJ;credential=session:Qm7cXw2KpL9sTn4vBd8yRf3h;at=1792051200;chain=compute",
+  "checks": [
+    { "action": "blockstore.volumes.create", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:vol_8d2f6h1j4k9m" },
+    { "action": "blockstore.volumes.attach", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:vol_8d2f6h1j4k9m" }
+  ]
+}

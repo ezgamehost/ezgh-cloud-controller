@@ -1,0 +1,89 @@
+{
+  "description": "A widget's uptime [start, end) as interval events: one per UTC hour it touches, times written as in IDs (Z, milliseconds only when non-zero), quantity in seconds as a canonical decimal, each with its own ID (resource wgt_4k2m9x0a7qpe, meter widgets.widget.uptime).",
+  "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+  "meter": "widgets.widget.uptime",
+  "cases": [
+    {
+      "name": "a run across three hours",
+      "start": "2026-09-28T10:42:17.250Z",
+      "end": "2026-09-28T12:05:00Z",
+      "expected": [
+        {
+          "start": "2026-09-28T10:42:17.250Z",
+          "end": "2026-09-28T11:00:00Z",
+          "quantity": "1062.75",
+          "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:42:17.250Z"
+        },
+        {
+          "start": "2026-09-28T11:00:00Z",
+          "end": "2026-09-28T12:00:00Z",
+          "quantity": "3600",
+          "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T11:00:00Z"
+        },
+        {
+          "start": "2026-09-28T12:00:00Z",
+          "end": "2026-09-28T12:05:00Z",
+          "quantity": "300",
+          "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T12:00:00Z"
+        }
+      ]
+    },
+    {
+      "name": "exactly one hour",
+      "start": "2026-09-28T10:00:00Z",
+      "end": "2026-09-28T11:00:00Z",
+      "expected": [
+        {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z",
+          "quantity": "3600",
+          "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z"
+        }
+      ]
+    },
+    {
+      "name": "two milliseconds across a boundary",
+      "start": "2026-09-28T10:59:59.999Z",
+      "end": "2026-09-28T11:00:00.001Z",
+      "expected": [
+        {
+          "start": "2026-09-28T10:59:59.999Z",
+          "end": "2026-09-28T11:00:00Z",
+          "quantity": "0.001",
+          "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:59:59.999Z"
+        },
+        {
+          "start": "2026-09-28T11:00:00Z",
+          "end": "2026-09-28T11:00:00.001Z",
+          "quantity": "0.001",
+          "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T11:00:00Z"
+        }
+      ]
+    },
+    {
+      "name": "across midnight and a month end",
+      "start": "2026-09-30T23:30:00Z",
+      "end": "2026-10-01T00:15:00Z",
+      "expected": [
+        {
+          "start": "2026-09-30T23:30:00Z",
+          "end": "2026-10-01T00:00:00Z",
+          "quantity": "1800",
+          "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-30T23:30:00Z"
+        },
+        {
+          "start": "2026-10-01T00:00:00Z",
+          "end": "2026-10-01T00:15:00Z",
+          "quantity": "900",
+          "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-10-01T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "name": "empty",
+      "start": "2026-09-28T10:00:00Z",
+      "end": "2026-09-28T10:00:00Z",
+      "expected": []
+    }
+  ]
+}

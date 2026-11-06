@@ -1,0 +1,394 @@
+{
+  "description": "The platform's registered resource types (contracts/resources.md, \"Resource types\"), by slug prefix: the type a Trails event's resources[].type shows for a resource of that prefix, whichever product records the event (a compute event naming a network interface types it NetworkInterface). The type is the registered camelCase name with a capital first letter. notTyped lists the table's prefixes that never appear in a resourceName (internal records) or aren't registered yet; a kit types them, and any prefix not listed in types, \"Unknown\".",
+  "types": [
+    {
+      "prefix": "alr",
+      "type": "AlertRule",
+      "owner": "obs"
+    },
+    {
+      "prefix": "app",
+      "type": "Application",
+      "owner": "sso"
+    },
+    {
+      "prefix": "bkt",
+      "type": "Bucket",
+      "owner": "objects"
+    },
+    {
+      "prefix": "bot",
+      "type": "Bot",
+      "owner": "org-api"
+    },
+    {
+      "prefix": "cpt",
+      "type": "ContactPoint",
+      "owner": "obs"
+    },
+    {
+      "prefix": "crt",
+      "type": "Certificate",
+      "owner": "certificates"
+    },
+    {
+      "prefix": "ctk",
+      "type": "ClientToken",
+      "owner": "obs"
+    },
+    {
+      "prefix": "dau",
+      "type": "DomainAuthorization",
+      "owner": "certificates"
+    },
+    {
+      "prefix": "dbb",
+      "type": "Backup",
+      "owner": "databases"
+    },
+    {
+      "prefix": "dbg",
+      "type": "BlueGreenDeployment",
+      "owner": "databases"
+    },
+    {
+      "prefix": "dbi",
+      "type": "Database",
+      "owner": "databases"
+    },
+    {
+      "prefix": "dgp",
+      "type": "Group",
+      "owner": "sso"
+    },
+    {
+      "prefix": "dir",
+      "type": "Directory",
+      "owner": "sso"
+    },
+    {
+      "prefix": "dom",
+      "type": "Domain",
+      "owner": "domains"
+    },
+    {
+      "prefix": "dsh",
+      "type": "Dashboard",
+      "owner": "obs"
+    },
+    {
+      "prefix": "dst",
+      "type": "Dataset",
+      "owner": "obs"
+    },
+    {
+      "prefix": "eab",
+      "type": "AcmeBinding",
+      "owner": "certificates"
+    },
+    {
+      "prefix": "eni",
+      "type": "NetworkInterface",
+      "owner": "network"
+    },
+    {
+      "prefix": "fap",
+      "type": "AccessPoint",
+      "owner": "files"
+    },
+    {
+      "prefix": "fen",
+      "type": "Environment",
+      "owner": "flags"
+    },
+    {
+      "prefix": "fld",
+      "type": "Folder",
+      "owner": "org-api"
+    },
+    {
+      "prefix": "flg",
+      "type": "Flag",
+      "owner": "flags"
+    },
+    {
+      "prefix": "fmt",
+      "type": "MountTarget",
+      "owner": "files"
+    },
+    {
+      "prefix": "fsg",
+      "type": "Segment",
+      "owner": "flags"
+    },
+    {
+      "prefix": "fsk",
+      "type": "SdkKey",
+      "owner": "flags"
+    },
+    {
+      "prefix": "fsy",
+      "type": "FileSystem",
+      "owner": "files"
+    },
+    {
+      "prefix": "fwl",
+      "type": "Firewall",
+      "owner": "firewall"
+    },
+    {
+      "prefix": "grp",
+      "type": "Group",
+      "owner": "org-api"
+    },
+    {
+      "prefix": "gtr",
+      "type": "GitRepository",
+      "owner": "git"
+    },
+    {
+      "prefix": "idp",
+      "type": "IdentityProvider",
+      "owner": "sso"
+    },
+    {
+      "prefix": "igk",
+      "type": "IngestKey",
+      "owner": "org-api"
+    },
+    {
+      "prefix": "img",
+      "type": "Image",
+      "owner": "images"
+    },
+    {
+      "prefix": "ina",
+      "type": "Account",
+      "owner": "inference"
+    },
+    {
+      "prefix": "ins",
+      "type": "Instance",
+      "owner": "compute"
+    },
+    {
+      "prefix": "iss",
+      "type": "Issue",
+      "owner": "obs"
+    },
+    {
+      "prefix": "kad",
+      "type": "Addon",
+      "owner": "kubernetes"
+    },
+    {
+      "prefix": "kae",
+      "type": "AccessEntry",
+      "owner": "kubernetes"
+    },
+    {
+      "prefix": "kcl",
+      "type": "Cluster",
+      "owner": "kubernetes"
+    },
+    {
+      "prefix": "kms",
+      "type": "Key",
+      "owner": "keys"
+    },
+    {
+      "prefix": "kng",
+      "type": "NodeGroup",
+      "owner": "kubernetes"
+    },
+    {
+      "prefix": "kpa",
+      "type": "PodIdentityAssociation",
+      "owner": "kubernetes"
+    },
+    {
+      "prefix": "lbr",
+      "type": "LoadBalancer",
+      "owner": "lb"
+    },
+    {
+      "prefix": "mcn",
+      "type": "Connection",
+      "owner": "mcpcentral"
+    },
+    {
+      "prefix": "mcs",
+      "type": "Server",
+      "owner": "mcpcentral"
+    },
+    {
+      "prefix": "mgw",
+      "type": "Gateway",
+      "owner": "mcpcentral"
+    },
+    {
+      "prefix": "mps",
+      "type": "PersonalServer",
+      "owner": "mcpcentral"
+    },
+    {
+      "prefix": "oak",
+      "type": "AccessKey",
+      "owner": "objects"
+    },
+    {
+      "prefix": "obt",
+      "type": "Batch",
+      "owner": "ocr"
+    },
+    {
+      "prefix": "oip",
+      "type": "OidcProvider",
+      "owner": "org-api"
+    },
+    {
+      "prefix": "org",
+      "type": "Organization",
+      "owner": "org-api"
+    },
+    {
+      "prefix": "pca",
+      "type": "CertificateAuthority",
+      "owner": "certificates"
+    },
+    {
+      "prefix": "pct",
+      "type": "PrivateCertificate",
+      "owner": "certificates"
+    },
+    {
+      "prefix": "pip",
+      "type": "Ipv4Address",
+      "owner": "network"
+    },
+    {
+      "prefix": "pol",
+      "type": "Policy",
+      "owner": "org-api"
+    },
+    {
+      "prefix": "prc",
+      "type": "Processor",
+      "owner": "ocr"
+    },
+    {
+      "prefix": "prj",
+      "type": "Project",
+      "owner": "org-api"
+    },
+    {
+      "prefix": "ptc",
+      "type": "PullThroughCacheRule",
+      "owner": "registry"
+    },
+    {
+      "prefix": "qsb",
+      "type": "Subscription",
+      "owner": "queues"
+    },
+    {
+      "prefix": "que",
+      "type": "Queue",
+      "owner": "queues"
+    },
+    {
+      "prefix": "rep",
+      "type": "Repository",
+      "owner": "registry"
+    },
+    {
+      "prefix": "sec",
+      "type": "Secret",
+      "owner": "secrets"
+    },
+    {
+      "prefix": "sil",
+      "type": "Silence",
+      "owner": "obs"
+    },
+    {
+      "prefix": "slo",
+      "type": "Slo",
+      "owner": "obs"
+    },
+    {
+      "prefix": "snp",
+      "type": "Snapshot",
+      "owner": "blockstore"
+    },
+    {
+      "prefix": "ssh",
+      "type": "SshKey",
+      "owner": "compute"
+    },
+    {
+      "prefix": "svc",
+      "type": "Service",
+      "owner": "obs"
+    },
+    {
+      "prefix": "tdl",
+      "type": "TrailDelivery",
+      "owner": "trails"
+    },
+    {
+      "prefix": "tgp",
+      "type": "TargetGroup",
+      "owner": "lb"
+    },
+    {
+      "prefix": "usr",
+      "type": "User",
+      "owner": "sso"
+    },
+    {
+      "prefix": "vip",
+      "type": "Vip",
+      "owner": "network"
+    },
+    {
+      "prefix": "vol",
+      "type": "Volume",
+      "owner": "blockstore"
+    },
+    {
+      "prefix": "wfa",
+      "type": "App",
+      "owner": "workflows"
+    },
+    {
+      "prefix": "wfs",
+      "type": "Schedule",
+      "owner": "workflows"
+    },
+    {
+      "prefix": "wgt",
+      "type": "Widget",
+      "owner": "widgets"
+    },
+    {
+      "prefix": "zon",
+      "type": "Zone",
+      "owner": "dns"
+    }
+  ],
+  "notTyped": [
+    "bgt",
+    "cmd",
+    "exp",
+    "fwr",
+    "ipa",
+    "kgr",
+    "lsn",
+    "nod",
+    "scr",
+    "ssn",
+    "sso"
+  ],
+  "unknown": "Unknown"
+}

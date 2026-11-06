@@ -1,0 +1,798 @@
+{
+  "description": "Service log lines (contracts/deployment.md, \"Logging and shutdown\"; docs/logging-design.md). Every kit reproduces these. words: a key split into lowercase words. keys: whether a key is sensitive (its words, less trailing containers, end in a oneWord or twoWords entry). redact: a JSON value in, the value written out. routes: a router's pattern in, the access line's route out. lines: one log line from its level, message, scope (context fields, or null) and attributes ([key, value] pairs, in order), compared as JSON values; the first four keys must also be time, level, message, service in that order; time is fixed at 2026-10-14T18:03:22.123Z and service at widgets-api. access: the access line's level and attributes from what the middleware saw (requestBytes/responseBytes null = unknown, caller null = unauthenticated, errorCode null = none).",
+  "redacted": "[REDACTED]",
+  "sensitive": {
+    "oneWord": [
+      "token",
+      "secret",
+      "password",
+      "passwd",
+      "passphrase",
+      "cookie",
+      "cookies",
+      "authorization",
+      "credential",
+      "credentials",
+      "signature",
+      "apikey",
+      "privatekey",
+      "cvc",
+      "cvv",
+      "otp"
+    ],
+    "twoWords": [
+      "api key",
+      "private key",
+      "secret key",
+      "signing key",
+      "encryption key",
+      "access key",
+      "application key",
+      "card number",
+      "password hash",
+      "secret hash",
+      "token hash"
+    ],
+    "containers": [
+      "value",
+      "values",
+      "raw",
+      "pem",
+      "der",
+      "header",
+      "headers",
+      "bytes",
+      "b64",
+      "base64",
+      "hex",
+      "plain",
+      "plaintext",
+      "string",
+      "str",
+      "text",
+      "data"
+    ]
+  },
+  "words": [
+    {
+      "key": "apiKey",
+      "words": [
+        "api",
+        "key"
+      ]
+    },
+    {
+      "key": "APIKey",
+      "words": [
+        "api",
+        "key"
+      ]
+    },
+    {
+      "key": "x-api-key",
+      "words": [
+        "x",
+        "api",
+        "key"
+      ]
+    },
+    {
+      "key": "refresh_token",
+      "words": [
+        "refresh",
+        "token"
+      ]
+    },
+    {
+      "key": "Set-Cookie",
+      "words": [
+        "set",
+        "cookie"
+      ]
+    },
+    {
+      "key": "userID",
+      "words": [
+        "user",
+        "id"
+      ]
+    },
+    {
+      "key": "IDToken",
+      "words": [
+        "id",
+        "token"
+      ]
+    },
+    {
+      "key": "s3Key",
+      "words": [
+        "s3",
+        "key"
+      ]
+    },
+    {
+      "key": "token.endpoint",
+      "words": [
+        "token",
+        "endpoint"
+      ]
+    },
+    {
+      "key": "",
+      "words": []
+    },
+    {
+      "key": "__",
+      "words": []
+    }
+  ],
+  "keys": [
+    {
+      "key": "apiKey",
+      "sensitive": true
+    },
+    {
+      "key": "x-api-key",
+      "sensitive": true
+    },
+    {
+      "key": "apikey",
+      "sensitive": true
+    },
+    {
+      "key": "apiKeyId",
+      "sensitive": false
+    },
+    {
+      "key": "clientSecret",
+      "sensitive": true
+    },
+    {
+      "key": "secretName",
+      "sensitive": false
+    },
+    {
+      "key": "refresh_token",
+      "sensitive": true
+    },
+    {
+      "key": "access_token",
+      "sensitive": true
+    },
+    {
+      "key": "idToken",
+      "sensitive": true
+    },
+    {
+      "key": "tokenType",
+      "sensitive": false
+    },
+    {
+      "key": "token_type",
+      "sensitive": false
+    },
+    {
+      "key": "prompt_tokens",
+      "sensitive": false
+    },
+    {
+      "key": "tokens_per_minute",
+      "sensitive": false
+    },
+    {
+      "key": "token_endpoint",
+      "sensitive": false
+    },
+    {
+      "key": "token_endpoint_auth_method",
+      "sensitive": false
+    },
+    {
+      "key": "token_expires_at",
+      "sensitive": false
+    },
+    {
+      "key": "Set-Cookie",
+      "sensitive": true
+    },
+    {
+      "key": "cookies",
+      "sensitive": true
+    },
+    {
+      "key": "Authorization",
+      "sensitive": true
+    },
+    {
+      "key": "authorizationHeader",
+      "sensitive": true
+    },
+    {
+      "key": "password",
+      "sensitive": true
+    },
+    {
+      "key": "passwordHash",
+      "sensitive": true
+    },
+    {
+      "key": "privateKeyPem",
+      "sensitive": true
+    },
+    {
+      "key": "private_key",
+      "sensitive": true
+    },
+    {
+      "key": "secretKey",
+      "sensitive": true
+    },
+    {
+      "key": "applicationKey",
+      "sensitive": true
+    },
+    {
+      "key": "cardNumber",
+      "sensitive": true
+    },
+    {
+      "key": "cvc",
+      "sensitive": true
+    },
+    {
+      "key": "tokenValue",
+      "sensitive": true
+    },
+    {
+      "key": "secretData",
+      "sensitive": true
+    },
+    {
+      "key": "signatureAlgorithm",
+      "sensitive": false
+    },
+    {
+      "key": "credentialKind",
+      "sensitive": false
+    },
+    {
+      "key": "data",
+      "sensitive": false
+    },
+    {
+      "key": "headers",
+      "sensitive": false
+    },
+    {
+      "key": "cacheKey",
+      "sensitive": false
+    },
+    {
+      "key": "idempotencyKey",
+      "sensitive": false
+    },
+    {
+      "key": "s3Key",
+      "sensitive": false
+    },
+    {
+      "key": "resourceName",
+      "sensitive": false
+    },
+    {
+      "key": "",
+      "sensitive": false
+    }
+  ],
+  "redact": [
+    {
+      "name": "nested header map",
+      "input": {
+        "request": {
+          "headers": {
+            "Authorization": "Bearer ezgh_x",
+            "User-Agent": "curl/8"
+          }
+        }
+      },
+      "output": {
+        "request": {
+          "headers": {
+            "Authorization": "[REDACTED]",
+            "User-Agent": "curl/8"
+          }
+        }
+      }
+    },
+    {
+      "name": "a sensitive key masks a whole object",
+      "input": {
+        "cookies": {
+          "session": "abc"
+        }
+      },
+      "output": {
+        "cookies": "[REDACTED]"
+      }
+    },
+    {
+      "name": "objects inside arrays",
+      "input": {
+        "items": [
+          {
+            "token": "a",
+            "name": "n"
+          },
+          3,
+          "s"
+        ]
+      },
+      "output": {
+        "items": [
+          {
+            "token": "[REDACTED]",
+            "name": "n"
+          },
+          3,
+          "s"
+        ]
+      }
+    },
+    {
+      "name": "values of any type",
+      "input": {
+        "password": 1234,
+        "secret": null,
+        "otp": true
+      },
+      "output": {
+        "password": "[REDACTED]",
+        "secret": "[REDACTED]",
+        "otp": "[REDACTED]"
+      }
+    },
+    {
+      "name": "identifiers and counts are kept",
+      "input": {
+        "apiKeyId": "key_1",
+        "prompt_tokens": 12,
+        "token_endpoint": "https://idp.example/token"
+      },
+      "output": {
+        "apiKeyId": "key_1",
+        "prompt_tokens": 12,
+        "token_endpoint": "https://idp.example/token"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "input": "GET /v1/organizations/{organizationId}/projects",
+      "route": "/v1/organizations/{organizationId}/projects"
+    },
+    {
+      "input": "POST /v1/widgets",
+      "route": "/v1/widgets"
+    },
+    {
+      "input": "/v1/organizations/:organizationId/projects/:projectId",
+      "route": "/v1/organizations/{organizationId}/projects/{projectId}"
+    },
+    {
+      "input": "/v1/files/{path...}",
+      "route": "/v1/files/{path...}"
+    },
+    {
+      "input": "",
+      "route": "unmatched"
+    }
+  ],
+  "lines": [
+    {
+      "name": "base fields",
+      "level": "info",
+      "message": "started",
+      "scope": null,
+      "attrs": [],
+      "line": {
+        "time": "2026-10-14T18:03:22.123Z",
+        "level": "info",
+        "message": "started",
+        "service": "widgets-api"
+      }
+    },
+    {
+      "name": "attributes after the base fields",
+      "level": "warn",
+      "message": "relay failed",
+      "scope": null,
+      "attrs": [
+        [
+          "attempt",
+          3
+        ],
+        [
+          "target",
+          {
+            "host": "relay.test",
+            "port": 443
+          }
+        ]
+      ],
+      "line": {
+        "time": "2026-10-14T18:03:22.123Z",
+        "level": "warn",
+        "message": "relay failed",
+        "service": "widgets-api",
+        "attempt": 3,
+        "target": {
+          "host": "relay.test",
+          "port": 443
+        }
+      }
+    },
+    {
+      "name": "debug",
+      "level": "debug",
+      "message": "d",
+      "scope": null,
+      "attrs": [],
+      "line": {
+        "time": "2026-10-14T18:03:22.123Z",
+        "level": "debug",
+        "message": "d",
+        "service": "widgets-api"
+      }
+    },
+    {
+      "name": "error",
+      "level": "error",
+      "message": "e",
+      "scope": null,
+      "attrs": [
+        [
+          "error",
+          "connection refused"
+        ]
+      ],
+      "line": {
+        "time": "2026-10-14T18:03:22.123Z",
+        "level": "error",
+        "message": "e",
+        "service": "widgets-api",
+        "error": "connection refused"
+      }
+    },
+    {
+      "name": "base-field names are renamed",
+      "level": "info",
+      "message": "m",
+      "scope": null,
+      "attrs": [
+        [
+          "message",
+          "x"
+        ],
+        [
+          "level",
+          "y"
+        ],
+        [
+          "time",
+          "z"
+        ],
+        [
+          "service",
+          "s"
+        ],
+        [
+          "msg",
+          "w"
+        ]
+      ],
+      "line": {
+        "time": "2026-10-14T18:03:22.123Z",
+        "level": "info",
+        "message": "m",
+        "service": "widgets-api",
+        "attr.message": "x",
+        "attr.level": "y",
+        "attr.time": "z",
+        "attr.service": "s",
+        "attr.msg": "w"
+      }
+    },
+    {
+      "name": "scope fields",
+      "level": "info",
+      "message": "m",
+      "scope": {
+        "requestId": "req-1",
+        "organizationId": "org_k3f9a0x2m7qp",
+        "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
+        "spanId": "00f067aa0ba902b7"
+      },
+      "attrs": [],
+      "line": {
+        "time": "2026-10-14T18:03:22.123Z",
+        "level": "info",
+        "message": "m",
+        "service": "widgets-api",
+        "requestId": "req-1",
+        "organizationId": "org_k3f9a0x2m7qp",
+        "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
+        "spanId": "00f067aa0ba902b7"
+      }
+    },
+    {
+      "name": "a context attribute fills an unknown context field",
+      "level": "info",
+      "message": "m",
+      "scope": null,
+      "attrs": [
+        [
+          "requestId",
+          "req-2"
+        ]
+      ],
+      "line": {
+        "time": "2026-10-14T18:03:22.123Z",
+        "level": "info",
+        "message": "m",
+        "service": "widgets-api",
+        "requestId": "req-2"
+      }
+    },
+    {
+      "name": "a context attribute equal to the scope's is the same field",
+      "level": "info",
+      "message": "m",
+      "scope": {
+        "requestId": "req-1"
+      },
+      "attrs": [
+        [
+          "requestId",
+          "req-1"
+        ]
+      ],
+      "line": {
+        "time": "2026-10-14T18:03:22.123Z",
+        "level": "info",
+        "message": "m",
+        "service": "widgets-api",
+        "requestId": "req-1"
+      }
+    },
+    {
+      "name": "a different context attribute is renamed",
+      "level": "info",
+      "message": "m",
+      "scope": {
+        "requestId": "req-1"
+      },
+      "attrs": [
+        [
+          "requestId",
+          "req-9"
+        ]
+      ],
+      "line": {
+        "time": "2026-10-14T18:03:22.123Z",
+        "level": "info",
+        "message": "m",
+        "service": "widgets-api",
+        "requestId": "req-1",
+        "attr.requestId": "req-9"
+      }
+    },
+    {
+      "name": "redaction at the top level and nested",
+      "level": "info",
+      "message": "m",
+      "scope": null,
+      "attrs": [
+        [
+          "apiKey",
+          "ezgh_k"
+        ],
+        [
+          "apiKeyId",
+          "key_1"
+        ],
+        [
+          "upstream",
+          {
+            "headers": {
+              "cookie": "a=b",
+              "accept": "*/*"
+            }
+          }
+        ]
+      ],
+      "line": {
+        "time": "2026-10-14T18:03:22.123Z",
+        "level": "info",
+        "message": "m",
+        "service": "widgets-api",
+        "apiKey": "[REDACTED]",
+        "apiKeyId": "key_1",
+        "upstream": {
+          "headers": {
+            "cookie": "[REDACTED]",
+            "accept": "*/*"
+          }
+        }
+      }
+    },
+    {
+      "name": "a repeated attribute keeps its last value",
+      "level": "info",
+      "message": "m",
+      "scope": null,
+      "attrs": [
+        [
+          "n",
+          1
+        ],
+        [
+          "n",
+          2
+        ]
+      ],
+      "line": {
+        "time": "2026-10-14T18:03:22.123Z",
+        "level": "info",
+        "message": "m",
+        "service": "widgets-api",
+        "n": 2
+      }
+    }
+  ],
+  "access": [
+    {
+      "name": "authorized read",
+      "input": {
+        "method": "GET",
+        "route": "/v1/organizations/{organizationId}/projects",
+        "status": 200,
+        "durationMs": 12.4,
+        "requestBytes": 0,
+        "responseBytes": 1834,
+        "clientIp": "203.0.113.9",
+        "userAgent": "ezgh/0.27.0",
+        "caller": {
+          "type": "user",
+          "id": "usr_1",
+          "apiKeyId": "key_1"
+        },
+        "errorCode": null
+      },
+      "level": "info",
+      "attrs": {
+        "kind": "access",
+        "method": "GET",
+        "route": "/v1/organizations/{organizationId}/projects",
+        "status": 200,
+        "durationMs": 12.4,
+        "requestBytes": 0,
+        "responseBytes": 1834,
+        "clientIp": "203.0.113.9",
+        "userAgent": "ezgh/0.27.0",
+        "principalType": "user",
+        "principalId": "usr_1",
+        "apiKeyId": "key_1"
+      }
+    },
+    {
+      "name": "server error with a code and unknown sizes",
+      "input": {
+        "method": "POST",
+        "route": "/v1/widgets",
+        "status": 503,
+        "durationMs": 1.23456,
+        "requestBytes": null,
+        "responseBytes": null,
+        "clientIp": "203.0.113.9",
+        "userAgent": "",
+        "caller": null,
+        "errorCode": "unavailable"
+      },
+      "level": "error",
+      "attrs": {
+        "kind": "access",
+        "method": "POST",
+        "route": "/v1/widgets",
+        "status": 503,
+        "durationMs": 1.235,
+        "clientIp": "203.0.113.9",
+        "errorCode": "unavailable"
+      }
+    },
+    {
+      "name": "client error",
+      "input": {
+        "method": "GET",
+        "route": "unmatched",
+        "status": 404,
+        "durationMs": 0.5,
+        "requestBytes": 0,
+        "responseBytes": 80,
+        "clientIp": "198.51.100.7",
+        "userAgent": "curl/8.9",
+        "caller": null,
+        "errorCode": "not_found"
+      },
+      "level": "info",
+      "attrs": {
+        "kind": "access",
+        "method": "GET",
+        "route": "unmatched",
+        "status": 404,
+        "durationMs": 0.5,
+        "requestBytes": 0,
+        "responseBytes": 80,
+        "clientIp": "198.51.100.7",
+        "userAgent": "curl/8.9",
+        "errorCode": "not_found"
+      }
+    },
+    {
+      "name": "internal caller",
+      "input": {
+        "method": "POST",
+        "route": "/internal/v1/events",
+        "status": 202,
+        "durationMs": 3,
+        "requestBytes": 512,
+        "responseBytes": 2,
+        "clientIp": "10.0.0.5",
+        "userAgent": "",
+        "caller": {
+          "type": "internal"
+        },
+        "errorCode": null
+      },
+      "level": "info",
+      "attrs": {
+        "kind": "access",
+        "method": "POST",
+        "route": "/internal/v1/events",
+        "status": 202,
+        "durationMs": 3,
+        "requestBytes": 512,
+        "responseBytes": 2,
+        "clientIp": "10.0.0.5",
+        "principalType": "internal"
+      }
+    },
+    {
+      "name": "a long user agent is truncated to 256 characters",
+      "input": {
+        "method": "GET",
+        "route": "/v1/widgets",
+        "status": 200,
+        "durationMs": 1,
+        "requestBytes": 0,
+        "responseBytes": 2,
+        "clientIp": "203.0.113.9",
+        "userAgent": "éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé",
+        "caller": null,
+        "errorCode": null
+      },
+      "level": "info",
+      "attrs": {
+        "kind": "access",
+        "method": "GET",
+        "route": "/v1/widgets",
+        "status": 200,
+        "durationMs": 1,
+        "requestBytes": 0,
+        "responseBytes": 2,
+        "clientIp": "203.0.113.9",
+        "userAgent": "éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé"
+      }
+    }
+  ]
+}

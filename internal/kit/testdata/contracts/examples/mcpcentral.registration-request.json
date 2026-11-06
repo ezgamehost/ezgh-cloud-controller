@@ -1,0 +1,164 @@
+{
+  "registrationVersion": 1,
+  "namespace": "mcpcentral",
+  "displayName": "MCP Central",
+  "description": "An excerpt of MCP Central's manifest for the contracts' edge-host rules; mcp-stack's service-manifest.json is the product's own.",
+  "directoryUsable": true,
+  "orgApi": {
+    "operations": [
+      "lifecycle.events",
+      "permissions.batch",
+      "productPolicies.write"
+    ]
+  },
+  "scopes": [
+    {
+      "name": "mcpcentral:connect",
+      "actions": [
+        "mcpcentral.gateways.connect",
+        "mcpcentral.servers.use",
+        "mcpcentral.tools.call"
+      ]
+    },
+    {
+      "name": "mcpcentral:portal",
+      "actions": [
+        "mcpcentral.gateways.connect",
+        "mcpcentral.servers.use",
+        "mcpcentral.connections.*"
+      ]
+    }
+  ],
+  "resourceTypes": [
+    {
+      "name": "server",
+      "prefix": "mcs",
+      "parent": "project",
+      "regional": true,
+      "description": "A shared MCP server."
+    },
+    {
+      "name": "gateway",
+      "prefix": "mgw",
+      "parent": "project",
+      "regional": true,
+      "description": "The project's one MCP endpoint, https://<alias>.mcp.ezgh.app/central."
+    },
+    {
+      "name": "connection",
+      "prefix": "mcn",
+      "parent": "project",
+      "regional": true,
+      "description": "A principal's connection to a server."
+    },
+    {
+      "name": "personalServer",
+      "prefix": "mps",
+      "parent": "project",
+      "regional": true,
+      "description": "A server a directory user added for themselves."
+    }
+  ],
+  "managedPolicies": [
+    {
+      "name": "McpcentralFullAccess",
+      "description": "Everything in MCP Central."
+    },
+    {
+      "name": "McpcentralReadOnlyAccess",
+      "description": "View servers, the endpoint and your own clients."
+    },
+    {
+      "name": "McpcentralUserAccess",
+      "description": "Use the endpoint, connect servers and configure your own clients."
+    }
+  ],
+  "actions": [
+    {
+      "id": "mcpcentral.gateways.get",
+      "description": "View the project's MCP endpoint and its URL",
+      "resource": "gateway",
+      "accessLevel": "read",
+      "managedPolicies": [
+        "ReadOnlyAccess",
+        "McpcentralFullAccess",
+        "McpcentralReadOnlyAccess",
+        "McpcentralUserAccess"
+      ]
+    },
+    {
+      "id": "mcpcentral.gateways.connect",
+      "description": "Connect an MCP client to the project's MCP endpoint",
+      "resource": "gateway",
+      "accessLevel": "write",
+      "managedPolicies": [
+        "McpcentralFullAccess",
+        "McpcentralUserAccess"
+      ]
+    },
+    {
+      "id": "mcpcentral.clients.list",
+      "description": "List your own MCP clients and your default configuration",
+      "resource": "gateway",
+      "accessLevel": "list",
+      "managedPolicies": [
+        "ReadOnlyAccess",
+        "McpcentralFullAccess",
+        "McpcentralReadOnlyAccess",
+        "McpcentralUserAccess"
+      ]
+    },
+    {
+      "id": "mcpcentral.clients.get",
+      "description": "View one of your own MCP clients, or your default configuration",
+      "resource": "gateway",
+      "accessLevel": "read",
+      "managedPolicies": [
+        "ReadOnlyAccess",
+        "McpcentralFullAccess",
+        "McpcentralReadOnlyAccess",
+        "McpcentralUserAccess"
+      ]
+    },
+    {
+      "id": "mcpcentral.clients.configure",
+      "description": "Choose the servers and tools your own MCP clients get",
+      "resource": "gateway",
+      "accessLevel": "write",
+      "managedPolicies": [
+        "McpcentralFullAccess",
+        "McpcentralUserAccess"
+      ]
+    },
+    {
+      "id": "mcpcentral.servers.use",
+      "description": "Use a server through the endpoint",
+      "resource": "server",
+      "accessLevel": "write",
+      "managedPolicies": [
+        "McpcentralFullAccess",
+        "McpcentralUserAccess"
+      ]
+    },
+    {
+      "id": "mcpcentral.tools.call",
+      "description": "Call a server's tool",
+      "resource": "server",
+      "accessLevel": "write",
+      "managedPolicies": [
+        "McpcentralFullAccess",
+        "McpcentralUserAccess"
+      ]
+    },
+    {
+      "id": "mcpcentral.connections.connect",
+      "description": "Connect your own account to a server",
+      "resource": "server",
+      "accessLevel": "write",
+      "managedPolicies": [
+        "McpcentralFullAccess",
+        "McpcentralUserAccess"
+      ]
+    }
+  ]
+}

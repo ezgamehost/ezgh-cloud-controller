@@ -1,0 +1,9 @@
+{
+  "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+  "directoryId": "0199a3f0-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+  "userId": "0199a3f1-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+  "userName": "ada@acme.test",
+  "groupIds": ["0199a3f4-1a2b-7c3d-8e4f-5a6b7c8d9e0f"],
+  "sessionId": "0199a3f6-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+  "mfaAuthenticated": true
+}

@@ -1,0 +1,176 @@
+{
+  "description": "How an API reads an identifier (contracts/api-conventions.md, \"References to other resources\"; owner decision 2026-10-22). body: a reference to another resource in a request body takes only that resource's prefixed ID. A UUID there, in any case, is 400 invalid_request with the issue at the field: \"use the <noun>'s ID (<prefix>_…)\". Anything else that isn't a prefixed ID of the referenced type (another type's prefix, a malformed value, a non-string) is 400 at the field: \"must be <article> <prefix>_ ID\". issue is null when the value is read; whether the resource exists is checked after. filter: a list filter naming another resource (a query parameter) takes the prefixed ID too: a UUID, in any case, is the same 400 at the parameter; any other value is read as the filter (issue null), and one that isn't a known ID of the type matches nothing (an empty page, never 400 or 503). path: a resource's own path segment takes its prefixed ID or its lowercase UUID; an organization or project segment takes its prefixed ID (org_…, prj_…) or its lowercase UUID (owner decision 2026-11-04); an aliasable segment (Keys' :key) takes those two or alias:<name>. accepted false is the same 404 as a missing resource.",
+  "body": [
+    {
+      "name": "a volume's prefixed ID",
+      "field": "volumeId",
+      "type": { "prefix": "vol", "noun": "volume", "article": "a" },
+      "value": "vol_4k2m9x0a7qpe",
+      "issue": null
+    },
+    {
+      "name": "a volume's UUID",
+      "field": "volumeId",
+      "type": { "prefix": "vol", "noun": "volume", "article": "a" },
+      "value": "019a2f10-6d4e-7b32-9c5e-2f3a4b5c6d7e",
+      "issue": { "path": "volumeId", "message": "use the volume's ID (vol_…)" }
+    },
+    {
+      "name": "an upper-case UUID is refused the same way",
+      "field": "networkInterfaces.0.networkInterfaceId",
+      "type": { "prefix": "eni", "noun": "network interface", "article": "an" },
+      "value": "019A2F10-6D4E-7B32-9C5E-2F3A4B5C6D7E",
+      "issue": { "path": "networkInterfaces.0.networkInterfaceId", "message": "use the network interface's ID (eni_…)" }
+    },
+    {
+      "name": "a UUID in a list is refused at its item",
+      "field": "networkInterfaces.0.firewallIds.1",
+      "type": { "prefix": "fwl", "noun": "firewall", "article": "a" },
+      "value": "019a2f10-6d4e-7b32-9c5e-000000000001",
+      "issue": { "path": "networkInterfaces.0.firewallIds.1", "message": "use the firewall's ID (fwl_…)" }
+    },
+    {
+      "name": "an SSH key's prefixed ID",
+      "field": "sshKeyIds.0",
+      "type": { "prefix": "ssh", "noun": "SSH key", "article": "an" },
+      "value": "ssh_8k2l4m6n8p0q",
+      "issue": null
+    },
+    {
+      "name": "an SSH key's UUID",
+      "field": "sshKeyIds.0",
+      "type": { "prefix": "ssh", "noun": "SSH key", "article": "an" },
+      "value": "019a2f10-6d4e-7b32-9c5e-2f3a4b5c6d7e",
+      "issue": { "path": "sshKeyIds.0", "message": "use the SSH key's ID (ssh_…)" }
+    },
+    {
+      "name": "a snapshot's UUID",
+      "field": "source.snapshotId",
+      "type": { "prefix": "snp", "noun": "snapshot", "article": "a" },
+      "value": "019a2f10-6d4e-7b32-9c5e-2f3a4b5c6d7e",
+      "issue": { "path": "source.snapshotId", "message": "use the snapshot's ID (snp_…)" }
+    },
+    {
+      "name": "an IPv4 address's UUID",
+      "field": "ipv4.address",
+      "type": { "prefix": "pip", "noun": "IPv4 address", "article": "a" },
+      "value": "019a2f10-6d4e-7b32-9c5e-2f3a4b5c6d7e",
+      "issue": { "path": "ipv4.address", "message": "use the IPv4 address's ID (pip_…)" }
+    },
+    {
+      "name": "another type's prefixed ID",
+      "field": "volumeId",
+      "type": { "prefix": "vol", "noun": "volume", "article": "a" },
+      "value": "snp_4k2m9x0a7qpe",
+      "issue": { "path": "volumeId", "message": "must be a vol_ ID" }
+    },
+    {
+      "name": "a prefixed ID with an upper-case body",
+      "field": "volumeId",
+      "type": { "prefix": "vol", "noun": "volume", "article": "a" },
+      "value": "vol_4K2M9X0A7QPE",
+      "issue": { "path": "volumeId", "message": "must be a vol_ ID" }
+    },
+    {
+      "name": "a UUID without hyphens isn't a UUID, nor an ID",
+      "field": "networkInterfaceId",
+      "type": { "prefix": "eni", "noun": "network interface", "article": "an" },
+      "value": "019a2f106d4e7b329c5e2f3a4b5c6d7e",
+      "issue": { "path": "networkInterfaceId", "message": "must be an eni_ ID" }
+    },
+    {
+      "name": "a resource name isn't an ID",
+      "field": "volumeId",
+      "type": { "prefix": "vol", "noun": "volume", "article": "a" },
+      "value": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:vol_4k2m9x0a7qpe",
+      "issue": { "path": "volumeId", "message": "must be a vol_ ID" }
+    },
+    {
+      "name": "a number",
+      "field": "volumeId",
+      "type": { "prefix": "vol", "noun": "volume", "article": "a" },
+      "value": 42,
+      "issue": { "path": "volumeId", "message": "must be a vol_ ID" }
+    }
+  ],
+  "filter": [
+    {
+      "name": "a volume filter by the volume's prefixed ID",
+      "parameter": "volume",
+      "type": { "prefix": "vol", "noun": "volume", "article": "a" },
+      "value": "vol_4k2m9x0a7qpe",
+      "issue": null
+    },
+    {
+      "name": "a volume filter by the volume's UUID",
+      "parameter": "volume",
+      "type": { "prefix": "vol", "noun": "volume", "article": "a" },
+      "value": "019a2f10-6d4e-7b32-9c5e-2f3a4b5c6d7e",
+      "issue": { "path": "volume", "message": "use the volume's ID (vol_…)" }
+    },
+    {
+      "name": "an upper-case UUID is refused the same way",
+      "parameter": "networkInterface",
+      "type": { "prefix": "eni", "noun": "network interface", "article": "an" },
+      "value": "019A2F10-6D4E-7B32-9C5E-2F3A4B5C6D7E",
+      "issue": { "path": "networkInterface", "message": "use the network interface's ID (eni_…)" }
+    },
+    {
+      "name": "an instance filter by the instance's prefixed ID",
+      "parameter": "instance",
+      "type": { "prefix": "ins", "noun": "instance", "article": "an" },
+      "value": "ins_8k2l4m6n8p0q",
+      "issue": null
+    },
+    {
+      "name": "an instance filter by a UUID",
+      "parameter": "instance",
+      "type": { "prefix": "ins", "noun": "instance", "article": "an" },
+      "value": "019a2f10-6d4e-7b32-9c5e-2f3a4b5c6d7e",
+      "issue": { "path": "instance", "message": "use the instance's ID (ins_…)" }
+    },
+    {
+      "name": "another type's prefixed ID is read, and matches nothing",
+      "parameter": "volume",
+      "type": { "prefix": "vol", "noun": "volume", "article": "a" },
+      "value": "snp_4k2m9x0a7qpe",
+      "issue": null
+    },
+    {
+      "name": "a malformed value is read, and matches nothing",
+      "parameter": "networkInterface",
+      "type": { "prefix": "eni", "noun": "network interface", "article": "an" },
+      "value": "garbage",
+      "issue": null
+    },
+    {
+      "name": "a UUID without hyphens isn't a UUID: it's read, and matches nothing",
+      "parameter": "volume",
+      "type": { "prefix": "vol", "noun": "volume", "article": "a" },
+      "value": "019a2f106d4e7b329c5e2f3a4b5c6d7e",
+      "issue": null
+    }
+  ],
+  "path": [
+    { "name": "a resource by its prefixed ID", "segment": "resource", "prefix": "vol", "value": "vol_4k2m9x0a7qpe", "accepted": true },
+    { "name": "a resource by its UUID", "segment": "resource", "prefix": "vol", "value": "019a2f10-6d4e-7b32-9c5e-2f3a4b5c6d7e", "accepted": true },
+    { "name": "another type's prefixed ID", "segment": "resource", "prefix": "vol", "value": "snp_4k2m9x0a7qpe", "accepted": false },
+    { "name": "a malformed ID", "segment": "resource", "prefix": "vol", "value": "vol_4k2m", "accepted": false },
+    { "name": "an organization by its UUID", "segment": "organization", "value": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70", "accepted": true },
+    { "name": "an organization by its prefixed ID", "segment": "organization", "value": "org_k3f9a0x2m7qp", "accepted": true },
+    { "name": "an organization by a project's prefixed ID", "segment": "organization", "value": "prj_g7h8i9j0k1l2", "accepted": false },
+    { "name": "a project by its UUID", "segment": "project", "value": "0199a3c2-7c2a-7e11-8b3d-4e5f6a7b8c9d", "accepted": true },
+    { "name": "a project by its prefixed ID", "segment": "project", "value": "prj_g7h8i9j0k1l2", "accepted": true },
+    { "name": "a malformed project ID", "segment": "project", "value": "prj_G7H8I9J0K1L2", "accepted": false },
+    { "name": "a key by its prefixed ID", "segment": "aliasable", "prefix": "kms", "value": "kms_4k2m9x0a7qpe", "accepted": true },
+    { "name": "a key by an alias", "segment": "aliasable", "prefix": "kms", "value": "alias:billing-prod", "accepted": true },
+    { "name": "the longest alias", "segment": "aliasable", "prefix": "kms", "value": "alias:a123456789012345678901234567890123456789012345678901234567890123", "accepted": true },
+    { "name": "an alias one character too long", "segment": "aliasable", "prefix": "kms", "value": "alias:a1234567890123456789012345678901234567890123456789012345678901234", "accepted": false },
+    { "name": "an alias with nothing after the colon", "segment": "aliasable", "prefix": "kms", "value": "alias:", "accepted": false },
+    { "name": "an alias starting with a hyphen", "segment": "aliasable", "prefix": "kms", "value": "alias:-prod", "accepted": false },
+    { "name": "an alias in capitals", "segment": "aliasable", "prefix": "kms", "value": "alias:Prod", "accepted": false },
+    { "name": "an alias naming an ID", "segment": "aliasable", "prefix": "kms", "value": "alias:kms_4k2m9x0a7qpe", "accepted": false },
+    { "name": "a key by its UUID", "segment": "aliasable", "prefix": "kms", "value": "019a2f10-6d4e-7b32-9c5e-2f3a4b5c6d7e", "accepted": true },
+    { "name": "an alias on an ordinary resource segment", "segment": "resource", "prefix": "kms", "value": "alias:billing-prod", "accepted": false }
+  ]
+}

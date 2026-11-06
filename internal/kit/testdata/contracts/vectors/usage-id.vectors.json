@@ -1,0 +1,396 @@
+{
+  "about": [
+    "Test vectors for usage event IDs (billing-stack docs/metering-design.md, 'Idempotency and event IDs'). Implementations in any language must reproduce every value here.",
+    "canonicalJson: 'value' serialized with no whitespace and object keys sorted by Unicode code point (= UTF-8 byte order). Strings escape only \", \\ and U+0000-U+001F (\\b \\f \\n \\r \\t, else \\u00xx lowercase); everything else is written raw as UTF-8. 'sha256' is SHA-256 of the canonical UTF-8 bytes, 'hash' its first 16 hex characters.",
+    "times: an instant in IDs is RFC 3339 UTC with Z, milliseconds only when non-zero, then always 3 digits.",
+    "ids: delta = <resource id>:<meter>:<project id or ''>:<hash(dimensions)>:<hash(tags)>:<time(windowStart)>; interval = <resource id>:<meter>:<time(windowStart)>; gauge = <resource id>:<meter>:<project id or ''>:<hash(dimensions)>:<hash(tags)>:<time(occurredAt)>. The resource id is the last slug of resourceName.",
+    "corrections: <original id>:c<n>, n from 1."
+  ],
+  "canonicalJson": [
+    {
+      "name": "empty object",
+      "value": {},
+      "canonical": "{}",
+      "sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "hash": "44136fa355b3678a"
+    },
+    {
+      "name": "one key",
+      "value": {
+        "team": "platform"
+      },
+      "canonical": "{\"team\":\"platform\"}",
+      "sha256": "5ad62904b020559da0fd4a704f13bb329c25168f87e598c43a48f07e76d99bc7",
+      "hash": "5ad62904b020559d"
+    },
+    {
+      "name": "keys are sorted",
+      "value": {
+        "zone": "us-west-1a",
+        "os": "linux",
+        "instanceType": "g4.large"
+      },
+      "canonical": "{\"instanceType\":\"g4.large\",\"os\":\"linux\",\"zone\":\"us-west-1a\"}",
+      "sha256": "f2a1653f11816ac59aba9232a93596f9c2700b7ac3b065aed146de0e63d1c536",
+      "hash": "f2a1653f11816ac5"
+    },
+    {
+      "name": "the example event's tags",
+      "value": {
+        "team": "platform",
+        "env": "prod"
+      },
+      "canonical": "{\"env\":\"prod\",\"team\":\"platform\"}",
+      "sha256": "c784f4f83b7be2592c453adc8a83bed9c7f9bd98e694f76a468e8d12aba41978",
+      "hash": "c784f4f83b7be259"
+    },
+    {
+      "name": "uppercase sorts before lowercase",
+      "value": {
+        "b": "1",
+        "B": "2",
+        "a": "3",
+        "A": "4"
+      },
+      "canonical": "{\"A\":\"4\",\"B\":\"2\",\"a\":\"3\",\"b\":\"1\"}",
+      "sha256": "f02e7f87439704d701e20c45d798ec367e390b092366fca7c88ceb0db80724bc",
+      "hash": "f02e7f87439704d7"
+    },
+    {
+      "name": "prefixes sort first",
+      "value": {
+        "ab": "1",
+        "a": "2",
+        "a:": "3",
+        "": "4"
+      },
+      "canonical": "{\"\":\"4\",\"a\":\"2\",\"a:\":\"3\",\"ab\":\"1\"}",
+      "sha256": "030e3a07045cabb9e021c95c6ae67afce350081ac2bcd67b7f8fa1cdd5d1cc7a",
+      "hash": "030e3a07045cabb9"
+    },
+    {
+      "name": "escapes: quote, backslash, control characters",
+      "value": {
+        "q\"k": "say \"hi\"",
+        "back": "a\\b",
+        "ctl": "\b\f\n\r\t\u0000\u001f"
+      },
+      "canonical": "{\"back\":\"a\\\\b\",\"ctl\":\"\\b\\f\\n\\r\\t\\u0000\\u001f\",\"q\\\"k\":\"say \\\"hi\\\"\"}",
+      "sha256": "44327bed928665fa25bef79f28a6ac977bca07337ee12c12e8c996e22ddccc9f",
+      "hash": "44327bed928665fa"
+    },
+    {
+      "name": "not escaped: <>&, U+2028, non-ASCII",
+      "value": {
+        "html": "<a href='x'>&amp;</a>",
+        "sep": "  ",
+        "café": "naïve",
+        "jp": "東京"
+      },
+      "canonical": "{\"café\":\"naïve\",\"html\":\"<a href='x'>&amp;</a>\",\"jp\":\"東京\",\"sep\":\"  \"}",
+      "sha256": "c6ee693974b163205973ede5b9575af415137c40750098d240611d7b78fcb02c",
+      "hash": "c6ee693974b16320"
+    },
+    {
+      "name": "code point order, not UTF-16 order: U+FF5A before U+1F600",
+      "value": {
+        "😀": "grin",
+        "ｚ": "fullwidth z",
+        "é": "e acute",
+        "z": "z"
+      },
+      "canonical": "{\"z\":\"z\",\"é\":\"e acute\",\"ｚ\":\"fullwidth z\",\"😀\":\"grin\"}",
+      "sha256": "fa35729fa0dc9692b9d2d297619bcdfcd19684fc3e9f6781f1815da69b46e331",
+      "hash": "fa35729fa0dc9692"
+    },
+    {
+      "name": "tag keys with colons and slashes",
+      "value": {
+        "ezgh:createdBy": "system",
+        "cost-center/eu": "42",
+        "a.b": "c"
+      },
+      "canonical": "{\"a.b\":\"c\",\"cost-center/eu\":\"42\",\"ezgh:createdBy\":\"system\"}",
+      "sha256": "3c2e9a5be0fdaf24ae6e884fb2f7b40a813df7fe9fa0e75dcc32d27d0bc2ba76",
+      "hash": "3c2e9a5be0fdaf24"
+    },
+    {
+      "name": "nested values and arrays",
+      "value": {
+        "b": [
+          3,
+          "x",
+          null,
+          true
+        ],
+        "a": {
+          "d": 1.5,
+          "c": -0.25
+        }
+      },
+      "canonical": "{\"a\":{\"c\":-0.25,\"d\":1.5},\"b\":[3,\"x\",null,true]}",
+      "sha256": "8ea7feb433d4ad9170d7e2dbbbd91a59cf4685a399620b86b4ab84d8e10f8210",
+      "hash": "8ea7feb433d4ad91"
+    }
+  ],
+  "times": [
+    {
+      "input": "2026-09-28T10:00:00Z",
+      "idTime": "2026-09-28T10:00:00Z"
+    },
+    {
+      "input": "2026-09-28T10:00:00.000Z",
+      "idTime": "2026-09-28T10:00:00Z"
+    },
+    {
+      "input": "2026-09-28T10:00:00.0Z",
+      "idTime": "2026-09-28T10:00:00Z"
+    },
+    {
+      "input": "2026-09-28T10:42:17.250Z",
+      "idTime": "2026-09-28T10:42:17.250Z"
+    },
+    {
+      "input": "2026-09-28T10:42:17.25Z",
+      "idTime": "2026-09-28T10:42:17.250Z"
+    },
+    {
+      "input": "2026-09-28T10:42:17.001Z",
+      "idTime": "2026-09-28T10:42:17.001Z"
+    },
+    {
+      "input": "2026-02-28T23:59:59.999Z",
+      "idTime": "2026-02-28T23:59:59.999Z"
+    }
+  ],
+  "ids": [
+    {
+      "name": "reference meter: widget uptime checkpoint",
+      "kind": "interval",
+      "input": {
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "meter": "widgets.widget.uptime",
+        "windowStart": "2026-09-28T10:00:00Z"
+      },
+      "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z"
+    },
+    {
+      "name": "interval: window start with milliseconds",
+      "kind": "interval",
+      "input": {
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "meter": "widgets.widget.uptime",
+        "windowStart": "2026-09-28T10:42:17.250Z"
+      },
+      "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:42:17.250Z"
+    },
+    {
+      "name": "interval: .000 milliseconds are dropped",
+      "kind": "interval",
+      "input": {
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:ins_4k2m9x0a7qpe",
+        "meter": "compute.instance.uptime",
+        "windowStart": "2026-09-28T10:42:17.000Z"
+      },
+      "id": "ins_4k2m9x0a7qpe:compute.instance.uptime:2026-09-28T10:42:17Z"
+    },
+    {
+      "name": "interval: fewer fraction digits are padded",
+      "kind": "interval",
+      "input": {
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:ins_4k2m9x0a7qpe",
+        "meter": "compute.instance.uptime",
+        "windowStart": "2026-09-28T10:42:17.5Z"
+      },
+      "id": "ins_4k2m9x0a7qpe:compute.instance.uptime:2026-09-28T10:42:17.500Z"
+    },
+    {
+      "name": "delta: egress flush",
+      "kind": "delta",
+      "input": {
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:ins_4k2m9x0a7qpe",
+        "meter": "network.egress.internet",
+        "projectId": "01992f6e-3c4a-7b1e-8d2f-0a1b2c3d4e5f",
+        "dimensions": {
+          "zone": "us-west-1a"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "windowStart": "2026-09-28T10:05:00Z"
+      },
+      "id": "ins_4k2m9x0a7qpe:network.egress.internet:01992f6e-3c4a-7b1e-8d2f-0a1b2c3d4e5f:c6e3fd0afec82626:c784f4f83b7be259:2026-09-28T10:05:00Z"
+    },
+    {
+      "name": "delta: retagged to B mid-minute",
+      "kind": "delta",
+      "input": {
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:ins_4k2m9x0a7qpe",
+        "meter": "network.egress.internet",
+        "projectId": "01992f6e-3c4a-7b1e-8d2f-0a1b2c3d4e5f",
+        "dimensions": {
+          "zone": "us-west-1a"
+        },
+        "tags": {
+          "team": "billing",
+          "env": "prod"
+        },
+        "windowStart": "2026-09-28T10:05:20.125Z"
+      },
+      "id": "ins_4k2m9x0a7qpe:network.egress.internet:01992f6e-3c4a-7b1e-8d2f-0a1b2c3d4e5f:c6e3fd0afec82626:15709fa934794b17:2026-09-28T10:05:20.125Z"
+    },
+    {
+      "name": "delta: retagged back to A",
+      "kind": "delta",
+      "input": {
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:ins_4k2m9x0a7qpe",
+        "meter": "network.egress.internet",
+        "projectId": "01992f6e-3c4a-7b1e-8d2f-0a1b2c3d4e5f",
+        "dimensions": {
+          "zone": "us-west-1a"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "windowStart": "2026-09-28T10:05:40Z"
+      },
+      "id": "ins_4k2m9x0a7qpe:network.egress.internet:01992f6e-3c4a-7b1e-8d2f-0a1b2c3d4e5f:c6e3fd0afec82626:c784f4f83b7be259:2026-09-28T10:05:40Z"
+    },
+    {
+      "name": "delta: moved to another project",
+      "kind": "delta",
+      "input": {
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:ins_4k2m9x0a7qpe",
+        "meter": "network.egress.internet",
+        "projectId": "01992f6e-3c4a-7b1e-8d2f-5f4e3d2c1b0a",
+        "dimensions": {
+          "zone": "us-west-1a"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "windowStart": "2026-09-28T10:05:00Z"
+      },
+      "id": "ins_4k2m9x0a7qpe:network.egress.internet:01992f6e-3c4a-7b1e-8d2f-5f4e3d2c1b0a:c6e3fd0afec82626:c784f4f83b7be259:2026-09-28T10:05:00Z"
+    },
+    {
+      "name": "delta: no dimensions, no tags",
+      "kind": "delta",
+      "input": {
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:ins_4k2m9x0a7qpe",
+        "meter": "compute.api.requests",
+        "projectId": "01992f6e-3c4a-7b1e-8d2f-0a1b2c3d4e5f",
+        "dimensions": {},
+        "tags": {},
+        "windowStart": "2026-09-28T10:06:00Z"
+      },
+      "id": "ins_4k2m9x0a7qpe:compute.api.requests:01992f6e-3c4a-7b1e-8d2f-0a1b2c3d4e5f:44136fa355b3678a:44136fa355b3678a:2026-09-28T10:06:00Z"
+    },
+    {
+      "name": "delta: organization-level resource (null project is empty)",
+      "kind": "delta",
+      "input": {
+        "resourceName": "ezgh::org_k3f9a0x2m7qp",
+        "meter": "support.plan.requests",
+        "projectId": null,
+        "dimensions": {},
+        "tags": {},
+        "windowStart": "2026-09-28T10:00:00Z"
+      },
+      "id": "org_k3f9a0x2m7qp:support.plan.requests::44136fa355b3678a:44136fa355b3678a:2026-09-28T10:00:00Z"
+    },
+    {
+      "name": "gauge: hour-start snapshot",
+      "kind": "gauge",
+      "input": {
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:bkt_z9y8x7w6v5u4",
+        "meter": "storage.bucket.stored",
+        "projectId": "01992f6e-3c4a-7b1e-8d2f-0a1b2c3d4e5f",
+        "dimensions": {
+          "class": "standard"
+        },
+        "tags": {
+          "env": "prod"
+        },
+        "occurredAt": "2026-09-28T11:00:00Z"
+      },
+      "id": "bkt_z9y8x7w6v5u4:storage.bucket.stored:01992f6e-3c4a-7b1e-8d2f-0a1b2c3d4e5f:57bda4d1e8917d76:fdf65bc0fcace2d9:2026-09-28T11:00:00Z"
+    },
+    {
+      "name": "gauge: closing sample at the same instant, other tags",
+      "kind": "gauge",
+      "input": {
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:bkt_z9y8x7w6v5u4",
+        "meter": "storage.bucket.stored",
+        "projectId": "01992f6e-3c4a-7b1e-8d2f-0a1b2c3d4e5f",
+        "dimensions": {
+          "class": "standard"
+        },
+        "tags": {
+          "env": "staging"
+        },
+        "occurredAt": "2026-09-28T11:00:00Z"
+      },
+      "id": "bkt_z9y8x7w6v5u4:storage.bucket.stored:01992f6e-3c4a-7b1e-8d2f-0a1b2c3d4e5f:57bda4d1e8917d76:50189f0051e905b9:2026-09-28T11:00:00Z"
+    },
+    {
+      "name": "reference gauge: widget storage hour-start snapshot",
+      "kind": "gauge",
+      "input": {
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "meter": "widgets.widget.storage",
+        "projectId": "01992f6e-3c4a-7b1e-8d2f-0a1b2c3d4e5f",
+        "dimensions": {},
+        "tags": {
+          "env": "prod",
+          "team": "platform"
+        },
+        "occurredAt": "2026-09-28T11:00:00Z"
+      },
+      "id": "wgt_4k2m9x0a7qpe:widgets.widget.storage:01992f6e-3c4a-7b1e-8d2f-0a1b2c3d4e5f:44136fa355b3678a:c784f4f83b7be259:2026-09-28T11:00:00Z"
+    },
+    {
+      "name": "reference gauge: widget storage sample on change",
+      "kind": "gauge",
+      "input": {
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "meter": "widgets.widget.storage",
+        "projectId": "01992f6e-3c4a-7b1e-8d2f-0a1b2c3d4e5f",
+        "dimensions": {},
+        "tags": {},
+        "occurredAt": "2026-09-28T11:17:03.042Z"
+      },
+      "id": "wgt_4k2m9x0a7qpe:widgets.widget.storage:01992f6e-3c4a-7b1e-8d2f-0a1b2c3d4e5f:44136fa355b3678a:44136fa355b3678a:2026-09-28T11:17:03.042Z"
+    }
+  ],
+  "corrections": [
+    {
+      "originalId": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+      "n": 1,
+      "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z:c1"
+    },
+    {
+      "originalId": "ins_4k2m9x0a7qpe:network.egress.internet:01992f6e-3c4a-7b1e-8d2f-0a1b2c3d4e5f:c6e3fd0afec82626:c784f4f83b7be259:2026-09-28T10:05:00Z",
+      "n": 1,
+      "id": "ins_4k2m9x0a7qpe:network.egress.internet:01992f6e-3c4a-7b1e-8d2f-0a1b2c3d4e5f:c6e3fd0afec82626:c784f4f83b7be259:2026-09-28T10:05:00Z:c1"
+    },
+    {
+      "originalId": "bkt_z9y8x7w6v5u4:storage.bucket.stored:01992f6e-3c4a-7b1e-8d2f-0a1b2c3d4e5f:57bda4d1e8917d76:fdf65bc0fcace2d9:2026-09-28T11:00:00Z",
+      "n": 2,
+      "id": "bkt_z9y8x7w6v5u4:storage.bucket.stored:01992f6e-3c4a-7b1e-8d2f-0a1b2c3d4e5f:57bda4d1e8917d76:fdf65bc0fcace2d9:2026-09-28T11:00:00Z:c2"
+    },
+    {
+      "originalId": "wgt_4k2m9x0a7qpe:widgets.widget.storage:01992f6e-3c4a-7b1e-8d2f-0a1b2c3d4e5f:44136fa355b3678a:c784f4f83b7be259:2026-09-28T11:00:00Z",
+      "n": 1,
+      "id": "wgt_4k2m9x0a7qpe:widgets.widget.storage:01992f6e-3c4a-7b1e-8d2f-0a1b2c3d4e5f:44136fa355b3678a:c784f4f83b7be259:2026-09-28T11:00:00Z:c1"
+    },
+    {
+      "originalId": "wgt_4k2m9x0a7qpe:widgets.widget.storage:01992f6e-3c4a-7b1e-8d2f-0a1b2c3d4e5f:44136fa355b3678a:c784f4f83b7be259:2026-09-28T11:00:00Z",
+      "n": 2,
+      "id": "wgt_4k2m9x0a7qpe:widgets.widget.storage:01992f6e-3c4a-7b1e-8d2f-0a1b2c3d4e5f:44136fa355b3678a:c784f4f83b7be259:2026-09-28T11:00:00Z:c2"
+    }
+  ]
+}

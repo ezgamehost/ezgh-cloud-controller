@@ -1,0 +1,2465 @@
+{
+  "about": [
+    "Usage event validation vectors: what service-kit's validateAgainstRegistry (usage.ts) answers, and so what metering-ingest answers, since it validates with the same code (billing-stack 956967d). Implementations in any language must give exactly these issues.",
+    "context: the registry (meters), the authenticated producer, the configured regions and the clock (now). Meters other than widgets.widget.uptime and widgets.widget.storage (billing-stack catalog/meters/widgets.json, exactly) are vector-only.",
+    "The event's meter is looked up in context.meters by its `meter`. When the registry has no such meter, the issue { path: \"meter\", message: \"unknown_meter: <JSON meter id> isn't a current meter\" } comes first, and the event's other rules are checked without a meter.",
+    "valid: no issues. invalid: exactly these issues, each { path, message }: a dotted path into the event (\"\" for the whole event), and a message that starts with the ingest code and \": \" when the rule has one (invalid_dimension: …). Order within a case isn't part of the contract; compare them as a multiset.",
+    "Two stages: first each field's shape (type, format, length; missing and unknown fields), every problem at once. Only an event whose fields are all well-formed is then checked across fields and against its meter, the clock and the configuration (\"several problems at once\" shows it).",
+    "ingestOnly: events validation accepts and metering-ingest then rejects, knowing org-api's directory, each organization's billing period and the events already stored (for idempotency_conflict, the first valid event is assumed accepted). Their issues give the path and code only.",
+    "Generated: UPDATE_VECTORS=1 bun test usage-events.vectors in packages/service-kit rewrites the issues from the code; review the diff. Copied verbatim to service-template contracts/vectors/usage-events.json."
+  ],
+  "context": {
+    "producer": "widgets",
+    "regions": [
+      "us-west-1",
+      "us-local-1"
+    ],
+    "now": "2026-09-28T12:00:00.000Z",
+    "meters": [
+      {
+        "id": "widgets.widget.uptime",
+        "version": 1,
+        "service": "widgets",
+        "displayName": "Widget uptime",
+        "producers": [
+          "widgets"
+        ],
+        "kind": "interval",
+        "unit": "second",
+        "aggregation": "sum",
+        "window": "hour",
+        "resourceType": "wgt",
+        "global": false,
+        "dimensions": {
+          "size": {
+            "pricing": true,
+            "required": true,
+            "values": [
+              "small",
+              "large"
+            ]
+          }
+        },
+        "maxQuantity": "3600",
+        "expectedCadence": "PT1H",
+        "lossTolerant": false,
+        "reconciliationTolerance": "0",
+        "status": "shadow"
+      },
+      {
+        "id": "widgets.api.requests",
+        "version": 1,
+        "service": "widgets",
+        "displayName": "API requests (vector-only)",
+        "producers": [
+          "widgets"
+        ],
+        "kind": "delta",
+        "unit": "request",
+        "aggregation": "sum",
+        "window": "hour",
+        "resourceType": "wgt",
+        "global": false,
+        "dimensions": {
+          "operation": {
+            "pricing": false,
+            "required": true,
+            "pattern": "^[A-Z][A-Za-z]{2,63}$"
+          }
+        },
+        "maxQuantity": "1000000",
+        "expectedCadence": "PT5M",
+        "lossTolerant": true,
+        "reconciliationTolerance": "0.01",
+        "status": "shadow"
+      },
+      {
+        "id": "widgets.widget.storage",
+        "version": 1,
+        "service": "widgets",
+        "displayName": "Widget storage",
+        "producers": [
+          "widgets"
+        ],
+        "kind": "gauge",
+        "unit": "byte",
+        "aggregation": "twa",
+        "window": "hour",
+        "resourceType": "wgt",
+        "global": false,
+        "dimensions": {},
+        "maxQuantity": "1000000000000000",
+        "maxGap": "PT3H",
+        "expectedCadence": "PT1H",
+        "lossTolerant": false,
+        "reconciliationTolerance": "0",
+        "status": "shadow"
+      },
+      {
+        "id": "widgets.widget.legacy",
+        "version": 2,
+        "service": "widgets",
+        "displayName": "Legacy (vector-only)",
+        "producers": [
+          "widgets"
+        ],
+        "kind": "interval",
+        "unit": "second",
+        "aggregation": "sum",
+        "window": "hour",
+        "resourceType": "wgt",
+        "global": false,
+        "dimensions": {},
+        "maxQuantity": "3600",
+        "expectedCadence": "PT1H",
+        "lossTolerant": false,
+        "reconciliationTolerance": "0",
+        "status": "retired"
+      },
+      {
+        "id": "compute.instance.uptime",
+        "version": 1,
+        "service": "compute",
+        "displayName": "Instance uptime (vector-only)",
+        "producers": [
+          "compute"
+        ],
+        "kind": "interval",
+        "unit": "second",
+        "aggregation": "sum",
+        "window": "hour",
+        "resourceType": "ins",
+        "global": false,
+        "dimensions": {},
+        "maxQuantity": "3600",
+        "expectedCadence": "PT1H",
+        "lossTolerant": false,
+        "reconciliationTolerance": "0",
+        "status": "shadow"
+      }
+    ]
+  },
+  "valid": [
+    {
+      "name": "interval: a full hour, small",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      }
+    },
+    {
+      "name": "interval: the hour so far, stopped at 11:42:17.250",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T11:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T11:00:00Z",
+          "end": "2026-09-28T11:42:17.250Z"
+        },
+        "quantity": "2537.25",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      }
+    },
+    {
+      "name": "interval: window ends on the next hour boundary, no tags field",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T09:30:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T09:30:00Z",
+          "end": "2026-09-28T10:00:00Z"
+        },
+        "quantity": "1800",
+        "dimensions": {
+          "size": "large"
+        },
+        "correctionOf": null
+      }
+    },
+    {
+      "name": "interval: timestamps with three fractional digits are accepted too",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T08:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T08:00:00.000Z",
+          "end": "2026-09-28T09:00:00.000Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      }
+    },
+    {
+      "name": "interval: a correction taking back 1200.5 seconds",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z:c1",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "-1200.5",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z"
+      }
+    },
+    {
+      "name": "interval: ends 4 minutes in the future (clock skew)",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T12:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T12:00:00Z",
+          "end": "2026-09-28T12:04:00Z"
+        },
+        "quantity": "240",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      }
+    },
+    {
+      "name": "delta: a minute window",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.api.requests:0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81:aec6694a9f40ae40:c784f4f83b7be259:2026-09-28T10:05:00Z",
+        "producer": "widgets",
+        "meter": "widgets.api.requests",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "quantity": "1834",
+        "dimensions": {
+          "operation": "GetWidget"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null,
+        "window": {
+          "start": "2026-09-28T10:05:00Z",
+          "end": "2026-09-28T10:06:00Z"
+        }
+      }
+    },
+    {
+      "name": "delta: at an instant",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.api.requests:0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81:aec6694a9f40ae40:c784f4f83b7be259:2026-09-28T10:05:00Z",
+        "producer": "widgets",
+        "meter": "widgets.api.requests",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "quantity": "1834",
+        "dimensions": {
+          "operation": "GetWidget"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null,
+        "occurredAt": "2026-09-28T10:05:00Z"
+      }
+    },
+    {
+      "name": "gauge: hour-start snapshot",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.storage:0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81:44136fa355b3678a:c784f4f83b7be259:2026-09-28T11:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.storage",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "quantity": "53687091200",
+        "dimensions": {},
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null,
+        "occurredAt": "2026-09-28T11:00:00Z"
+      }
+    },
+    {
+      "name": "gauge: a replacement sample",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.storage:0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81:44136fa355b3678a:c784f4f83b7be259:2026-09-28T11:00:00Z:c1",
+        "producer": "widgets",
+        "meter": "widgets.widget.storage",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "quantity": "53687091000",
+        "dimensions": {},
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": "wgt_4k2m9x0a7qpe:widgets.widget.storage:0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81:44136fa355b3678a:c784f4f83b7be259:2026-09-28T11:00:00Z",
+        "occurredAt": "2026-09-28T11:00:00Z"
+      }
+    },
+    {
+      "name": "gauge: the final 0 when the widget is deleted",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.storage:0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81:44136fa355b3678a:c784f4f83b7be259:2026-09-28T11:47:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.storage",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "quantity": "0",
+        "dimensions": {},
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null,
+        "occurredAt": "2026-09-28T11:47:00Z"
+      }
+    },
+    {
+      "name": "interval: a correction's ID is free, <original>:c<n> by convention",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z:c2",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "-60",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z"
+      }
+    },
+    {
+      "name": "interval: a tag key of 128 emoji is 128 characters (256 UTF-16 units)",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀": "x"
+        },
+        "correctionOf": null
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "specVersion 2.0",
+      "event": {
+        "specVersion": "2.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "specVersion",
+          "message": "Expected \"1.0\""
+        }
+      ]
+    },
+    {
+      "name": "id with a space",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe uptime",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "id",
+          "message": "Expected 1–200 printable ASCII characters, no spaces"
+        }
+      ]
+    },
+    {
+      "name": "id over 200 characters",
+      "event": {
+        "specVersion": "1.0",
+        "id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "id",
+          "message": "Expected 1–200 printable ASCII characters, no spaces"
+        }
+      ]
+    },
+    {
+      "name": "another producer",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "compute",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "producer",
+          "message": "producer_mismatch: this credential reports as \"widgets\""
+        },
+        {
+          "path": "meter",
+          "message": "meter_not_owned: \"compute\" doesn't report widgets.widget.uptime"
+        }
+      ]
+    },
+    {
+      "name": "a meter the registry doesn't have (the rest is checked without a meter)",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.nope",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "meter",
+          "message": "unknown_meter: \"widgets.widget.nope\" isn't a current meter"
+        }
+      ]
+    },
+    {
+      "name": "retired meter",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.legacy",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {},
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "meter",
+          "message": "unknown_meter: \"widgets.widget.legacy\" isn't a current meter"
+        }
+      ]
+    },
+    {
+      "name": "a meter the producer doesn't own",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "compute.instance.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:ins_a1b2c3d4e5f6",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {},
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "meter",
+          "message": "meter_not_owned: \"widgets\" doesn't report compute.instance.uptime"
+        }
+      ]
+    },
+    {
+      "name": "organizationId in uppercase",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199A3C2-5B1E-7D40-9F3A-2C8E6B1D4F70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "organizationId",
+          "message": "Expected a lowercase UUID"
+        }
+      ]
+    },
+    {
+      "name": "projectId missing (required even when null)",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "projectId",
+          "message": "Missing key"
+        }
+      ]
+    },
+    {
+      "name": "correctionOf missing (required even when null)",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        }
+      },
+      "issues": [
+        {
+          "path": "correctionOf",
+          "message": "Missing key"
+        }
+      ]
+    },
+    {
+      "name": "resource of another type",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:ins_a1b2c3d4e5f6",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "resourceName",
+          "message": "Expected a wgt_ resource"
+        }
+      ]
+    },
+    {
+      "name": "resource name with a path",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe/disk0",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "resourceName",
+          "message": "Expected a resource name like ezgh:us-west-1:org_…:prj_…:ins_…"
+        }
+      ]
+    },
+    {
+      "name": "projectId null for a resource inside a project",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": null,
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "projectId",
+          "message": "unknown_project: the resource is in a project, so projectId is required"
+        }
+      ]
+    },
+    {
+      "name": "region not configured",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "eu-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "region",
+          "message": "invalid_region: expected the resource name's region, \"us-west-1\""
+        },
+        {
+          "path": "region",
+          "message": "invalid_region: expected one of us-west-1, us-local-1"
+        }
+      ]
+    },
+    {
+      "name": "region differs from the resource name's",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-local-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "region",
+          "message": "invalid_region: expected the resource name's region, \"us-west-1\""
+        }
+      ]
+    },
+    {
+      "name": "interval with occurredAt instead of window",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null,
+        "occurredAt": "2026-09-28T10:00:00Z"
+      },
+      "issues": [
+        {
+          "path": "window",
+          "message": "Interval meters report a window"
+        }
+      ]
+    },
+    {
+      "name": "neither occurredAt nor window",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "",
+          "message": "Expected exactly one of occurredAt and window"
+        },
+        {
+          "path": "window",
+          "message": "Interval meters report a window"
+        }
+      ]
+    },
+    {
+      "name": "window crosses an hour boundary",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:30:00Z",
+          "end": "2026-09-28T11:30:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "window.end",
+          "message": "Expected the window inside one UTC hour (end may be exactly the next hour)"
+        }
+      ]
+    },
+    {
+      "name": "window ends before it starts",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:30:00Z",
+          "end": "2026-09-28T10:20:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "window.end",
+          "message": "Expected end after start"
+        }
+      ]
+    },
+    {
+      "name": "window start with +00:00 instead of Z",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00+00:00",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "window.start",
+          "message": "Expected a UTC timestamp like 2026-09-28T10:00:00Z or 2026-09-28T10:00:00.250Z"
+        }
+      ]
+    },
+    {
+      "name": "window start with four fractional digits",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00.0001Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "window.start",
+          "message": "Expected a UTC timestamp like 2026-09-28T10:00:00Z or 2026-09-28T10:00:00.250Z"
+        }
+      ]
+    },
+    {
+      "name": "window on a day that doesn't exist",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-02-30T10:00:00Z",
+          "end": "2026-02-30T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "window.start",
+          "message": "Expected a UTC timestamp like 2026-09-28T10:00:00Z or 2026-09-28T10:00:00.250Z"
+        },
+        {
+          "path": "window.end",
+          "message": "Expected a UTC timestamp like 2026-09-28T10:00:00Z or 2026-09-28T10:00:00.250Z"
+        }
+      ]
+    },
+    {
+      "name": "window ends 10 minutes in the future",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T12:00:00Z",
+          "end": "2026-09-28T12:10:00Z"
+        },
+        "quantity": "600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "window.end",
+          "message": "Expected no more than 5 minutes in the future"
+        }
+      ]
+    },
+    {
+      "name": "delta with both occurredAt and window",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.api.requests:0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81:aec6694a9f40ae40:c784f4f83b7be259:2026-09-28T10:05:00Z",
+        "producer": "widgets",
+        "meter": "widgets.api.requests",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "quantity": "1834",
+        "dimensions": {
+          "operation": "GetWidget"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null,
+        "window": {
+          "start": "2026-09-28T10:05:00Z",
+          "end": "2026-09-28T10:06:00Z"
+        },
+        "occurredAt": "2026-09-28T10:05:00Z"
+      },
+      "issues": [
+        {
+          "path": "",
+          "message": "Expected exactly one of occurredAt and window"
+        }
+      ]
+    },
+    {
+      "name": "gauge with a window and no occurredAt",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.storage:0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81:44136fa355b3678a:c784f4f83b7be259:2026-09-28T11:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.storage",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "quantity": "53687091200",
+        "dimensions": {},
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null,
+        "window": {
+          "start": "2026-09-28T11:00:00Z",
+          "end": "2026-09-28T11:01:00Z"
+        }
+      },
+      "issues": [
+        {
+          "path": "occurredAt",
+          "message": "Gauge meters report an instant (occurredAt)"
+        }
+      ]
+    },
+    {
+      "name": "gauge sample in the future",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.storage:0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81:44136fa355b3678a:c784f4f83b7be259:2026-09-28T11:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.storage",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "quantity": "53687091200",
+        "dimensions": {},
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null,
+        "occurredAt": "2026-09-28T12:05:00.001Z"
+      },
+      "issues": [
+        {
+          "path": "occurredAt",
+          "message": "Expected no more than 5 minutes in the future"
+        }
+      ]
+    },
+    {
+      "name": "gauge level negative, even in a correction",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.storage:0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81:44136fa355b3678a:c784f4f83b7be259:2026-09-28T11:00:00Z:c1",
+        "producer": "widgets",
+        "meter": "widgets.widget.storage",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "quantity": "-1",
+        "dimensions": {},
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": "wgt_4k2m9x0a7qpe:widgets.widget.storage:0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81:44136fa355b3678a:c784f4f83b7be259:2026-09-28T11:00:00Z",
+        "occurredAt": "2026-09-28T11:00:00Z"
+      },
+      "issues": [
+        {
+          "path": "quantity",
+          "message": "A gauge level can't be negative"
+        }
+      ]
+    },
+    {
+      "name": "quantity as a JSON number",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": 3600,
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "quantity",
+          "message": "Expected string"
+        }
+      ]
+    },
+    {
+      "name": "quantity with 13 decimal places",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "12.1234567890123",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "quantity",
+          "message": "Expected a decimal like 12 or -1200.5 (up to 26 digits, 12 after the point)"
+        }
+      ]
+    },
+    {
+      "name": "negative quantity without correctionOf",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "-5",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "quantity",
+          "message": "Quantities are negative only in corrections (correctionOf)"
+        }
+      ]
+    },
+    {
+      "name": "quantity over maxQuantity",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600.001",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "quantity",
+          "message": "Expected at most 3600 per event"
+        }
+      ]
+    },
+    {
+      "name": "required dimension missing",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {},
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "dimensions.size",
+          "message": "invalid_dimension: required"
+        }
+      ]
+    },
+    {
+      "name": "pricing dimension value not allowed",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "medium"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "dimensions.size",
+          "message": "invalid_dimension: expected one of small, large"
+        }
+      ]
+    },
+    {
+      "name": "undeclared dimension",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small",
+          "color": "red"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "dimensions.color",
+          "message": "invalid_dimension: widgets.widget.uptime has no dimension \"color\""
+        }
+      ]
+    },
+    {
+      "name": "reporting dimension doesn't match its pattern",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.api.requests:0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81:aec6694a9f40ae40:c784f4f83b7be259:2026-09-28T10:05:00Z",
+        "producer": "widgets",
+        "meter": "widgets.api.requests",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "quantity": "1834",
+        "dimensions": {
+          "operation": "get-widget"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null,
+        "window": {
+          "start": "2026-09-28T10:05:00Z",
+          "end": "2026-09-28T10:06:00Z"
+        }
+      },
+      "issues": [
+        {
+          "path": "dimensions.operation",
+          "message": "invalid_dimension: expected a value matching ^[A-Z][A-Za-z]{2,63}$"
+        }
+      ]
+    },
+    {
+      "name": "reserved tag key",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "ezgh:owner": "x"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "tags.ezgh:owner",
+          "message": "Tag keys starting with ezgh: are set by the system"
+        }
+      ]
+    },
+    {
+      "name": "51 tags",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "k0": "v",
+          "k1": "v",
+          "k2": "v",
+          "k3": "v",
+          "k4": "v",
+          "k5": "v",
+          "k6": "v",
+          "k7": "v",
+          "k8": "v",
+          "k9": "v",
+          "k10": "v",
+          "k11": "v",
+          "k12": "v",
+          "k13": "v",
+          "k14": "v",
+          "k15": "v",
+          "k16": "v",
+          "k17": "v",
+          "k18": "v",
+          "k19": "v",
+          "k20": "v",
+          "k21": "v",
+          "k22": "v",
+          "k23": "v",
+          "k24": "v",
+          "k25": "v",
+          "k26": "v",
+          "k27": "v",
+          "k28": "v",
+          "k29": "v",
+          "k30": "v",
+          "k31": "v",
+          "k32": "v",
+          "k33": "v",
+          "k34": "v",
+          "k35": "v",
+          "k36": "v",
+          "k37": "v",
+          "k38": "v",
+          "k39": "v",
+          "k40": "v",
+          "k41": "v",
+          "k42": "v",
+          "k43": "v",
+          "k44": "v",
+          "k45": "v",
+          "k46": "v",
+          "k47": "v",
+          "k48": "v",
+          "k49": "v",
+          "k50": "v"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "tags",
+          "message": "Expected at most 50 tags"
+        }
+      ]
+    },
+    {
+      "name": "tag value over 256 characters",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "tags.team",
+          "message": "Expected at most 256 characters"
+        }
+      ]
+    },
+    {
+      "name": "tag key over 128 characters (129 emoji: characters are code points, not UTF-16 units)",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀": "x"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "tags.😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀",
+          "message": "Expected a key of 1–128 characters"
+        }
+      ]
+    },
+    {
+      "name": "empty tag key",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "": "x"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "tags.",
+          "message": "Expected a key of 1–128 characters"
+        }
+      ]
+    },
+    {
+      "name": "empty dimension value",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": ""
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "dimensions.size",
+          "message": "invalid_dimension: expected one of small, large"
+        }
+      ]
+    },
+    {
+      "name": "gauge correction whose ID isn't <correctionOf>:c<n>",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.storage:0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81:44136fa355b3678a:c784f4f83b7be259:2026-09-28T11:00:00Z-fix",
+        "producer": "widgets",
+        "meter": "widgets.widget.storage",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "quantity": "53687000000",
+        "dimensions": {},
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": "wgt_4k2m9x0a7qpe:widgets.widget.storage:0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81:44136fa355b3678a:c784f4f83b7be259:2026-09-28T11:00:00Z",
+        "occurredAt": "2026-09-28T11:00:00Z"
+      },
+      "issues": [
+        {
+          "path": "id",
+          "message": "A gauge correction's id is <original id>:c<n>"
+        }
+      ]
+    },
+    {
+      "name": "unknown field",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null,
+        "cost": "0.01"
+      },
+      "issues": [
+        {
+          "path": "cost",
+          "message": "Expected no excess property"
+        }
+      ]
+    },
+    {
+      "name": "not an object",
+      "event": "an event",
+      "issues": [
+        {
+          "path": "",
+          "message": "Expected object"
+        }
+      ]
+    },
+    {
+      "name": "id isn't a string",
+      "event": {
+        "specVersion": "1.0",
+        "id": 5,
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "id",
+          "message": "Expected string"
+        }
+      ]
+    },
+    {
+      "name": "producer empty",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "producer",
+          "message": "Expected a value with a length of at least 1"
+        }
+      ]
+    },
+    {
+      "name": "producer missing",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "producer",
+          "message": "Missing key"
+        }
+      ]
+    },
+    {
+      "name": "projectId neither a string nor null",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": 5,
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "projectId",
+          "message": "Expected string | null"
+        }
+      ]
+    },
+    {
+      "name": "occurredAt null on an interval (leave it out)",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null,
+        "occurredAt": null
+      },
+      "issues": [
+        {
+          "path": "occurredAt",
+          "message": "Expected string"
+        }
+      ]
+    },
+    {
+      "name": "window with an unknown field",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z",
+          "hours": 1
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "window.hours",
+          "message": "Expected no excess property"
+        }
+      ]
+    },
+    {
+      "name": "window without end",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "window.end",
+          "message": "Missing key"
+        }
+      ]
+    },
+    {
+      "name": "dimension value over 128 characters",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "dimensions.size",
+          "message": "Expected at most 128 characters"
+        }
+      ]
+    },
+    {
+      "name": "tag value not a string",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": 1
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "tags.team",
+          "message": "Expected string"
+        }
+      ]
+    },
+    {
+      "name": "correctionOf is the event's own id",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "-1",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z"
+      },
+      "issues": [
+        {
+          "path": "correctionOf",
+          "message": "A correction has an id of its own"
+        }
+      ]
+    },
+    {
+      "name": "a resource directly in the organization, with a projectId",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "projectId",
+          "message": "unknown_project: the resource isn't in a project, so projectId must be null"
+        }
+      ]
+    },
+    {
+      "name": "empty region for a regional meter",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh::org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "region",
+          "message": "invalid_region: this meter is regional"
+        }
+      ]
+    },
+    {
+      "name": "several problems at once",
+      "event": {
+        "specVersion": "1.0",
+        "id": "",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": 1,
+        "dimensions": {
+          "size": "medium"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "issues": [
+        {
+          "path": "id",
+          "message": "Expected 1–200 printable ASCII characters, no spaces"
+        },
+        {
+          "path": "quantity",
+          "message": "Expected string"
+        }
+      ]
+    }
+  ],
+  "ingestOnly": [
+    {
+      "name": "an organization org-api doesn't know, or whose slug isn't the resource name's",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-9f52-7b84-8d7e-6a2c0f5b8d14",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "rejectedBy": "metering-ingest",
+      "issues": [
+        {
+          "path": "organizationId",
+          "code": "unknown_project"
+        }
+      ]
+    },
+    {
+      "name": "a project org-api doesn't know, in another organization, or deleted before this usage",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-7d30-7f62-9b5c-4e0a8d3f6b92",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "rejectedBy": "metering-ingest",
+      "issues": [
+        {
+          "path": "projectId",
+          "code": "unknown_project"
+        }
+      ]
+    },
+    {
+      "name": "an organization whose final invoice was issued",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-8e41-7a73-8c6d-5f1b9e4a7c03",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "rejectedBy": "metering-ingest",
+      "issues": [
+        {
+          "path": "organizationId",
+          "code": "organization_closed"
+        }
+      ]
+    },
+    {
+      "name": "July usage in late September: past the late-data cutoff (end of August, with the default anchor day)",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-07-15T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-07-15T10:00:00Z",
+          "end": "2026-07-15T11:00:00Z"
+        },
+        "quantity": "3600",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "rejectedBy": "metering-ingest",
+      "issues": [
+        {
+          "path": "occurredAt",
+          "code": "stale_usage"
+        }
+      ]
+    },
+    {
+      "name": "the ID of an accepted event (the full hour above) with other content",
+      "event": {
+        "specVersion": "1.0",
+        "id": "wgt_4k2m9x0a7qpe:widgets.widget.uptime:2026-09-28T10:00:00Z",
+        "producer": "widgets",
+        "meter": "widgets.widget.uptime",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:wgt_4k2m9x0a7qpe",
+        "region": "us-west-1",
+        "window": {
+          "start": "2026-09-28T10:00:00Z",
+          "end": "2026-09-28T11:00:00Z"
+        },
+        "quantity": "3599",
+        "dimensions": {
+          "size": "small"
+        },
+        "tags": {
+          "team": "platform",
+          "env": "prod"
+        },
+        "correctionOf": null
+      },
+      "rejectedBy": "metering-ingest",
+      "issues": [
+        {
+          "path": "id",
+          "code": "idempotency_conflict"
+        }
+      ]
+    }
+  ]
+}

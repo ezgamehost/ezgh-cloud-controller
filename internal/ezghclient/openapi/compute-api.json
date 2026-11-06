@@ -1,0 +1,5747 @@
+{
+  "components": {
+    "headers": {
+      "Retry-After": {
+        "description": "Whole seconds to wait before retrying. Never on quota_exceeded.",
+        "schema": {
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "X-Request-Id": {
+        "description": "The request's ID, in every log line and its Trails event.",
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "parameters": {
+      "Cursor": {
+        "description": "The previous page's nextCursor. Bound to the organization, the list and its filters.",
+        "in": "query",
+        "name": "cursor",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "IdempotencyKey": {
+        "description": "Makes a retry safe: the same key and request get the stored response.",
+        "in": "header",
+        "name": "Idempotency-Key",
+        "required": false,
+        "schema": {
+          "pattern": "^[\\x21-\\x7e]{1,200}$",
+          "type": "string"
+        }
+      },
+      "Limit": {
+        "description": "The page size. Out of range is 400, never a clamp.",
+        "in": "query",
+        "name": "limit",
+        "required": false,
+        "schema": {
+          "default": 20,
+          "maximum": 100,
+          "minimum": 1,
+          "type": "integer"
+        }
+      }
+    },
+    "responses": {
+      "AccessDenied": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "access_denied: the caller's policies don't allow the action; forbidden_origin: a cookie-authenticated write from an origin that isn't allowed; spend_limit_reached.",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        }
+      },
+      "Conflict": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "quota_exceeded (an allocation quota, with quota), idempotency_conflict, idempotency_in_progress (with Retry-After), organization_deletion_pending, operation_in_progress, or the endpoint's own 409 codes.",
+        "headers": {
+          "Retry-After": {
+            "$ref": "#/components/headers/Retry-After"
+          },
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        }
+      },
+      "InternalError": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "internal_error: a bug; the details are in the logs, under the request ID.",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        }
+      },
+      "InvalidRequest": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "invalid_request (with issues), invalid_cursor, or the endpoint's own 400 codes.",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        }
+      },
+      "NotFound": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "not_found: unknown, malformed, or in an organization the caller isn't in.",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        }
+      },
+      "Operation": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Operation"
+            }
+          }
+        },
+        "description": "The operation, which Location names; poll it until it finishes.",
+        "headers": {
+          "Location": {
+            "description": "The operation's path.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "Retry-After": {
+            "$ref": "#/components/headers/Retry-After"
+          }
+        }
+      },
+      "PayloadTooLarge": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "payload_too_large: the body is over the endpoint's limit (1 MiB unless it says otherwise).",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        }
+      },
+      "TooManyRequests": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "too_many_requests, with Retry-After; or quota_exceeded (a rate, usage or concurrency quota, with quota), never with Retry-After.",
+        "headers": {
+          "Retry-After": {
+            "$ref": "#/components/headers/Retry-After"
+          },
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        }
+      },
+      "Unauthenticated": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "unauthenticated: no credential, or one that doesn't check out.",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        }
+      },
+      "Unavailable": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        },
+        "description": "unavailable: a dependency the request needs is down. Retry after Retry-After.",
+        "headers": {
+          "Retry-After": {
+            "$ref": "#/components/headers/Retry-After"
+          },
+          "X-Request-Id": {
+            "$ref": "#/components/headers/X-Request-Id"
+          }
+        }
+      }
+    },
+    "schemas": {
+      "AutoscalingActivity": {
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "cause": {
+            "type": "string"
+          },
+          "details": {
+            "type": "object"
+          },
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "launch",
+              "terminate",
+              "replace",
+              "scale",
+              "release",
+              "error"
+            ],
+            "type": "string"
+          },
+          "outcome": {
+            "enum": [
+              "succeeded",
+              "failed",
+              "inProgress"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "at",
+          "kind",
+          "cause",
+          "outcome",
+          "details"
+        ],
+        "type": "object"
+      },
+      "AutoscalingActivityList": {
+        "properties": {
+          "activities": {
+            "items": {
+              "$ref": "#/components/schemas/AutoscalingActivity"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "activities",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "AutoscalingGroup": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "desiredCapacity": {
+            "type": "integer"
+          },
+          "healthCheckGraceSeconds": {
+            "type": "integer"
+          },
+          "id": {
+            "description": "asg_\u2026",
+            "type": "string"
+          },
+          "instanceWarmupSeconds": {
+            "type": "integer"
+          },
+          "lastError": {
+            "properties": {
+              "at": {
+                "format": "date-time",
+                "type": "string"
+              },
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "at"
+            ],
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "launchSpec": {
+            "$ref": "#/components/schemas/AutoscalingLaunchSpec"
+          },
+          "launchSpecVersion": {
+            "type": "integer"
+          },
+          "maxSize": {
+            "maximum": 100,
+            "type": "integer"
+          },
+          "minSize": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "policies": {
+            "items": {
+              "$ref": "#/components/schemas/AutoscalingPolicy"
+            },
+            "type": "array"
+          },
+          "release": {
+            "$ref": "#/components/schemas/AutoscalingRelease"
+          },
+          "scaleInCooldownSeconds": {
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "creating",
+              "active",
+              "updating",
+              "deleting",
+              "failed"
+            ],
+            "type": "string"
+          },
+          "targetGroups": {
+            "description": "Load balancer target groups the group's members register with.",
+            "items": {
+              "description": "tgp_\u2026",
+              "type": "string"
+            },
+            "maxItems": 5,
+            "type": "array",
+            "uniqueItems": true
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "status",
+          "minSize",
+          "maxSize",
+          "desiredCapacity",
+          "launchSpec",
+          "launchSpecVersion",
+          "targetGroups",
+          "policies",
+          "instanceWarmupSeconds",
+          "scaleInCooldownSeconds",
+          "healthCheckGraceSeconds",
+          "release",
+          "lastError",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "AutoscalingGroupCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "desiredCapacity": {
+            "description": "Between minSize and maxSize. On create, omitted is minSize.",
+            "maximum": 100,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "healthCheckGraceSeconds": {
+            "default": 300,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "instanceWarmupSeconds": {
+            "default": 300,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "launchSpec": {
+            "$ref": "#/components/schemas/LaunchSpecInput"
+          },
+          "maxSize": {
+            "maximum": 100,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "minSize": {
+            "maximum": 100,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "name": {
+            "maxLength": 93,
+            "minLength": 1,
+            "type": "string"
+          },
+          "policies": {
+            "description": "Names are unique within the group.",
+            "items": {
+              "$ref": "#/components/schemas/AutoscalingPolicy"
+            },
+            "maxItems": 10,
+            "type": "array"
+          },
+          "release": {
+            "additionalProperties": false,
+            "properties": {
+              "batchPercent": {
+                "default": 25,
+                "maximum": 100,
+                "minimum": 1,
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          },
+          "scaleInCooldownSeconds": {
+            "default": 300,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "targetGroups": {
+            "description": "Load balancer target groups the group's members register with.",
+            "items": {
+              "description": "tgp_\u2026",
+              "type": "string"
+            },
+            "maxItems": 5,
+            "type": "array",
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "name",
+          "minSize",
+          "maxSize",
+          "launchSpec"
+        ],
+        "type": "object"
+      },
+      "AutoscalingGroupList": {
+        "properties": {
+          "autoscalingGroups": {
+            "items": {
+              "$ref": "#/components/schemas/AutoscalingGroup"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "autoscalingGroups",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "AutoscalingGroupUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "desiredCapacity": {
+            "description": "Between minSize and maxSize. On create, omitted is minSize.",
+            "maximum": 100,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "healthCheckGraceSeconds": {
+            "default": 300,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "instanceWarmupSeconds": {
+            "default": 300,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "maxSize": {
+            "maximum": 100,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "minSize": {
+            "maximum": 100,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "policies": {
+            "description": "Names are unique within the group.",
+            "items": {
+              "$ref": "#/components/schemas/AutoscalingPolicy"
+            },
+            "maxItems": 10,
+            "type": "array"
+          },
+          "release": {
+            "additionalProperties": false,
+            "properties": {
+              "batchPercent": {
+                "default": 25,
+                "maximum": 100,
+                "minimum": 1,
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          },
+          "scaleInCooldownSeconds": {
+            "default": 300,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "targetGroups": {
+            "description": "Load balancer target groups the group's members register with.",
+            "items": {
+              "description": "tgp_\u2026",
+              "type": "string"
+            },
+            "maxItems": 5,
+            "type": "array",
+            "uniqueItems": true
+          }
+        },
+        "type": "object"
+      },
+      "AutoscalingLaunchSpec": {
+        "properties": {
+          "bot": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "image": {
+            "type": "string"
+          },
+          "instanceType": {
+            "type": "string"
+          },
+          "networkInterfaces": {
+            "items": {
+              "properties": {
+                "firewallIds": {
+                  "description": "null: the project's default firewall. []: none.",
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                },
+                "ipv4": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                },
+                "ipv6": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                },
+                "subnet": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "ipv4",
+                "ipv6",
+                "firewallIds",
+                "subnet"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "resolvedImage": {
+            "description": "The image (img_\u2026) every member launches: resolved when the launch spec was written.",
+            "type": "string"
+          },
+          "rootVolume": {
+            "properties": {
+              "iops": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "sizeGiB": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "throughputMBps": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "volumeType": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "sizeGiB",
+              "volumeType",
+              "iops",
+              "throughputMBps"
+            ],
+            "type": "object"
+          },
+          "sshKeyIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          },
+          "userData": {
+            "description": "Always null: user data is never returned.",
+            "type": "null"
+          },
+          "userDataPresent": {
+            "type": "boolean"
+          },
+          "volumes": {
+            "items": {
+              "properties": {
+                "iops": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "sizeGiB": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "throughputMBps": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "volumeType": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "sizeGiB",
+                "volumeType",
+                "iops",
+                "throughputMBps"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "instanceType",
+          "image",
+          "resolvedImage",
+          "sshKeyIds",
+          "userData",
+          "userDataPresent",
+          "rootVolume",
+          "networkInterfaces",
+          "volumes",
+          "tags",
+          "bot"
+        ],
+        "type": "object"
+      },
+      "AutoscalingMember": {
+        "properties": {
+          "health": {
+            "enum": [
+              "healthy",
+              "unhealthy",
+              "pending"
+            ],
+            "type": "string"
+          },
+          "instanceId": {
+            "description": "ins_\u2026",
+            "type": "string"
+          },
+          "launchSpecVersion": {
+            "type": "integer"
+          },
+          "launchedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "launching",
+              "inService",
+              "retiring"
+            ],
+            "type": "string"
+          },
+          "targetHealth": {
+            "description": "One entry per attached target group; state is null before registration.",
+            "items": {
+              "properties": {
+                "reason": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "state": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "targetGroup": {
+                  "description": "tgp_\u2026",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "targetGroup",
+                "state",
+                "reason"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "instanceId",
+          "launchSpecVersion",
+          "state",
+          "health",
+          "launchedAt",
+          "targetHealth"
+        ],
+        "type": "object"
+      },
+      "AutoscalingMemberList": {
+        "properties": {
+          "members": {
+            "items": {
+              "$ref": "#/components/schemas/AutoscalingMember"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "members",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "AutoscalingMetric": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "enum": [
+              "cpuUtilization",
+              "memoryUtilization",
+              "promql"
+            ],
+            "type": "string"
+          },
+          "query": {
+            "description": "Required for promql (an instant vector of exactly one series; __asg_instances__ is replaced by a regex of the warm members' ins_ IDs), null otherwise. At most 8 KiB.",
+            "maxLength": 8192,
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "kind",
+          "query"
+        ],
+        "type": "object"
+      },
+      "AutoscalingPolicy": {
+        "additionalProperties": false,
+        "properties": {
+          "metric": {
+            "$ref": "#/components/schemas/AutoscalingMetric"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "target": {
+            "description": "A positive decimal string.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "metric",
+          "target"
+        ],
+        "type": "object"
+      },
+      "AutoscalingRelease": {
+        "properties": {
+          "batchPercent": {
+            "type": "integer"
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "remaining": {
+            "description": "Non-retiring members below the target version.",
+            "type": "integer"
+          },
+          "replaced": {
+            "description": "Non-retiring members on the target version.",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "inProgress",
+              "succeeded",
+              "failed",
+              "cancelled",
+              null
+            ],
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "targetVersion": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "batchPercent",
+          "status",
+          "targetVersion",
+          "replaced",
+          "remaining",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "ConsoleOutput": {
+        "additionalProperties": false,
+        "properties": {
+          "capturedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "output": {
+            "description": "The serial output's bytes, base64.",
+            "type": "string"
+          },
+          "truncated": {
+            "description": "Earlier output was dropped: only the last 64 KiB is kept.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "output",
+          "capturedAt",
+          "truncated"
+        ],
+        "type": "object"
+      },
+      "ConsoleSession": {
+        "additionalProperties": false,
+        "properties": {
+          "expiresAt": {
+            "description": "When the ticket stops redeeming (30 seconds).",
+            "format": "date-time",
+            "type": "string"
+          },
+          "sessionId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "ticket": {
+            "description": "The one-time ticket, base64url: send it as the subprotocol ticket.<ticket>. null in an Idempotency-Key replay (only its hash is kept).",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": {
+            "enum": [
+              "serial",
+              "vnc"
+            ],
+            "type": "string"
+          },
+          "url": {
+            "description": "wss://compute-console.ezghcloud.com/v1/sessions/<sessionId>.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sessionId",
+          "type",
+          "url",
+          "ticket",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
+      "ConsoleSessionCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "enum": [
+              "serial",
+              "vnc"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "type": "object"
+      },
+      "Error": {
+        "additionalProperties": false,
+        "description": "Every non-2xx answer. Clients branch on code, never on message.",
+        "properties": {
+          "error": {
+            "additionalProperties": true,
+            "properties": {
+              "code": {
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9_]*$",
+                "type": "string"
+              },
+              "issues": {
+                "description": "invalid_request: one entry per problem, at a dotted path.",
+                "items": {
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "path": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "path",
+                    "message"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "message": {
+                "maxLength": 1024,
+                "type": "string"
+              },
+              "quota": {
+                "$ref": "#/components/schemas/QuotaExceeded"
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "type": "object"
+      },
+      "ForceOption": {
+        "additionalProperties": false,
+        "properties": {
+          "force": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "HealthEvent": {
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "check": {
+            "enum": [
+              "system",
+              "instance"
+            ]
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "failed",
+              "passed",
+              "panic",
+              "watchdog_reset",
+              "io_error",
+              "instance_crashed"
+            ]
+          },
+          "reason": {
+            "$ref": "#/components/schemas/StatusCheckReason"
+          }
+        },
+        "required": [
+          "id",
+          "at",
+          "check",
+          "kind",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "HealthEventPage": {
+        "properties": {
+          "healthEvents": {
+            "items": {
+              "$ref": "#/components/schemas/HealthEvent"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "healthEvents",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "Instance": {
+        "properties": {
+          "architecture": {
+            "type": "string"
+          },
+          "bot": {
+            "description": "The Bot attached to the instance: code on the instance gets short-lived API keys acting as it from the metadata service. null with none.",
+            "properties": {
+              "id": {
+                "description": "The Bot's bot_ ID.",
+                "pattern": "^bot_[a-z0-9]{12}$",
+                "type": "string"
+              },
+              "name": {
+                "description": "The Bot's name on a single instance's read; null in lists, or when the Bot no longer exists.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "cpuFamily": {
+            "enum": [
+              "shared",
+              "dedicated"
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "image": {
+            "properties": {
+              "alias": {
+                "description": "The image alias the instance launched from; empty for a launch from an exact image ID or a root volume restored from a snapshot.",
+                "type": "string"
+              },
+              "id": {
+                "description": "The exact image (img_\u2026) the launch resolved; empty for a root restored from a snapshot.",
+                "type": "string"
+              },
+              "sha256": {
+                "description": "The sha256 of the exact image the launch resolved; empty for a root restored from a snapshot.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "alias",
+              "id",
+              "sha256"
+            ],
+            "type": "object"
+          },
+          "instanceStore": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InstanceStore"
+              }
+            ],
+            "description": "Copied from the instance type when it was set; null for types without. Ephemeral: contents are lost when the instance stops, is terminated or moves to another host; a reboot keeps them."
+          },
+          "instanceType": {
+            "type": "string"
+          },
+          "launchedAt": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "memoryMiB": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "networkInterfaceIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "organizationId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "primaryNetworkInterfaceId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "projectId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "resourceName": {
+            "type": "string"
+          },
+          "rootDevice": {
+            "description": "Where the root lives: a block storage volume (rootVolumeId), or instance store disk 0 (rootVolumeId null; the instance can be rebooted and terminated but not stopped or resized).",
+            "enum": [
+              "volume",
+              "instanceStore"
+            ],
+            "type": "string"
+          },
+          "rootVolumeId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "slug": {
+            "type": "string"
+          },
+          "sshKeys": {
+            "items": {
+              "properties": {
+                "fingerprint": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "fingerprint"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "status": {
+            "$ref": "#/components/schemas/InstanceStatus"
+          },
+          "statusChecks": {
+            "$ref": "#/components/schemas/StatusChecks"
+          },
+          "statusReason": {
+            "$ref": "#/components/schemas/StatusReason"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "vcpus": {
+            "type": "integer"
+          },
+          "volumeHotplug": {
+            "description": "Whether attach-volume and detach-volume work on the instance while it runs. False until the instance's first start after the feature was enabled, and while it's stopped.",
+            "type": "boolean"
+          },
+          "volumeIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "resourceName",
+          "organizationId",
+          "projectId",
+          "region",
+          "tags",
+          "status",
+          "statusReason",
+          "instanceType",
+          "cpuFamily",
+          "vcpus",
+          "memoryMiB",
+          "architecture",
+          "image",
+          "sshKeys",
+          "primaryNetworkInterfaceId",
+          "networkInterfaceIds",
+          "rootVolumeId",
+          "volumeIds",
+          "launchedAt",
+          "createdAt",
+          "updatedAt",
+          "bot",
+          "volumeHotplug",
+          "instanceStore",
+          "rootDevice"
+        ],
+        "type": "object"
+      },
+      "InstanceCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "bot": {
+            "description": "A Bot of the organization (its bot_ ID) to attach: code on the instance gets short-lived API keys acting as it from the metadata service. Needs bots.pass on the Bot (403 access_denied naming bots.pass). An unknown Bot or a UUID is 400 invalid_request at bot.",
+            "pattern": "^bot_[a-z0-9]{12}$",
+            "type": "string"
+          },
+          "image": {
+            "description": "An image alias, such as linux/ubuntu:24.04, or an exact image ID (img_\u2026) this project may launch: its own or a public platform image. Required unless rootVolume.snapshotId restores the root volume from a snapshot.",
+            "type": "string"
+          },
+          "instanceType": {
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "networkInterfaces": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "firewallIds": {
+                  "description": "Omitted: the project's default firewall (for a private interface, its VPC's default firewall). []: none.",
+                  "items": {
+                    "description": "A firewall's fwl_ ID (a UUID is 400 invalid_request at this item).",
+                    "pattern": "^fwl_[a-z0-9]{12}$",
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "ipv4": {
+                  "description": "A public IPv4 address. On a private interface it is mapped onto the interface's primary private IPv4 (the instance never sees it) and needs the VPC's network gateway (409 vpc_has_no_gateway). Omitted: none on a public interface; with subnet, the subnet's autoAssignPublicIpv4 decides.",
+                  "type": "boolean"
+                },
+                "ipv6": {
+                  "description": "Only with subnet: a public IPv6 /64 on the private interface, configured on the instance; needs the VPC's network gateway (409 vpc_has_no_gateway). Omitted, the subnet's autoAssignPublicIpv6 decides.",
+                  "type": "boolean"
+                },
+                "networkInterfaceId": {
+                  "description": "An existing interface's eni_ ID (a UUID is 400 invalid_request).",
+                  "pattern": "^eni_[a-z0-9]{12}$",
+                  "type": "string"
+                },
+                "privateIpv4Address": {
+                  "description": "The private interface's primary IPv4 address, a usable address of its subnet; omitted, the lowest free one. Only with subnet.",
+                  "format": "ipv4",
+                  "type": "string"
+                },
+                "subnet": {
+                  "description": "A VPC subnet (sbn_\u2026) of this project: the interface is private, with a primary private IPv4 and IPv6 address in it. It may be the primary (index 0): then no other interface may be public (409 primary_is_private).",
+                  "pattern": "^sbn_[a-z0-9]{12}$",
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "rootDevice": {
+            "default": "volume",
+            "description": "instanceStore boots from the type's first instance store disk (store0): the type must have instanceStore (400 invalid_request at rootDevice), rootVolume must be absent (400 at rootVolume), the image must fit the disk (400 image_too_large), and the instance can't be stopped or resized (409 instance_store_root). Its rootVolumeId is null.",
+            "enum": [
+              "volume",
+              "instanceStore"
+            ],
+            "type": "string"
+          },
+          "rootVolume": {
+            "additionalProperties": false,
+            "properties": {
+              "iops": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "sizeGiB": {
+                "description": "Omitted: the image's minimum size, rounded up to whole GiB, or the snapshot's volume size.",
+                "minimum": 1,
+                "type": "integer"
+              },
+              "snapshotId": {
+                "description": "A snapshot (snp_\u2026) of this project to restore the root volume from, in place of image. The caller needs blockstore.snapshots.restore on it.",
+                "type": "string"
+              },
+              "throughputMBps": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "volumeType": {
+                "description": "A volume type from the block store's catalog. Omitted: the catalog's default type; a region whose catalog has no default answers 400 at rootVolume.volumeType, so name one. A root from a snapshot keeps the snapshot's type, and omitted takes it.",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "sshKeyIds": {
+            "items": {
+              "description": "An SSH key's ssh_ ID. Body references take prefixed IDs only: a UUID is 400 invalid_request at this item.",
+              "pattern": "^ssh_[a-z0-9]{12}$",
+              "type": "string"
+            },
+            "maxItems": 10,
+            "type": "array"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          },
+          "userData": {
+            "description": "Base64, at most 16 KiB decoded. Never recorded.",
+            "type": "string"
+          },
+          "volumes": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "iops": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "sizeGiB": {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                "throughputMBps": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "volumeId": {
+                  "description": "An existing volume's vol_ ID (a UUID is 400 invalid_request).",
+                  "pattern": "^vol_[a-z0-9]{12}$",
+                  "type": "string"
+                },
+                "volumeType": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "instanceType",
+          "networkInterfaces"
+        ],
+        "type": "object"
+      },
+      "InstanceList": {
+        "properties": {
+          "instances": {
+            "items": {
+              "$ref": "#/components/schemas/Instance"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "instances",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "InstanceResize": {
+        "additionalProperties": false,
+        "properties": {
+          "instanceType": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "instanceType"
+        ],
+        "type": "object"
+      },
+      "InstanceStatus": {
+        "enum": [
+          "pending",
+          "running",
+          "rebooting",
+          "stopping",
+          "stopped",
+          "starting",
+          "resizing",
+          "terminating",
+          "impaired",
+          "recovering",
+          "failed"
+        ]
+      },
+      "InstanceStore": {
+        "description": "Local NVMe disks on the instance's host, virtio-blk with serials store0, store1, \u2026: ephemeral (contents are lost when the instance stops, is terminated or moves to another host; a reboot keeps them). null for types without.",
+        "properties": {
+          "disks": {
+            "type": "integer"
+          },
+          "iops": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "sizeGiB": {
+            "type": "integer"
+          },
+          "throughputMBps": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "disks",
+          "sizeGiB",
+          "iops",
+          "throughputMBps"
+        ],
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "InstanceType": {
+        "properties": {
+          "architecture": {
+            "enum": [
+              "amd64"
+            ]
+          },
+          "cpuGroup": {
+            "type": "string"
+          },
+          "cpuMaxPercent": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "family": {
+            "type": "string"
+          },
+          "instanceStore": {
+            "$ref": "#/components/schemas/InstanceStore"
+          },
+          "limits": {
+            "properties": {
+              "networkInterfaces": {
+                "type": "integer"
+              },
+              "volumes": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "networkInterfaces",
+              "volumes"
+            ],
+            "type": "object"
+          },
+          "memoryMiB": {
+            "type": "integer"
+          },
+          "migratable": {
+            "type": "boolean"
+          },
+          "name": {
+            "description": "The type's name, launched by (t0.small).",
+            "type": "string"
+          },
+          "network": {
+            "properties": {
+              "baselineMbps": {
+                "type": "integer"
+              },
+              "burstMbps": {
+                "type": "integer"
+              },
+              "pps": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "baselineMbps",
+              "burstMbps",
+              "pps"
+            ],
+            "type": "object"
+          },
+          "numaNodes": {
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "active",
+              "deprecated"
+            ]
+          },
+          "storage": {
+            "properties": {
+              "iops": {
+                "type": "integer"
+              },
+              "throughputMBps": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "iops",
+              "throughputMBps"
+            ],
+            "type": "object"
+          },
+          "vcpus": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name",
+          "family",
+          "cpuGroup",
+          "architecture",
+          "vcpus",
+          "memoryMiB",
+          "numaNodes",
+          "cpuMaxPercent",
+          "migratable",
+          "network",
+          "storage",
+          "limits",
+          "status",
+          "instanceStore"
+        ],
+        "type": "object"
+      },
+      "InstanceTypeList": {
+        "properties": {
+          "instanceTypes": {
+            "items": {
+              "$ref": "#/components/schemas/InstanceType"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "instanceTypes"
+        ],
+        "type": "object"
+      },
+      "InstanceUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "bot": {
+            "description": "Attach or change the Bot (its bot_ ID; needs bots.pass on it), or null to remove it. Takes effect at the instance's next credentials fetch, with no restart; keys already handed out last until they expire (at most 10 minutes).",
+            "pattern": "^bot_[a-z0-9]{12}$",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          }
+        },
+        "type": "object"
+      },
+      "LaunchSpecInput": {
+        "additionalProperties": false,
+        "description": "A launch's fields minus what can't repeat across members: no name (members are named <group>-<6 random base36>), no existing volumeId or networkInterfaceId, no privateIpv4Address, no rootVolume.snapshotId, no rootDevice (400 at that path). Everything else validates as POST \u2026/instances does.",
+        "properties": {
+          "bot": {
+            "description": "A Bot of the organization (its bot_ ID) to attach: code on the instance gets short-lived API keys acting as it from the metadata service. Needs bots.pass on the Bot (403 access_denied naming bots.pass). An unknown Bot or a UUID is 400 invalid_request at bot.",
+            "pattern": "^bot_[a-z0-9]{12}$",
+            "type": "string"
+          },
+          "image": {
+            "description": "An image alias, such as linux/ubuntu:24.04, or an exact image ID (img_\u2026) this project may launch. Resolved when the launch spec is written and pinned (resolvedImage).",
+            "type": "string"
+          },
+          "instanceType": {
+            "type": "string"
+          },
+          "networkInterfaces": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "firewallIds": {
+                  "description": "Omitted: the project's default firewall (for a private interface, its VPC's default firewall). []: none.",
+                  "items": {
+                    "description": "A firewall's fwl_ ID (a UUID is 400 invalid_request at this item).",
+                    "pattern": "^fwl_[a-z0-9]{12}$",
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "ipv4": {
+                  "description": "A public IPv4 address. On a private interface it is mapped onto the interface's primary private IPv4 (the instance never sees it) and needs the VPC's network gateway (409 vpc_has_no_gateway). Omitted: none on a public interface; with subnet, the subnet's autoAssignPublicIpv4 decides.",
+                  "type": "boolean"
+                },
+                "ipv6": {
+                  "description": "Only with subnet: a public IPv6 /64 on the private interface, configured on the instance; needs the VPC's network gateway (409 vpc_has_no_gateway). Omitted, the subnet's autoAssignPublicIpv6 decides.",
+                  "type": "boolean"
+                },
+                "subnet": {
+                  "description": "A VPC subnet (sbn_\u2026) of this project: the interface is private, with a primary private IPv4 and IPv6 address in it. It may be the primary (index 0): then no other interface may be public (409 primary_is_private).",
+                  "pattern": "^sbn_[a-z0-9]{12}$",
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "rootDevice": {
+            "default": "volume",
+            "description": "Only volume: a group's instances can't boot from instance store (400 invalid_request at rootDevice).",
+            "enum": [
+              "volume"
+            ],
+            "type": "string"
+          },
+          "rootVolume": {
+            "additionalProperties": false,
+            "properties": {
+              "iops": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "sizeGiB": {
+                "description": "Omitted: the image's minimum size, rounded up to whole GiB.",
+                "minimum": 1,
+                "type": "integer"
+              },
+              "throughputMBps": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "volumeType": {
+                "description": "A volume type from the block store's catalog. Omitted: the catalog's default type.",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "sshKeyIds": {
+            "items": {
+              "description": "An SSH key's ssh_ ID. Body references take prefixed IDs only: a UUID is 400 invalid_request at this item.",
+              "pattern": "^ssh_[a-z0-9]{12}$",
+              "type": "string"
+            },
+            "maxItems": 10,
+            "type": "array"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          },
+          "userData": {
+            "description": "Base64, at most 16 KiB decoded. Never recorded or returned. On PUT, omitted keeps the stored user data, null clears it, a string replaces it.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "volumes": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "iops": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "sizeGiB": {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                "throughputMBps": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "volumeType": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "instanceType",
+          "image",
+          "networkInterfaces"
+        ],
+        "type": "object"
+      },
+      "NetworkInterfaceAttach": {
+        "additionalProperties": false,
+        "properties": {
+          "deviceIndex": {
+            "description": "Omitted: the lowest free index. 0 is the primary interface.",
+            "maximum": 63,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "networkInterfaceId": {
+            "description": "The interface's eni_ ID (a UUID is 400 invalid_request).",
+            "pattern": "^eni_[a-z0-9]{12}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "networkInterfaceId"
+        ],
+        "type": "object"
+      },
+      "NetworkInterfaceDetach": {
+        "additionalProperties": false,
+        "properties": {
+          "networkInterfaceId": {
+            "description": "The interface's eni_ ID (a UUID is 400 invalid_request).",
+            "pattern": "^eni_[a-z0-9]{12}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "networkInterfaceId"
+        ],
+        "type": "object"
+      },
+      "ObservabilitySettings": {
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "environment": {
+            "description": "The obs environment the metrics go to.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "enabled",
+          "environment"
+        ],
+        "type": "object"
+      },
+      "Operation": {
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "cancellable": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdBy": {
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "type": {
+                "enum": [
+                  "user",
+                  "bot",
+                  "ssoUser",
+                  "service"
+                ]
+              }
+            },
+            "required": [
+              "type",
+              "id"
+            ],
+            "type": "object"
+          },
+          "error": {
+            "description": "A failed operation's error, { code, message }.",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "finishedAt": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "organizationId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "projectId": {
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/OperationStatus"
+          },
+          "target": {
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "resourceName": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "resourceName",
+              "type"
+            ],
+            "type": "object"
+          },
+          "type": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "organizationId",
+          "projectId",
+          "type",
+          "action",
+          "status",
+          "target",
+          "cancellable",
+          "createdBy",
+          "createdAt",
+          "updatedAt",
+          "startedAt",
+          "finishedAt",
+          "error"
+        ],
+        "type": "object"
+      },
+      "OperationList": {
+        "properties": {
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "operations": {
+            "items": {
+              "$ref": "#/components/schemas/Operation"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "operations",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "OperationStatus": {
+        "enum": [
+          "queued",
+          "running",
+          "succeeded",
+          "failed",
+          "cancelled"
+        ]
+      },
+      "QuotaExceeded": {
+        "additionalProperties": false,
+        "description": "quota_exceeded: the quota that refused the request. Never with Retry-After.",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "inFlight": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "kind": {
+            "enum": [
+              "allocation",
+              "rate",
+              "usage",
+              "concurrency"
+            ]
+          },
+          "limit": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "periodStart": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "resetsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "scope": {
+            "enum": [
+              "organization",
+              "project",
+              "resource"
+            ]
+          },
+          "scopeResourceName": {
+            "type": "string"
+          },
+          "used": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "window": {
+            "description": "rate only: an ISO 8601 duration, PT1S to PT1H.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "scope",
+          "limit"
+        ],
+        "type": "object"
+      },
+      "SshKey": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "fingerprint": {
+            "description": "SHA256:\u2026, unique in the project.",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "keyType": {
+            "enum": [
+              "ssh-ed25519",
+              "ecdsa-sha2-nistp256",
+              "ecdsa-sha2-nistp384",
+              "ecdsa-sha2-nistp521",
+              "ssh-rsa"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "organizationId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "projectId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "publicKey": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "resourceName": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "resourceName",
+          "organizationId",
+          "projectId",
+          "region",
+          "tags",
+          "keyType",
+          "publicKey",
+          "fingerprint",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "SshKeyCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "publicKey": {
+            "description": "One OpenSSH public key line.",
+            "type": "string"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          }
+        },
+        "required": [
+          "name",
+          "publicKey"
+        ],
+        "type": "object"
+      },
+      "SshKeyList": {
+        "properties": {
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sshKeys": {
+            "items": {
+              "$ref": "#/components/schemas/SshKey"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "sshKeys",
+          "nextCursor"
+        ],
+        "type": "object"
+      },
+      "SshKeyUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          }
+        },
+        "type": "object"
+      },
+      "StatusCheckGroup": {
+        "properties": {
+          "checks": {
+            "items": {
+              "properties": {
+                "name": {
+                  "description": "system: host, process, volumes; instance: reachability, kernel.",
+                  "type": "string"
+                },
+                "reason": {
+                  "$ref": "#/components/schemas/StatusCheckReason"
+                },
+                "since": {
+                  "description": "When this check entered its status; null before the cell first judged it.",
+                  "format": "date-time",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "status": {
+                  "$ref": "#/components/schemas/StatusCheckStatus"
+                }
+              },
+              "required": [
+                "name",
+                "status",
+                "reason",
+                "since"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "since": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusCheckStatus"
+          }
+        },
+        "required": [
+          "status",
+          "since",
+          "checks"
+        ],
+        "type": "object"
+      },
+      "StatusCheckReason": {
+        "properties": {
+          "code": {
+            "description": "host_unreachable, cell_unreachable, migration_unresolved, instance_process_failed, volume_io_error, volume_io_stalled, no_probe_reply or kernel_panic.",
+            "type": "string"
+          },
+          "detail": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "volumeId for the volume reasons.",
+            "type": "object"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "StatusCheckStatus": {
+        "enum": [
+          "passed",
+          "failed",
+          "initializing",
+          "not_applicable",
+          "unknown"
+        ]
+      },
+      "StatusChecks": {
+        "description": "The instance's status checks, on get and list. system: problems EZGH fixes (the host, the VM process, volumes, the cell); instance: problems inside the guest (no answer to probes, a kernel panic).",
+        "properties": {
+          "instance": {
+            "$ref": "#/components/schemas/StatusCheckGroup"
+          },
+          "system": {
+            "$ref": "#/components/schemas/StatusCheckGroup"
+          },
+          "updatedAt": {
+            "description": "When the cell last changed the checks.",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "system",
+          "instance",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "StatusReason": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "Tags": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "description": "At most 50; keys 1-128 characters, values at most 256, keys starting with ezgh: are reserved.",
+        "type": "object"
+      },
+      "VolumeAttach": {
+        "additionalProperties": false,
+        "properties": {
+          "deleteOnTermination": {
+            "description": "Delete the volume when the instance terminates. Default false.",
+            "type": "boolean"
+          },
+          "volumeId": {
+            "description": "The volume's vol_ ID (a UUID is 400 invalid_request).",
+            "pattern": "^vol_[a-z0-9]{12}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "volumeId"
+        ],
+        "type": "object"
+      },
+      "VolumeDetach": {
+        "additionalProperties": false,
+        "properties": {
+          "force": {
+            "description": "On a running instance, free the volume whether or not the guest releases it. Default false; ignored on a stopped instance.",
+            "type": "boolean"
+          },
+          "volumeId": {
+            "description": "The volume's vol_ ID (a UUID is 400 invalid_request).",
+            "pattern": "^vol_[a-z0-9]{12}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "volumeId"
+        ],
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "apiKey": {
+        "description": "A customer API key: Bearer ezgh_\u2026",
+        "scheme": "bearer",
+        "type": "http"
+      },
+      "oauth": {
+        "description": "An OAuth access token (Bearer ezgh_at_\u2026) or an EZGH SSO resource token (Bearer ezgh_sat_\u2026)",
+        "scheme": "bearer",
+        "type": "http"
+      },
+      "sessionCookie": {
+        "description": "A signed-in person's session, set by login.ezghcloud.com.",
+        "in": "cookie",
+        "name": "__Secure-better-auth.session_token",
+        "type": "apiKey"
+      }
+    }
+  },
+  "info": {
+    "description": "Instances (virtual machines), autoscaling groups, SSH keys and the project's compute settings. Every path is under an organization; lists are paged with limit, cursor and nextCursor. Each organization lists the instance types it may launch at GET /v1/organizations/{orgId}/instance-types.",
+    "title": "EZGH Compute API",
+    "version": "1.0.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/v1/organizations/{orgId}/instance-types": {
+      "get": {
+        "operationId": "ListInstanceTypes",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (org_\u2026)",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstanceTypeList"
+                }
+              }
+            },
+            "description": "Every active and deprecated type the organization can launch."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "List the instance types the organization can launch",
+        "x-ezgh-action": "compute.instances.list"
+      }
+    },
+    "/v1/organizations/{orgId}/instance-types/{name}": {
+      "get": {
+        "operationId": "GetInstanceType",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (org_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The type's name (t0.small).",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstanceType"
+                }
+              }
+            },
+            "description": "The type."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Get an instance type",
+        "x-ezgh-action": "compute.instances.list"
+      }
+    },
+    "/v1/organizations/{orgId}/operations": {
+      "get": {
+        "operationId": "ListOperations",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (org_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/OperationStatus"
+            }
+          },
+          {
+            "description": "Only operations on this resource.",
+            "in": "query",
+            "name": "targetResourceName",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationList"
+                }
+              }
+            },
+            "description": "A page of operations."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "List the organization's operations, newest first",
+        "x-ezgh-action": "compute.operations.list"
+      }
+    },
+    "/v1/organizations/{orgId}/operations/{operationId}": {
+      "delete": {
+        "description": "409 operation_finished or operation_not_cancellable when it can't be cancelled.",
+        "operationId": "CancelOperation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (org_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "operationId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "$ref": "#/components/responses/Operation"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Cancel an operation"
+      },
+      "get": {
+        "description": "While it's queued or running, Retry-After suggests when to poll again. Not recorded in Trails.",
+        "operationId": "GetOperation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (org_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "operationId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Operation"
+                }
+              }
+            },
+            "description": "The operation.",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/Retry-After"
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Get an operation (poll it until it finishes)"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/autoscaling-groups": {
+      "get": {
+        "operationId": "ListAutoscalingGroups",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (org_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (prj_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutoscalingGroupList"
+                }
+              }
+            },
+            "description": "A page of groups."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "List a project's autoscaling groups, newest first",
+        "x-ezgh-action": "compute.autoscalingGroups.list"
+      },
+      "post": {
+        "description": "Asynchronous: answers 202 with the CreateAutoscalingGroup operation. The writer needs the launch's permissions (compute.instances.create, the SSH keys, the Bot, and the network, firewall, block store and image actions) and, for a promql policy, obs.metrics.query on the project; 403 names the first denied. The image is resolved now and pinned. 503 unavailable (with Retry-After) while autoscaling is unavailable in the region; nothing is stored.",
+        "operationId": "CreateAutoscalingGroup",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (org_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (prj_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutoscalingGroupCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "$ref": "#/components/responses/Operation"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Create an autoscaling group",
+        "x-ezgh-action": "compute.autoscalingGroups.create",
+        "x-ezgh-quotas": [
+          "compute.autoscalingGroups"
+        ]
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/autoscaling-groups/{group}": {
+      "delete": {
+        "description": "Asynchronous: sets desired capacity to 0, terminates every member, then deletes the group.",
+        "operationId": "DeleteAutoscalingGroup",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (org_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (prj_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The group's prefixed ID (asg_\u2026) or its UUID.",
+            "in": "path",
+            "name": "group",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "202": {
+            "$ref": "#/components/responses/Operation"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Delete an autoscaling group",
+        "x-ezgh-action": "compute.autoscalingGroups.delete"
+      },
+      "get": {
+        "operationId": "GetAutoscalingGroup",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (org_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (prj_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The group's prefixed ID (asg_\u2026) or its UUID.",
+            "in": "path",
+            "name": "group",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutoscalingGroup"
+                }
+              }
+            },
+            "description": "The group.",
+            "headers": {
+              "ETag": {
+                "description": "The group's tag.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Get an autoscaling group",
+        "x-ezgh-action": "compute.autoscalingGroups.get"
+      },
+      "patch": {
+        "description": "Synchronous. Never changes the launch spec: use PUT \u2026/launch-spec.",
+        "operationId": "UpdateAutoscalingGroup",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (org_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (prj_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The group's prefixed ID (asg_\u2026) or its UUID.",
+            "in": "path",
+            "name": "group",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "description": "The ETag you read, or *. A stale one is 412 precondition_failed and changes nothing.",
+            "in": "header",
+            "name": "If-Match",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutoscalingGroupUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutoscalingGroup"
+                }
+              }
+            },
+            "description": "The group, changed.",
+            "headers": {
+              "ETag": {
+                "description": "The group's tag.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "412": {
+            "description": "precondition_failed: the group changed since the ETag in If-Match was read."
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Change a group's size, policies, timings or batch size",
+        "x-ezgh-action": "compute.autoscalingGroups.update"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/autoscaling-groups/{group}/activities": {
+      "get": {
+        "description": "Kept 30 days.",
+        "operationId": "ListAutoscalingGroupActivities",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (org_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (prj_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The group's prefixed ID (asg_\u2026) or its UUID.",
+            "in": "path",
+            "name": "group",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutoscalingActivityList"
+                }
+              }
+            },
+            "description": "A page of activities."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "List a group's activities, newest first",
+        "x-ezgh-action": "compute.autoscalingGroups.get"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/autoscaling-groups/{group}/launch-spec": {
+      "put": {
+        "description": "Asynchronous: answers 202 with the UpdateAutoscalingGroupLaunchSpec operation, which ends when the release does. The version moves on, the image is resolved again and pinned, and a release in progress is superseded (its operation ends cancelled). 409 operation_in_progress while the group is still being created. 503 unavailable (with Retry-After) while autoscaling is unavailable in the region; nothing changes.",
+        "operationId": "UpdateAutoscalingGroupLaunchSpec",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (org_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (prj_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The group's prefixed ID (asg_\u2026) or its UUID.",
+            "in": "path",
+            "name": "group",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "description": "The ETag you read, or *. A stale one is 412 precondition_failed and changes nothing.",
+            "in": "header",
+            "name": "If-Match",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LaunchSpecInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "$ref": "#/components/responses/Operation"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "412": {
+            "description": "precondition_failed: the group changed since the ETag in If-Match was read."
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Replace a group's launch spec and start a release",
+        "x-ezgh-action": "compute.autoscalingGroups.update"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/autoscaling-groups/{group}/members": {
+      "get": {
+        "operationId": "ListAutoscalingGroupMembers",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (org_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (prj_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The group's prefixed ID (asg_\u2026) or its UUID.",
+            "in": "path",
+            "name": "group",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutoscalingMemberList"
+                }
+              }
+            },
+            "description": "A page of members."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "List a group's members, oldest first",
+        "x-ezgh-action": "compute.autoscalingGroups.get"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/autoscaling-groups/{group}/release/cancel": {
+      "post": {
+        "description": "Leaves a mixed group: the members the release launched for its current step are terminated, and the others keep serving. 409 no_release when none is in progress.",
+        "operationId": "CancelAutoscalingGroupRelease",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (org_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (prj_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The group's prefixed ID (asg_\u2026) or its UUID.",
+            "in": "path",
+            "name": "group",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutoscalingGroup"
+                }
+              }
+            },
+            "description": "The group, with its release cancelled.",
+            "headers": {
+              "ETag": {
+                "description": "The group's tag.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Stop the release in progress",
+        "x-ezgh-action": "compute.autoscalingGroups.update"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/instances": {
+      "get": {
+        "description": "Filters combine: status, instanceType, and tag.<key>=<value> for each tag that must match.",
+        "operationId": "ListInstances",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (org_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (prj_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/InstanceStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "instanceType",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "A tag that must match, one parameter per tag: tag.<key>=<value>, for example tag.env=prod. Every one given must match.",
+            "in": "query",
+            "name": "tag.{key}",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstanceList"
+                }
+              }
+            },
+            "description": "A page of instances."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "List a project's instances, newest first",
+        "x-ezgh-action": "compute.instances.list"
+      },
+      "post": {
+        "description": "Asynchronous: answers 202 with the CreateInstance operation once capacity is claimed and every volume, interface and firewall attachment is reserved. 409 insufficient_capacity when no cell has room.",
+        "operationId": "CreateInstance",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (org_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (prj_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InstanceCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "$ref": "#/components/responses/Operation"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Launch an instance",
+        "x-ezgh-action": "compute.instances.create",
+        "x-ezgh-quotas": [
+          "compute.instances",
+          "compute.sharedVcpus",
+          "compute.dedicatedVcpus",
+          "compute.instanceLaunchesPerMinute"
+        ]
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/instances/{instance}": {
+      "delete": {
+        "description": "Asynchronous: answers 202 with the TerminateInstance operation. Billing stops at the 202. Always accepted, whatever the instance's state; an open operation on it is cancelled.",
+        "operationId": "TerminateInstance",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (org_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (prj_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The instance's prefixed ID (ins_\u2026) or its UUID.",
+            "in": "path",
+            "name": "instance",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "202": {
+            "$ref": "#/components/responses/Operation"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Terminate an instance",
+        "x-ezgh-action": "compute.instances.terminate"
+      },
+      "get": {
+        "operationId": "GetInstance",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (org_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (prj_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The instance's prefixed ID (ins_\u2026) or its UUID.",
+            "in": "path",
+            "name": "instance",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Instance"
+                }
+              }
+            },
+            "description": "The instance.",
+            "headers": {
+              "ETag": {
+                "description": "A strong tag of the instance's name, tags and Bot. Send it as If-Match on PATCH.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Get an instance",
+        "x-ezgh-action": "compute.instances.get"
+      },
+      "patch": {
+        "description": "Synchronous: only the fields given change.",
+        "operationId": "UpdateInstance",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (org_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (prj_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The instance's prefixed ID (ins_\u2026) or its UUID.",
+            "in": "path",
+            "name": "instance",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "description": "The ETag you read, or *. A stale one is 412 precondition_failed and changes nothing; without it the change applies to whatever is there.",
+            "in": "header",
+            "name": "If-Match",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InstanceUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Instance"
+                }
+              }
+            },
+            "description": "The instance, changed.",
+            "headers": {
+              "ETag": {
+                "description": "The instance's new tag.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "412": {
+            "description": "precondition_failed: the instance's name, tags or Bot changed since the ETag in If-Match was read."
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Rename or retag an instance, or change its Bot",
+        "x-ezgh-action": "compute.instances.update"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/instances/{instance}/attach-network-interface": {
+      "post": {
+        "description": "Synchronous. The instance must be stopped; the interface must be available and in the instance's project. It keeps its firewalls.",
+        "operationId": "AttachNetworkInterface",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (org_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (prj_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The instance's prefixed ID (ins_\u2026) or its UUID.",
+            "in": "path",
+            "name": "instance",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NetworkInterfaceAttach"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Instance"
+                }
+              }
+            },
+            "description": "The instance, with the change."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Attach a network interface to a stopped instance",
+        "x-ezgh-action": "compute.instances.attachNetworkInterface"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/instances/{instance}/attach-volume": {
+      "post": {
+        "description": "On a stopped instance it's synchronous: the volume takes the instance's next free volume slot and the guest sees it at the next start. The volume must be available and in the instance's project. On a running instance it's asynchronous: 202 with an AttachVolume operation, and the guest sees the disk once it succeeds (409 instance_restart_required until the instance is stopped and started once; 503 actions_unavailable while its control plane is unavailable). Attaching a volume that's already attached answers 200, or 202 with the attach's open operation.",
+        "operationId": "AttachVolume",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (org_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (prj_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The instance's prefixed ID (ins_\u2026) or its UUID.",
+            "in": "path",
+            "name": "instance",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VolumeAttach"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Instance"
+                }
+              }
+            },
+            "description": "The instance, with the change."
+          },
+          "202": {
+            "$ref": "#/components/responses/Operation"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Attach a volume to an instance",
+        "x-ezgh-action": "compute.instances.attachVolume"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/instances/{instance}/console-output": {
+      "get": {
+        "description": "The last 64 KiB of the instance's serial output, as last captured; readable whatever the instance's state. 404 console_output_unavailable when it has never produced any.",
+        "operationId": "GetConsoleOutput",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (org_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (prj_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The instance's prefixed ID (ins_\u2026) or its UUID.",
+            "in": "path",
+            "name": "instance",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the last this many lines.",
+            "in": "query",
+            "name": "tail",
+            "required": false,
+            "schema": {
+              "maximum": 10000,
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsoleOutput"
+                }
+              }
+            },
+            "description": "The console output."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Get an instance's console output",
+        "x-ezgh-action": "compute.instances.getConsoleOutput"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/instances/{instance}/console-sessions": {
+      "post": {
+        "description": "The instance must be running (409 instance_not_running). serial needs compute.instances.connectSerialConsole, vnc compute.instances.connectVncConsole. Connect to url within 30 seconds with the WebSocket subprotocols ezgh.console.v1 and ticket.<ticket>; the ticket redeems once and never goes in the URL. At most compute.consoleSessionsPerInstance sessions per instance at once (429 quota_exceeded). 503 actions_unavailable while the instance's cell can't act.",
+        "operationId": "CreateConsoleSession",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (org_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (prj_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The instance's prefixed ID (ins_\u2026) or its UUID.",
+            "in": "path",
+            "name": "instance",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConsoleSessionCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsoleSession"
+                }
+              }
+            },
+            "description": "The session and its one-time ticket."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Open a serial or VNC console session",
+        "x-ezgh-action": "compute.instances.connectSerialConsole"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/instances/{instance}/detach-network-interface": {
+      "post": {
+        "description": "Synchronous. The instance must be stopped. The primary interface can't be detached (409 primary_interface).",
+        "operationId": "DetachNetworkInterface",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (org_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (prj_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The instance's prefixed ID (ins_\u2026) or its UUID.",
+            "in": "path",
+            "name": "instance",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NetworkInterfaceDetach"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Instance"
+                }
+              }
+            },
+            "description": "The instance, with the change."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Detach a network interface from a stopped instance",
+        "x-ezgh-action": "compute.instances.detachNetworkInterface"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/instances/{instance}/detach-volume": {
+      "post": {
+        "description": "On a stopped instance it's synchronous and the volume becomes available. The root volume can't be detached (409 root_volume). On a running instance it's asynchronous: 202 with a DetachVolume operation, which waits for the guest to release the disk; force frees the volume without the guest (the guest sees I/O errors on it and may lose writes it hadn't made). A repeat answers the open operation, and a repeat with force escalates it. 409 volume_detaching while a force-detached disk is still in the guest.",
+        "operationId": "DetachVolume",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (org_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (prj_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The instance's prefixed ID (ins_\u2026) or its UUID.",
+            "in": "path",
+            "name": "instance",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VolumeDetach"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Instance"
+                }
+              }
+            },
+            "description": "The instance, with the change."
+          },
+          "202": {
+            "$ref": "#/components/responses/Operation"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Detach a volume from an instance",
+        "x-ezgh-action": "compute.instances.detachVolume"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/instances/{instance}/health-events": {
+      "get": {
+        "description": "Status check transitions, guest panics, watchdog resets, volume I/O errors and crashes of the last 30 days. Needs compute.instances.get.",
+        "operationId": "ListInstanceHealthEvents",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (org_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (prj_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The instance's prefixed ID (ins_\u2026) or its UUID.",
+            "in": "path",
+            "name": "instance",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthEventPage"
+                }
+              }
+            },
+            "description": "A page of health events."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "List an instance's health events, newest first",
+        "x-ezgh-action": "compute.instances.get"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/instances/{instance}/reboot": {
+      "post": {
+        "description": "Asynchronous. force resets it without asking the guest. 409 instance_not_running.",
+        "operationId": "RebootInstance",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (org_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (prj_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The instance's prefixed ID (ins_\u2026) or its UUID.",
+            "in": "path",
+            "name": "instance",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForceOption"
+              }
+            }
+          },
+          "required": false
+        },
+        "responses": {
+          "202": {
+            "$ref": "#/components/responses/Operation"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Reboot a running instance",
+        "x-ezgh-action": "compute.instances.reboot"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/instances/{instance}/resize": {
+      "post": {
+        "description": "Asynchronous. A running instance is restarted with the new type on its host or another one. 409 instance_store_root for an instance that boots from instance store.",
+        "operationId": "ResizeInstance",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (org_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (prj_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The instance's prefixed ID (ins_\u2026) or its UUID.",
+            "in": "path",
+            "name": "instance",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InstanceResize"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "$ref": "#/components/responses/Operation"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Change an instance's type",
+        "x-ezgh-action": "compute.instances.resize",
+        "x-ezgh-quotas": [
+          "compute.sharedVcpus",
+          "compute.dedicatedVcpus"
+        ]
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/instances/{instance}/start": {
+      "post": {
+        "description": "Asynchronous. 409 instance_not_stopped, 409 insufficient_capacity when no cell has room.",
+        "operationId": "StartInstance",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (org_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (prj_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The instance's prefixed ID (ins_\u2026) or its UUID.",
+            "in": "path",
+            "name": "instance",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "202": {
+            "$ref": "#/components/responses/Operation"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Start a stopped instance",
+        "x-ezgh-action": "compute.instances.start",
+        "x-ezgh-quotas": [
+          "compute.sharedVcpus",
+          "compute.dedicatedVcpus"
+        ]
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/instances/{instance}/stop": {
+      "post": {
+        "description": "Asynchronous. force skips the guest's graceful shutdown. 409 instance_not_running; 503 actions_unavailable while the instance's control plane is unavailable. 409 instance_store_root for an instance that boots from instance store.",
+        "operationId": "StopInstance",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (org_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (prj_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The instance's prefixed ID (ins_\u2026) or its UUID.",
+            "in": "path",
+            "name": "instance",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForceOption"
+              }
+            }
+          },
+          "required": false
+        },
+        "responses": {
+          "202": {
+            "$ref": "#/components/responses/Operation"
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Stop a running instance",
+        "x-ezgh-action": "compute.instances.stop"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/settings/observability": {
+      "get": {
+        "operationId": "GetObservabilitySettings",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (org_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (prj_\u2026)",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObservabilitySettings"
+                }
+              }
+            },
+            "description": "The setting."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Get the project's observability setting",
+        "x-ezgh-action": "compute.settings.get"
+      },
+      "put": {
+        "description": "Enabling it also needs obs.metrics.ingest on the project.",
+        "operationId": "UpdateObservabilitySettings",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (org_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (prj_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ObservabilitySettings"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObservabilitySettings"
+                }
+              }
+            },
+            "description": "The setting."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Send the project's instance metrics to EZGH Observability",
+        "x-ezgh-action": "compute.settings.update"
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/ssh-keys": {
+      "get": {
+        "operationId": "ListSshKeys",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (org_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (prj_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SshKeyList"
+                }
+              }
+            },
+            "description": "A page of SSH keys."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "List a project's SSH keys, newest first",
+        "x-ezgh-action": "compute.sshKeys.list"
+      },
+      "post": {
+        "description": "Ed25519, ECDSA (P-256, P-384, P-521) or RSA of at least 2048 bits, as one OpenSSH line. 409 ssh_key_exists when the project has a key with the same fingerprint.",
+        "operationId": "ImportSshKey",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (org_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (prj_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SshKeyCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SshKey"
+                }
+              }
+            },
+            "description": "The key."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Import an SSH public key",
+        "x-ezgh-action": "compute.sshKeys.create",
+        "x-ezgh-quotas": [
+          "compute.sshKeysPerProject"
+        ]
+      }
+    },
+    "/v1/organizations/{orgId}/projects/{projectId}/ssh-keys/{sshKey}": {
+      "delete": {
+        "description": "Instances keep the copy they launched with.",
+        "operationId": "DeleteSshKey",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (org_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (prj_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The SSH key's prefixed ID (ssh_\u2026) or its UUID.",
+            "in": "path",
+            "name": "sshKey",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Delete an SSH key",
+        "x-ezgh-action": "compute.sshKeys.delete"
+      },
+      "get": {
+        "operationId": "GetSshKey",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (org_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (prj_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The SSH key's prefixed ID (ssh_\u2026) or its UUID.",
+            "in": "path",
+            "name": "sshKey",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SshKey"
+                }
+              }
+            },
+            "description": "The key."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Get an SSH key",
+        "x-ezgh-action": "compute.sshKeys.get"
+      },
+      "patch": {
+        "operationId": "UpdateSshKey",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orgId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (org_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "description": "UUID or prefixed ID (prj_\u2026)",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The SSH key's prefixed ID (ssh_\u2026) or its UUID.",
+            "in": "path",
+            "name": "sshKey",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SshKeyUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SshKey"
+                }
+              }
+            },
+            "description": "The key, changed."
+          },
+          "400": {
+            "$ref": "#/components/responses/InvalidRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/AccessDenied"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/Unavailable"
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "oauth": []
+          },
+          {
+            "sessionCookie": []
+          }
+        ],
+        "summary": "Rename or retag an SSH key",
+        "x-ezgh-action": "compute.sshKeys.update"
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "https://compute-api.ezghcloud.com"
+    }
+  ]
+}

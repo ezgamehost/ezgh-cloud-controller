@@ -1,0 +1,320 @@
+{
+  "manifestVersion": 1,
+  "namespace": "mcpcentral",
+  "directoryUsable": true,
+  "orgApi": {
+    "operations": [
+      "lifecycle.events",
+      "permissions.batch",
+      "productPolicies.write"
+    ]
+  },
+  "scopes": [
+    {
+      "name": "mcpcentral:connect",
+      "actions": [
+        "mcpcentral.gateways.connect",
+        "mcpcentral.servers.use",
+        "mcpcentral.tools.call"
+      ]
+    },
+    {
+      "name": "mcpcentral:portal",
+      "actions": [
+        "mcpcentral.gateways.connect",
+        "mcpcentral.servers.use",
+        "mcpcentral.connections.*"
+      ]
+    }
+  ],
+  "displayName": "MCP Central",
+  "description": "An excerpt of MCP Central's manifest for the contracts' edge-host rules; mcp-stack's service-manifest.json is the product's own.",
+  "api": {
+    "hostname": "mcpcentral.ezghcloud.com",
+    "port": 5000
+  },
+  "edge": {
+    "domain": "mcp.ezgh.app",
+    "port": 5001,
+    "cookie": {
+      "name": "__Host-mcp_portal",
+      "audience": "portal"
+    }
+  },
+  "resourceTypes": [
+    {
+      "name": "server",
+      "prefix": "mcs",
+      "parent": "project",
+      "regional": true,
+      "description": "A shared MCP server."
+    },
+    {
+      "name": "gateway",
+      "prefix": "mgw",
+      "parent": "project",
+      "regional": true,
+      "description": "The project's one MCP endpoint, https://<alias>.mcp.ezgh.app/central."
+    },
+    {
+      "name": "connection",
+      "prefix": "mcn",
+      "parent": "project",
+      "regional": true,
+      "description": "A principal's connection to a server."
+    },
+    {
+      "name": "personalServer",
+      "prefix": "mps",
+      "parent": "project",
+      "regional": true,
+      "description": "A server a directory user added for themselves."
+    }
+  ],
+  "managedPolicies": [
+    {
+      "name": "McpcentralFullAccess",
+      "description": "Everything in MCP Central."
+    },
+    {
+      "name": "McpcentralReadOnlyAccess",
+      "description": "View servers, the endpoint and your own clients."
+    },
+    {
+      "name": "McpcentralUserAccess",
+      "description": "Use the endpoint, connect servers and configure your own clients."
+    }
+  ],
+  "actions": [
+    {
+      "id": "mcpcentral.gateways.get",
+      "description": "View the project's MCP endpoint and its URL",
+      "resource": "gateway",
+      "accessLevel": "read",
+      "managedPolicies": [
+        "ReadOnlyAccess",
+        "McpcentralFullAccess",
+        "McpcentralReadOnlyAccess",
+        "McpcentralUserAccess"
+      ]
+    },
+    {
+      "id": "mcpcentral.gateways.connect",
+      "description": "Connect an MCP client to the project's MCP endpoint",
+      "resource": "gateway",
+      "accessLevel": "write",
+      "managedPolicies": [
+        "McpcentralFullAccess",
+        "McpcentralUserAccess"
+      ]
+    },
+    {
+      "id": "mcpcentral.clients.list",
+      "description": "List your own MCP clients and your default configuration",
+      "resource": "gateway",
+      "accessLevel": "list",
+      "managedPolicies": [
+        "ReadOnlyAccess",
+        "McpcentralFullAccess",
+        "McpcentralReadOnlyAccess",
+        "McpcentralUserAccess"
+      ]
+    },
+    {
+      "id": "mcpcentral.clients.get",
+      "description": "View one of your own MCP clients, or your default configuration",
+      "resource": "gateway",
+      "accessLevel": "read",
+      "managedPolicies": [
+        "ReadOnlyAccess",
+        "McpcentralFullAccess",
+        "McpcentralReadOnlyAccess",
+        "McpcentralUserAccess"
+      ]
+    },
+    {
+      "id": "mcpcentral.clients.configure",
+      "description": "Choose the servers and tools your own MCP clients get",
+      "resource": "gateway",
+      "accessLevel": "write",
+      "managedPolicies": [
+        "McpcentralFullAccess",
+        "McpcentralUserAccess"
+      ]
+    },
+    {
+      "id": "mcpcentral.servers.use",
+      "description": "Use a server through the endpoint",
+      "resource": "server",
+      "accessLevel": "write",
+      "managedPolicies": [
+        "McpcentralFullAccess",
+        "McpcentralUserAccess"
+      ]
+    },
+    {
+      "id": "mcpcentral.tools.call",
+      "description": "Call a server's tool",
+      "resource": "server",
+      "accessLevel": "write",
+      "managedPolicies": [
+        "McpcentralFullAccess",
+        "McpcentralUserAccess"
+      ]
+    },
+    {
+      "id": "mcpcentral.connections.connect",
+      "description": "Connect your own account to a server",
+      "resource": "server",
+      "accessLevel": "write",
+      "managedPolicies": [
+        "McpcentralFullAccess",
+        "McpcentralUserAccess"
+      ]
+    }
+  ],
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/health",
+      "auth": "none",
+      "trail": null
+    },
+    {
+      "method": "GET",
+      "path": "/ready",
+      "auth": "none",
+      "trail": null
+    },
+    {
+      "method": "GET",
+      "path": "/openapi.json",
+      "auth": "none",
+      "trail": null
+    },
+    {
+      "method": "GET",
+      "path": "/.well-known/jwks.json",
+      "auth": "none",
+      "public": "metadata",
+      "trail": null
+    },
+    {
+      "method": "GET",
+      "path": "/oauth/client-metadata.json",
+      "auth": "none",
+      "public": "metadata",
+      "trail": null
+    },
+    {
+      "method": "GET",
+      "path": "/v1/oauth/callback",
+      "auth": "none",
+      "public": "redirect",
+      "trail": null
+    },
+    {
+      "method": "GET",
+      "path": "/v1/organizations/:orgId/projects/:projectId/gateway",
+      "auth": "caller",
+      "action": "mcpcentral.gateways.get",
+      "trail": {
+        "eventName": "GetGateway"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/central",
+      "host": "edge",
+      "auth": "caller",
+      "credentials": "bearer",
+      "action": "mcpcentral.gateways.connect",
+      "idempotencyException": "computation",
+      "timeoutSeconds": 900,
+      "trail": {
+        "byRpcMethod": {
+          "tools/call": {
+            "eventName": "CallTool",
+            "eventCategory": "Data",
+            "sensitive": [
+              "arguments"
+            ]
+          },
+          "initialize": null,
+          "notifications/initialized": null,
+          "ping": null,
+          "tools/list": null
+        },
+        "otherwise": null
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/v1/me",
+      "host": "edge",
+      "component": "edge",
+      "auth": "caller",
+      "credentials": "cookie",
+      "action": "mcpcentral.gateways.connect",
+      "trail": null
+    },
+    {
+      "method": "POST",
+      "path": "/v1/servers/:serverId/connection",
+      "host": "edge",
+      "component": "edge",
+      "auth": "caller",
+      "credentials": "cookie",
+      "action": "mcpcentral.connections.connect",
+      "idempotencyKey": true,
+      "trail": {
+        "eventName": "ConnectServer"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/.well-known/oauth-protected-resource",
+      "host": "edge",
+      "auth": "none",
+      "public": "metadata",
+      "trail": null
+    },
+    {
+      "method": "GET",
+      "path": "/.well-known/oauth-protected-resource/central",
+      "host": "edge",
+      "auth": "none",
+      "public": "metadata",
+      "trail": null
+    },
+    {
+      "method": "GET",
+      "path": "/sign-in",
+      "host": "edge",
+      "component": "edge",
+      "auth": "none",
+      "public": "redirect",
+      "trail": null
+    },
+    {
+      "method": "GET",
+      "path": "/callback",
+      "host": "edge",
+      "component": "edge",
+      "auth": "none",
+      "public": "redirect",
+      "trail": null
+    },
+    {
+      "method": "GET",
+      "path": "/oauth/callback",
+      "host": "edge",
+      "component": "edge",
+      "auth": "none",
+      "public": "redirect",
+      "credentials": "cookie",
+      "trail": null
+    }
+  ],
+  "quotas": []
+}

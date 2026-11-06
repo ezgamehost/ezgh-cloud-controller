@@ -1,0 +1,77 @@
+{
+  "description": "Decimal strings: valid ones and their canonical form (no leading zeros, no trailing fractional zeros, no \"-0\"), invalid ones, and milliseconds as canonical seconds.",
+  "canonical": [
+    {
+      "input": "0",
+      "canonical": "0"
+    },
+    {
+      "input": "000.500",
+      "canonical": "0.5"
+    },
+    {
+      "input": "-0.000",
+      "canonical": "0"
+    },
+    {
+      "input": "2537.250",
+      "canonical": "2537.25"
+    },
+    {
+      "input": "3600",
+      "canonical": "3600"
+    },
+    {
+      "input": "0.000000000001",
+      "canonical": "0.000000000001"
+    },
+    {
+      "input": "-1200.5",
+      "canonical": "-1200.5"
+    },
+    {
+      "input": "12345678901234567890123456.123456789012",
+      "canonical": "12345678901234567890123456.123456789012"
+    }
+  ],
+  "invalid": [
+    "",
+    " 1",
+    "+1",
+    "1.",
+    ".5",
+    "1e3",
+    "0x10",
+    "1,5",
+    "1.1234567890123",
+    "123456789012345678901234567",
+    "--1",
+    "NaN"
+  ],
+  "secondsFromMs": [
+    {
+      "ms": 0,
+      "seconds": "0"
+    },
+    {
+      "ms": 1,
+      "seconds": "0.001"
+    },
+    {
+      "ms": 250,
+      "seconds": "0.25"
+    },
+    {
+      "ms": 2537250,
+      "seconds": "2537.25"
+    },
+    {
+      "ms": 3600000,
+      "seconds": "3600"
+    },
+    {
+      "ms": 59999,
+      "seconds": "59.999"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "manifestVersion": 1,
+  "namespace": "workflows",
+  "displayName": "Workflows",
+  "description": "Durable workflows written as code in the customer's application, run step by step through push endpoints or pull workers.",
+  "api": { "hostname": "workflows-api.ezghcloud.com", "port": 6100 },
+  "live": { "hostname": "workflows-live.ezghcloud.com", "port": 6150 },
+  "serviceCredentials": { "issuerPrefix": "wfk" },
+  "resourceTypes": [
+    { "name": "app", "prefix": "wfa", "parent": "project", "regional": true, "description": "A Workflows app: one deployment of customer code that hosts workflows, reached by push or pull." }
+  ],
+  "managedPolicies": [
+    { "name": "WorkflowsFullAccess", "description": "Manage apps and schedules, and start, read, cancel and retry runs." },
+    { "name": "WorkflowsReadOnlyAccess", "description": "View apps, schedules and runs, without payloads." }
+  ],
+  "actions": [
+    { "id": "workflows.apps.list", "description": "List apps", "resource": "project", "accessLevel": "list", "managedPolicies": ["ReadOnlyAccess", "WorkflowsFullAccess", "WorkflowsReadOnlyAccess"] },
+    { "id": "workflows.runs.start", "description": "Start runs", "resource": "app", "accessLevel": "write", "managedPolicies": ["WorkflowsFullAccess"] },
+    { "id": "workflows.runs.cancel", "description": "Cancel runs", "resource": "app", "accessLevel": "write", "managedPolicies": ["WorkflowsFullAccess"] },
+    { "id": "workflows.workers.poll", "description": "Poll an app's task queue for invocations", "resource": "app", "accessLevel": "write", "managedPolicies": ["WorkflowsFullAccess"] }
+  ],
+  "endpoints": [
+    { "method": "GET", "path": "/health", "auth": "none", "trail": null },
+    { "method": "GET", "path": "/ready", "auth": "none", "trail": null },
+    { "method": "GET", "path": "/openapi.json", "auth": "none", "trail": null },
+    { "method": "GET", "path": "/v1/organizations/:orgId/projects/:projectId/apps", "auth": "caller", "action": "workflows.apps.list", "trail": { "eventName": "ListApps" } },
+    { "method": "POST", "path": "/v1/organizations/:orgId/projects/:projectId/runs", "auth": "caller", "action": "workflows.runs.start", "idempotencyKey": true, "blockedBySpendControls": true, "trail": { "eventName": "StartRun", "sensitive": ["input"], "record": "refusals" } },
+    { "method": "POST", "path": "/v1/organizations/:orgId/projects/:projectId/runs/:runId/cancel", "auth": "caller", "action": "workflows.runs.cancel", "idempotencyKey": true, "trail": { "eventName": "CancelRun" } },
+    { "method": "POST", "path": "/v1/invocations/checkpoint", "host": "live", "component": "live", "auth": "invocationToken", "trail": null },
+    { "method": "POST", "path": "/v1/invocations/complete", "host": "live", "component": "live", "auth": "invocationToken", "trail": null },
+    { "method": "POST", "path": "/v1/invocations/heartbeat", "host": "live", "component": "live", "auth": "invocationToken", "trail": null },
+    { "method": "GET", "path": "/v1/invocations/journal", "host": "live", "component": "live", "auth": "invocationToken", "trail": null },
+    { "method": "GET", "path": "/v1/invocations/payloads/:payloadId", "host": "live", "component": "live", "auth": "invocationToken", "trail": null },
+    { "method": "POST", "path": "/v1/organizations/:orgId/projects/:projectId/workers/poll", "host": "live", "component": "live", "auth": "caller", "action": "workflows.workers.poll", "idempotencyException": "computation", "timeoutSeconds": 70, "trail": { "eventName": "PollTasks", "record": "refusals" } },
+    { "method": "POST", "path": "/public/v1/callbacks/:token", "auth": "none", "public": "callback", "trail": null }
+  ],
+  "quotas": []
+}

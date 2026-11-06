@@ -1,0 +1,693 @@
+{
+  "description": "Quotas (contracts/quotas.md): billing periods from an account's anchor day, value resolution, a rate bucket's capacity, and a unit as a quota_exceeded message names it (every unit the platform's quota definitions use, and units that aren't words). Computed by scripts/lib/quotas.mjs; quotas-stack runs them too.",
+  "billingPeriods": [
+    {
+      "instant": "2026-09-29T12:00:00.000Z",
+      "anchorDay": 1,
+      "start": "2026-09-01T00:00:00.000Z",
+      "end": "2026-10-01T00:00:00.000Z"
+    },
+    {
+      "instant": "2026-09-15T00:00:00.000Z",
+      "anchorDay": 15,
+      "start": "2026-09-15T00:00:00.000Z",
+      "end": "2026-10-15T00:00:00.000Z"
+    },
+    {
+      "instant": "2026-09-14T23:59:59.999Z",
+      "anchorDay": 15,
+      "start": "2026-08-15T00:00:00.000Z",
+      "end": "2026-09-15T00:00:00.000Z"
+    },
+    {
+      "instant": "2026-01-10T08:00:00.000Z",
+      "anchorDay": 28,
+      "start": "2025-12-28T00:00:00.000Z",
+      "end": "2026-01-28T00:00:00.000Z"
+    },
+    {
+      "instant": "2026-03-01T00:00:00.000Z",
+      "anchorDay": 28,
+      "start": "2026-02-28T00:00:00.000Z",
+      "end": "2026-03-28T00:00:00.000Z"
+    },
+    {
+      "instant": "2026-02-28T00:00:00.000Z",
+      "anchorDay": 28,
+      "start": "2026-02-28T00:00:00.000Z",
+      "end": "2026-03-28T00:00:00.000Z"
+    },
+    {
+      "instant": "2028-02-29T13:00:00.000Z",
+      "anchorDay": 28,
+      "start": "2028-02-28T00:00:00.000Z",
+      "end": "2028-03-28T00:00:00.000Z"
+    },
+    {
+      "instant": "2026-12-31T23:59:59.999Z",
+      "anchorDay": 1,
+      "start": "2026-12-01T00:00:00.000Z",
+      "end": "2027-01-01T00:00:00.000Z"
+    },
+    {
+      "instant": "2027-01-01T00:00:00.000Z",
+      "anchorDay": 1,
+      "start": "2027-01-01T00:00:00.000Z",
+      "end": "2027-02-01T00:00:00.000Z"
+    },
+    {
+      "instant": "2026-01-05T00:00:00.000Z",
+      "anchorDay": 7,
+      "start": "2025-12-07T00:00:00.000Z",
+      "end": "2026-01-07T00:00:00.000Z"
+    },
+    {
+      "instant": "2026-10-31T23:00:00.000Z",
+      "anchorDay": 28,
+      "start": "2026-10-28T00:00:00.000Z",
+      "end": "2026-11-28T00:00:00.000Z"
+    },
+    {
+      "instant": "2026-11-27T23:59:59.999Z",
+      "anchorDay": 28,
+      "start": "2026-10-28T00:00:00.000Z",
+      "end": "2026-11-28T00:00:00.000Z"
+    }
+  ],
+  "values": {
+    "now": "2026-09-29T12:00:00.000Z",
+    "quotas": [
+      {
+        "id": "widgets.widgetsPerProject",
+        "kind": "allocation",
+        "scope": "project",
+        "perRegion": false,
+        "default": 20,
+        "tierDefaults": {
+          "trial": 5
+        }
+      },
+      {
+        "id": "widgets.largeWidgetsPerOrganization",
+        "kind": "allocation",
+        "scope": "organization",
+        "perRegion": false,
+        "default": 5,
+        "tierDefaults": {
+          "trial": 1
+        }
+      },
+      {
+        "id": "compute.instances.running",
+        "kind": "allocation",
+        "scope": "organization",
+        "perRegion": true,
+        "default": 10,
+        "tierDefaults": {}
+      },
+      {
+        "id": "compute.disks.perInstance",
+        "kind": "allocation",
+        "scope": "resource",
+        "perRegion": true,
+        "default": 4,
+        "tierDefaults": {}
+      }
+    ],
+    "overrides": [
+      {
+        "quota": "widgets.widgetsPerProject",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "scopeKey": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "region": "",
+        "value": 100,
+        "expiresAt": null
+      },
+      {
+        "quota": "widgets.widgetsPerProject",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "scopeKey": "",
+        "region": "",
+        "value": 40,
+        "expiresAt": null
+      },
+      {
+        "quota": "widgets.widgetsPerProject",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f71",
+        "scopeKey": "",
+        "region": "",
+        "value": 7,
+        "expiresAt": "2026-09-01T00:00:00.000Z"
+      },
+      {
+        "quota": "widgets.largeWidgetsPerOrganization",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "scopeKey": "",
+        "region": "",
+        "value": 0,
+        "expiresAt": "2026-12-31T00:00:00.000Z"
+      },
+      {
+        "quota": "compute.instances.running",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "scopeKey": "",
+        "region": "",
+        "value": 30,
+        "expiresAt": null
+      },
+      {
+        "quota": "compute.instances.running",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "scopeKey": "",
+        "region": "us-west-1",
+        "value": 50,
+        "expiresAt": null
+      },
+      {
+        "quota": "compute.disks.perInstance",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "scopeKey": "0199a3d0-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+        "region": "",
+        "value": 8,
+        "expiresAt": null
+      },
+      {
+        "quota": "compute.disks.perInstance",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "scopeKey": "",
+        "region": "us-west-1",
+        "value": 6,
+        "expiresAt": null
+      }
+    ],
+    "cases": [
+      {
+        "name": "an override for the exact project",
+        "quota": "widgets.widgetsPerProject",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "scopeKey": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "region": "",
+        "tier": "standard",
+        "expected": {
+          "value": 100,
+          "source": "override"
+        }
+      },
+      {
+        "name": "the organization's override, for a project without its own",
+        "quota": "widgets.widgetsPerProject",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "scopeKey": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a82",
+        "region": "",
+        "tier": "trial",
+        "expected": {
+          "value": 40,
+          "source": "organizationOverride"
+        }
+      },
+      {
+        "name": "an expired override doesn't count: the tier default",
+        "quota": "widgets.widgetsPerProject",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f71",
+        "scopeKey": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+        "region": "",
+        "tier": "trial",
+        "expected": {
+          "value": 5,
+          "source": "tier"
+        }
+      },
+      {
+        "name": "no override, no tier default: the default",
+        "quota": "widgets.widgetsPerProject",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f71",
+        "scopeKey": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a82",
+        "region": "",
+        "tier": "standard",
+        "expected": {
+          "value": 20,
+          "source": "default"
+        }
+      },
+      {
+        "name": "an organization-scoped override of 0",
+        "quota": "widgets.largeWidgetsPerOrganization",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "scopeKey": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "region": "",
+        "tier": "trial",
+        "expected": {
+          "value": 0,
+          "source": "override"
+        }
+      },
+      {
+        "name": "an unknown tier falls through to the default",
+        "quota": "widgets.largeWidgetsPerOrganization",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f71",
+        "scopeKey": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f71",
+        "region": "",
+        "tier": "verified",
+        "expected": {
+          "value": 5,
+          "source": "default"
+        }
+      },
+      {
+        "name": "perRegion: the exact region's override beats all regions'",
+        "quota": "compute.instances.running",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "scopeKey": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "region": "us-west-1",
+        "tier": "standard",
+        "expected": {
+          "value": 50,
+          "source": "override"
+        }
+      },
+      {
+        "name": "perRegion: another region takes the all-regions override",
+        "quota": "compute.instances.running",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "scopeKey": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "region": "eu-central-1",
+        "tier": "standard",
+        "expected": {
+          "value": 30,
+          "source": "override"
+        }
+      },
+      {
+        "name": "resource scope: the resource's own override beats the organization's region override",
+        "quota": "compute.disks.perInstance",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "scopeKey": "0199a3d0-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+        "region": "us-west-1",
+        "tier": "standard",
+        "expected": {
+          "value": 8,
+          "source": "override"
+        }
+      },
+      {
+        "name": "resource scope: another resource takes the organization's override for its region",
+        "quota": "compute.disks.perInstance",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "scopeKey": "0199a3d0-1a2b-7c3d-8e4f-5a6b7c8d9e10",
+        "region": "us-west-1",
+        "tier": "standard",
+        "expected": {
+          "value": 6,
+          "source": "organizationOverride"
+        }
+      },
+      {
+        "name": "resource scope: no override in another region",
+        "quota": "compute.disks.perInstance",
+        "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+        "scopeKey": "0199a3d0-1a2b-7c3d-8e4f-5a6b7c8d9e10",
+        "region": "us-local-1",
+        "tier": "standard",
+        "expected": {
+          "value": 4,
+          "source": "default"
+        }
+      }
+    ]
+  },
+  "bucketCapacity": [
+    {
+      "default": 30,
+      "burst": null,
+      "value": 30,
+      "capacity": 30
+    },
+    {
+      "default": 30,
+      "burst": 30,
+      "value": 45,
+      "capacity": 45
+    },
+    {
+      "default": 50,
+      "burst": 100,
+      "value": 50,
+      "capacity": 100
+    },
+    {
+      "default": 50,
+      "burst": 100,
+      "value": 75,
+      "capacity": 150
+    },
+    {
+      "default": 0,
+      "burst": 10,
+      "value": 3,
+      "capacity": 3
+    },
+    {
+      "default": 3,
+      "burst": 10,
+      "value": 1,
+      "capacity": 4
+    }
+  ],
+  "units": [
+    {
+      "unit": "address",
+      "n": 2,
+      "text": "addresses"
+    },
+    {
+      "unit": "alert-rule",
+      "n": 2,
+      "text": "alert-rules"
+    },
+    {
+      "unit": "app",
+      "n": 2,
+      "text": "apps"
+    },
+    {
+      "unit": "application",
+      "n": 2,
+      "text": "applications"
+    },
+    {
+      "unit": "batch",
+      "n": 2,
+      "text": "batches"
+    },
+    {
+      "unit": "client-token",
+      "n": 2,
+      "text": "client-tokens"
+    },
+    {
+      "unit": "contact-point",
+      "n": 2,
+      "text": "contact-points"
+    },
+    {
+      "unit": "dashboard",
+      "n": 2,
+      "text": "dashboards"
+    },
+    {
+      "unit": "dataset",
+      "n": 2,
+      "text": "datasets"
+    },
+    {
+      "unit": "directory",
+      "n": 2,
+      "text": "directories"
+    },
+    {
+      "unit": "environment",
+      "n": 2,
+      "text": "environments"
+    },
+    {
+      "unit": "firewall",
+      "n": 2,
+      "text": "firewalls"
+    },
+    {
+      "unit": "flag",
+      "n": 2,
+      "text": "flags"
+    },
+    {
+      "unit": "gibibyte",
+      "n": 2,
+      "text": "gibibytes"
+    },
+    {
+      "unit": "grant",
+      "n": 2,
+      "text": "grants"
+    },
+    {
+      "unit": "group",
+      "n": 2,
+      "text": "groups"
+    },
+    {
+      "unit": "identity-provider",
+      "n": 2,
+      "text": "identity-providers"
+    },
+    {
+      "unit": "image",
+      "n": 2,
+      "text": "images"
+    },
+    {
+      "unit": "instance",
+      "n": 2,
+      "text": "instances"
+    },
+    {
+      "unit": "interface",
+      "n": 2,
+      "text": "interfaces"
+    },
+    {
+      "unit": "iops",
+      "n": 2,
+      "text": "iops"
+    },
+    {
+      "unit": "key",
+      "n": 2,
+      "text": "keys"
+    },
+    {
+      "unit": "megabyte-per-second",
+      "n": 2,
+      "text": "megabytes-per-second"
+    },
+    {
+      "unit": "page",
+      "n": 2,
+      "text": "pages"
+    },
+    {
+      "unit": "processor",
+      "n": 2,
+      "text": "processors"
+    },
+    {
+      "unit": "queue",
+      "n": 2,
+      "text": "queues"
+    },
+    {
+      "unit": "repository",
+      "n": 2,
+      "text": "repositories"
+    },
+    {
+      "unit": "request",
+      "n": 2,
+      "text": "requests"
+    },
+    {
+      "unit": "resource",
+      "n": 2,
+      "text": "resources"
+    },
+    {
+      "unit": "rule",
+      "n": 2,
+      "text": "rules"
+    },
+    {
+      "unit": "schedule",
+      "n": 2,
+      "text": "schedules"
+    },
+    {
+      "unit": "secret",
+      "n": 2,
+      "text": "secrets"
+    },
+    {
+      "unit": "segment",
+      "n": 2,
+      "text": "segments"
+    },
+    {
+      "unit": "server",
+      "n": 2,
+      "text": "servers"
+    },
+    {
+      "unit": "service",
+      "n": 2,
+      "text": "services"
+    },
+    {
+      "unit": "silence",
+      "n": 2,
+      "text": "silences"
+    },
+    {
+      "unit": "slo",
+      "n": 2,
+      "text": "slos"
+    },
+    {
+      "unit": "snapshot",
+      "n": 2,
+      "text": "snapshots"
+    },
+    {
+      "unit": "subscription",
+      "n": 2,
+      "text": "subscriptions"
+    },
+    {
+      "unit": "upload",
+      "n": 2,
+      "text": "uploads"
+    },
+    {
+      "unit": "user",
+      "n": 2,
+      "text": "users"
+    },
+    {
+      "unit": "vcpu",
+      "n": 2,
+      "text": "vcpus"
+    },
+    {
+      "unit": "version",
+      "n": 2,
+      "text": "versions"
+    },
+    {
+      "unit": "widget",
+      "n": 2,
+      "text": "widgets"
+    },
+    {
+      "unit": "byte-per-second",
+      "n": 2,
+      "text": "bytes-per-second"
+    },
+    {
+      "unit": "byte-hour",
+      "n": 2,
+      "text": "byte-hours"
+    },
+    {
+      "unit": "reqps",
+      "n": 2,
+      "text": "reqps"
+    },
+    {
+      "unit": "bps",
+      "n": 2,
+      "text": "bps"
+    },
+    {
+      "unit": "kb",
+      "n": 2,
+      "text": "kb"
+    },
+    {
+      "unit": "ms",
+      "n": 2,
+      "text": "ms"
+    },
+    {
+      "unit": "W",
+      "n": 2,
+      "text": "W"
+    },
+    {
+      "unit": "GiB",
+      "n": 2,
+      "text": "GiB"
+    },
+    {
+      "unit": "2fa",
+      "n": 2,
+      "text": "2fa"
+    },
+    {
+      "unit": "req/s",
+      "n": 2,
+      "text": "req/s"
+    },
+    {
+      "unit": "p95",
+      "n": 2,
+      "text": "p95"
+    },
+    {
+      "unit": "policy",
+      "n": 2,
+      "text": "policies"
+    },
+    {
+      "unit": "box",
+      "n": 2,
+      "text": "boxes"
+    },
+    {
+      "unit": "mesh",
+      "n": 2,
+      "text": "meshes"
+    },
+    {
+      "unit": "day",
+      "n": 2,
+      "text": "days"
+    },
+    {
+      "unit": "",
+      "n": 2,
+      "text": "units"
+    },
+    {
+      "unit": "address",
+      "n": 1,
+      "text": "address"
+    },
+    {
+      "unit": "address",
+      "n": 0,
+      "text": "addresses"
+    },
+    {
+      "unit": "megabyte-per-second",
+      "n": 1,
+      "text": "megabyte-per-second"
+    },
+    {
+      "unit": "iops",
+      "n": 1,
+      "text": "iops"
+    },
+    {
+      "unit": "policy",
+      "n": 1,
+      "text": "policy"
+    },
+    {
+      "unit": "",
+      "n": 1,
+      "text": "unit"
+    },
+    {
+      "unit": "widget",
+      "n": 1000,
+      "text": "widgets"
+    }
+  ]
+}

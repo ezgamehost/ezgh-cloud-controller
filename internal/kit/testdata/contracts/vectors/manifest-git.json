@@ -1,0 +1,619 @@
+{
+  "description": "[being built] Git hosts and Git-host endpoints (contracts/registration.md, \"Git hosts\"). manifest is a valid Git excerpt (git-stack's data plane on git.ezghcloud.com, its API on git-api.ezghcloud.com); each case changes it as scripts/lib/manifest-cases.mjs does, and an invalid case's issue is a path both scripts/lib/manifest.mjs and the Go kit's manifest.Check report.",
+  "manifest": {
+    "manifestVersion": 1,
+    "namespace": "git",
+    "displayName": "Git",
+    "description": "Hosted Git repositories with pull requests, branch rules and Git LFS.",
+    "api": {
+      "hostname": "git-api.ezghcloud.com",
+      "port": 9000
+    },
+    "git": {
+      "domain": "git.ezghcloud.com",
+      "port": 9001
+    },
+    "resourceTypes": [
+      {
+        "name": "repository",
+        "prefix": "gtr",
+        "parent": "project",
+        "regional": true,
+        "description": "A Git repository."
+      }
+    ],
+    "managedPolicies": [
+      {
+        "name": "GitFullAccess",
+        "description": "Create and delete repositories; clone, push and read them."
+      }
+    ],
+    "actions": [
+      {
+        "id": "git.repositories.list",
+        "description": "List repositories",
+        "resource": "project",
+        "accessLevel": "list",
+        "managedPolicies": [
+          "ReadOnlyAccess",
+          "GitFullAccess"
+        ]
+      },
+      {
+        "id": "git.repositories.pull",
+        "description": "Clone and fetch a repository",
+        "resource": "repository",
+        "accessLevel": "write",
+        "managedPolicies": [
+          "GitFullAccess"
+        ]
+      },
+      {
+        "id": "git.repositories.readContents",
+        "description": "Read a repository's files",
+        "resource": "repository",
+        "accessLevel": "write",
+        "managedPolicies": [
+          "GitFullAccess"
+        ]
+      },
+      {
+        "id": "git.repositories.push",
+        "description": "Push to a repository",
+        "resource": "repository",
+        "accessLevel": "write",
+        "managedPolicies": [
+          "GitFullAccess"
+        ]
+      }
+    ],
+    "endpoints": [
+      {
+        "method": "GET",
+        "path": "/health",
+        "auth": "none",
+        "trail": null
+      },
+      {
+        "method": "GET",
+        "path": "/openapi.json",
+        "auth": "none",
+        "trail": null
+      },
+      {
+        "method": "GET",
+        "path": "/v1/organizations/:orgId/projects/:projectId/repositories",
+        "auth": "caller",
+        "action": "git.repositories.list",
+        "trail": {
+          "eventName": "ListRepositories"
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/v1/organizations/:orgId/projects/:projectId/repositories/:repoId/contents",
+        "auth": "caller",
+        "action": "git.repositories.readContents",
+        "trail": {
+          "eventName": "GetContents",
+          "eventCategory": "Data",
+          "record": "refusals"
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/<repo>.git/info/refs",
+        "host": "git",
+        "auth": "git",
+        "action": "git.repositories.pull",
+        "trail": {
+          "eventName": "FetchRepository",
+          "eventCategory": "Data",
+          "record": "refusals"
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/<repo>.git/git-upload-pack",
+        "host": "git",
+        "auth": "git",
+        "action": "git.repositories.pull",
+        "trail": {
+          "eventName": "FetchRepository",
+          "eventCategory": "Data",
+          "record": "refusals"
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/<repo>.git/git-receive-pack",
+        "host": "git",
+        "auth": "git",
+        "action": "git.repositories.push",
+        "trail": {
+          "eventName": "PushRepository",
+          "eventCategory": "Data"
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/<repo>.git/info/lfs/objects/batch",
+        "host": "git",
+        "auth": "git",
+        "action": "git.repositories.pull",
+        "trail": {
+          "eventName": "DownloadLfsObject",
+          "eventCategory": "Data",
+          "record": "refusals"
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/<repo>.git/info/lfs/objects/<oid>",
+        "host": "git",
+        "auth": "git",
+        "action": "git.repositories.pull",
+        "trail": {
+          "eventName": "DownloadLfsObject",
+          "eventCategory": "Data",
+          "record": "refusals"
+        }
+      },
+      {
+        "method": "PUT",
+        "path": "/<repo>.git/info/lfs/objects/<oid>",
+        "host": "git",
+        "auth": "git",
+        "action": "git.repositories.push",
+        "trail": null
+      }
+    ],
+    "quotas": []
+  },
+  "cases": [
+    {
+      "name": "the Git excerpt as it is: git.ezghcloud.com, with the API on git-api.ezghcloud.com",
+      "valid": true
+    },
+    {
+      "name": "a fetch may be recorded in full",
+      "endpoints": {
+        "POST /<repo>.git/git-upload-pack": {
+          "trail": {
+            "eventName": "FetchRepository",
+            "eventCategory": "Data"
+          }
+        },
+        "GET /<repo>.git/info/refs": {
+          "trail": {
+            "eventName": "FetchRepository",
+            "eventCategory": "Data"
+          }
+        }
+      },
+      "valid": true
+    },
+    {
+      "name": "an LFS upload may be recorded",
+      "endpoints": {
+        "PUT /<repo>.git/info/lfs/objects/<oid>": {
+          "trail": {
+            "eventName": "UploadLfsObject",
+            "eventCategory": "Data"
+          }
+        }
+      },
+      "valid": true
+    },
+    {
+      "name": "a ref advertisement is always recorded (refusals only or every call): it's the first request of every clone and push",
+      "endpoints": {
+        "GET /<repo>.git/info/refs": {
+          "trail": null
+        }
+      },
+      "valid": false,
+      "issue": "endpoints.4.trail"
+    },
+    {
+      "name": "a manifest serving only Git's routes, no LFS",
+      "remove": [
+        "POST /<repo>.git/info/lfs/objects/batch",
+        "GET /<repo>.git/info/lfs/objects/<oid>",
+        "PUT /<repo>.git/info/lfs/objects/<oid>"
+      ],
+      "valid": true
+    },
+    {
+      "name": "the Git host is required",
+      "manifest": {
+        "git": null
+      },
+      "issue": "git",
+      "valid": false
+    },
+    {
+      "name": "no Git host without Git endpoints",
+      "remove": [
+        "GET /<repo>.git/info/refs",
+        "POST /<repo>.git/git-upload-pack",
+        "POST /<repo>.git/git-receive-pack",
+        "POST /<repo>.git/info/lfs/objects/batch",
+        "GET /<repo>.git/info/lfs/objects/<oid>",
+        "PUT /<repo>.git/info/lfs/objects/<oid>"
+      ],
+      "issue": "git",
+      "valid": false
+    },
+    {
+      "name": "the Git domain is exactly <namespace>.ezghcloud.com",
+      "manifest": {
+        "git": {
+          "domain": "code.ezghcloud.com",
+          "port": 9001
+        }
+      },
+      "issue": "git.domain",
+      "valid": false
+    },
+    {
+      "name": "the Git domain isn't a name under it",
+      "manifest": {
+        "git": {
+          "domain": "x.git.ezghcloud.com",
+          "port": 9001
+        }
+      },
+      "issue": "git.domain",
+      "valid": false
+    },
+    {
+      "name": "a Git host moves the API to <namespace>-api.ezghcloud.com",
+      "manifest": {
+        "api": {
+          "hostname": "git.ezghcloud.com",
+          "port": 9000
+        }
+      },
+      "issue": "api.hostname",
+      "valid": false
+    },
+    {
+      "name": "never beside a registry host",
+      "manifest": {
+        "registry": {
+          "domain": "git.ezghcloud.com",
+          "port": 9002
+        }
+      },
+      "add": [
+        {
+          "method": "GET",
+          "path": "/v2/",
+          "host": "registry",
+          "auth": "none",
+          "trail": null
+        }
+      ],
+      "issue": "git",
+      "valid": false
+    },
+    {
+      "name": "the Git port isn't api.port",
+      "manifest": {
+        "git": {
+          "domain": "git.ezghcloud.com",
+          "port": 9000
+        }
+      },
+      "issue": "git.port",
+      "valid": false
+    },
+    {
+      "name": "the Git port is 1024-65535",
+      "manifest": {
+        "git": {
+          "domain": "git.ezghcloud.com",
+          "port": 443
+        }
+      },
+      "issue": "git.port",
+      "valid": false
+    },
+    {
+      "name": "a path outside Git's",
+      "endpoints": {
+        "POST /<repo>.git/git-upload-pack": {
+          "path": "/<repo>.git/objects/info/packs"
+        }
+      },
+      "issue": "endpoints.5.path",
+      "valid": false
+    },
+    {
+      "name": "a repository path without .git",
+      "endpoints": {
+        "POST /<repo>.git/git-upload-pack": {
+          "path": "/<repo>/git-upload-pack"
+        }
+      },
+      "issue": "endpoints.5.path",
+      "valid": false
+    },
+    {
+      "name": "a method the Git path doesn't take",
+      "endpoints": {
+        "GET /<repo>.git/info/refs": {
+          "method": "POST"
+        }
+      },
+      "issue": "endpoints.4.method",
+      "valid": false
+    },
+    {
+      "name": "no HEAD on the Git host",
+      "add": [
+        {
+          "method": "HEAD",
+          "path": "/<repo>.git/info/lfs/objects/<oid>",
+          "host": "git",
+          "auth": "git",
+          "action": "git.repositories.pull",
+          "trail": null
+        }
+      ],
+      "issue": "endpoints.10.method",
+      "valid": false
+    },
+    {
+      "name": "the same Git route twice",
+      "add": [
+        {
+          "method": "POST",
+          "path": "/<repo>.git/git-upload-pack",
+          "host": "git",
+          "auth": "git",
+          "action": "git.repositories.pull",
+          "trail": null
+        }
+      ],
+      "issue": "endpoints.10.path",
+      "valid": false
+    },
+    {
+      "name": "Git-host endpoints are auth git",
+      "endpoints": {
+        "POST /<repo>.git/git-upload-pack": {
+          "auth": "caller"
+        }
+      },
+      "issue": "endpoints.5.auth",
+      "valid": false
+    },
+    {
+      "name": "auth git names its action",
+      "endpoints": {
+        "POST /<repo>.git/git-upload-pack": {
+          "action": null
+        }
+      },
+      "issue": "endpoints.5.action",
+      "valid": false
+    },
+    {
+      "name": "auth git only on the Git host",
+      "add": [
+        {
+          "method": "GET",
+          "path": "/v1/organizations/:orgId/projects/:projectId/clones",
+          "auth": "git",
+          "action": "git.repositories.pull",
+          "trail": null
+        }
+      ],
+      "issue": "endpoints.10.auth",
+      "valid": false
+    },
+    {
+      "name": "a Git-host trail is a Data event",
+      "endpoints": {
+        "POST /<repo>.git/git-receive-pack": {
+          "trail": {
+            "eventName": "PushRepository"
+          }
+        }
+      },
+      "issue": "endpoints.6.trail.eventCategory",
+      "valid": false
+    },
+    {
+      "name": "a push is always recorded",
+      "endpoints": {
+        "POST /<repo>.git/git-receive-pack": {
+          "trail": null
+        }
+      },
+      "issue": "endpoints.6.trail",
+      "valid": false
+    },
+    {
+      "name": "an upload-pack is always recorded (refusals only or every call)",
+      "endpoints": {
+        "POST /<repo>.git/git-upload-pack": {
+          "trail": null
+        }
+      },
+      "issue": "endpoints.5.trail",
+      "valid": false
+    },
+    {
+      "name": "an LFS batch and download may be unrecorded",
+      "endpoints": {
+        "POST /<repo>.git/info/lfs/objects/batch": {
+          "trail": null
+        },
+        "GET /<repo>.git/info/lfs/objects/<oid>": {
+          "trail": null
+        }
+      },
+      "valid": true
+    },
+    {
+      "name": "a push never records refusals only",
+      "endpoints": {
+        "POST /<repo>.git/git-receive-pack": {
+          "trail": {
+            "eventName": "PushRepository",
+            "eventCategory": "Data",
+            "record": "refusals"
+          }
+        }
+      },
+      "issue": "endpoints.6.trail.record",
+      "valid": false
+    },
+    {
+      "name": "an LFS upload never records refusals only",
+      "endpoints": {
+        "PUT /<repo>.git/info/lfs/objects/<oid>": {
+          "trail": {
+            "eventName": "UploadLfsObject",
+            "eventCategory": "Data",
+            "record": "refusals"
+          }
+        }
+      },
+      "issue": "endpoints.9.trail.record",
+      "valid": false
+    },
+    {
+      "name": "a fetch's event name isn't shared with another action's endpoint",
+      "endpoints": {
+        "POST /<repo>.git/git-receive-pack": {
+          "trail": {
+            "eventName": "FetchRepository",
+            "eventCategory": "Data"
+          }
+        }
+      },
+      "issue": "endpoints.6.trail.eventName",
+      "valid": false
+    },
+    {
+      "name": "no Idempotency-Key on the Git host",
+      "endpoints": {
+        "POST /<repo>.git/git-receive-pack": {
+          "idempotencyKey": true
+        }
+      },
+      "issue": "endpoints.6.idempotencyKey",
+      "valid": false
+    },
+    {
+      "name": "Git endpoints name no component",
+      "endpoints": {
+        "POST /<repo>.git/git-upload-pack": {
+          "component": "api"
+        }
+      },
+      "issue": "endpoints.5.component",
+      "valid": false
+    },
+    {
+      "name": "Git endpoints are never asynchronous",
+      "endpoints": {
+        "POST /<repo>.git/git-receive-pack": {
+          "async": true
+        }
+      },
+      "issue": "endpoints.6.async",
+      "valid": false
+    },
+    {
+      "name": "Git endpoints consume no quotas",
+      "manifest": {
+        "quotas": [
+          {
+            "id": "git.pushesPerMinute",
+            "displayName": "Pushes per minute",
+            "description": "x",
+            "kind": "rate",
+            "scope": "organization",
+            "unit": "request",
+            "default": 10,
+            "window": "PT1M"
+          }
+        ]
+      },
+      "endpoints": {
+        "POST /<repo>.git/git-receive-pack": {
+          "quotas": [
+            "git.pushesPerMinute"
+          ]
+        }
+      },
+      "issue": "endpoints.6.quotas",
+      "valid": false
+    },
+    {
+      "name": "Git endpoints keep the server's timeouts",
+      "endpoints": {
+        "POST /<repo>.git/git-receive-pack": {
+          "timeoutSeconds": 900
+        }
+      },
+      "issue": "endpoints.6.timeoutSeconds",
+      "valid": false
+    },
+    {
+      "name": "Git endpoints aren't public endpoints",
+      "endpoints": {
+        "GET /<repo>.git/info/refs": {
+          "public": "metadata"
+        }
+      },
+      "issue": "endpoints.4.public",
+      "valid": false
+    },
+    {
+      "name": "Git endpoints don't narrow credentials",
+      "endpoints": {
+        "POST /<repo>.git/git-upload-pack": {
+          "credentials": "bearer"
+        }
+      },
+      "issue": "endpoints.5.credentials",
+      "valid": false
+    },
+    {
+      "name": "Git endpoints answer in Git's own errors",
+      "endpoints": {
+        "POST /<repo>.git/git-upload-pack": {
+          "errorModel": "openai"
+        }
+      },
+      "issue": "endpoints.5.errorModel",
+      "valid": false
+    },
+    {
+      "name": "Git endpoints are no computations",
+      "endpoints": {
+        "POST /<repo>.git/git-upload-pack": {
+          "idempotencyException": "computation"
+        }
+      },
+      "issue": "endpoints.5.idempotencyException",
+      "valid": false
+    },
+    {
+      "name": "Git endpoints are HTTP",
+      "endpoints": {
+        "POST /<repo>.git/git-upload-pack": {
+          "protocol": "grpc"
+        }
+      },
+      "issue": "endpoints.5.protocol",
+      "valid": false
+    }
+  ]
+}

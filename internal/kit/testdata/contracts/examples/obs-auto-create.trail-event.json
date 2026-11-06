@@ -1,0 +1,37 @@
+{
+  "eventVersion": "1.0",
+  "eventId": "0199a3f4-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+  "eventTime": "2026-10-02T09:05:00.000Z",
+  "eventType": "ApiCall",
+  "eventCategory": "Management",
+  "eventSource": "obs.ezghcloud.com",
+  "eventName": "CreateDataset",
+  "readOnly": false,
+  "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+  "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+  "userIdentity": {
+    "type": "IngestKey",
+    "principalId": "0199a3c4-2f30-7b42-8c5d-6e7f8091a2b3",
+    "userName": null,
+    "isRoot": false,
+    "accessKeyId": "0199a3c4-2f30-7b42-8c5d-6e7f8091a2b3",
+    "sessionContext": null,
+    "invokedBy": null
+  },
+  "sourceIpAddress": "203.0.113.9",
+  "userAgent": "OTel-OTLP-Exporter-Go/1.38.0",
+  "requestParameters": { "environment": "production" },
+  "responseElements": {
+    "id": "0199a3f4-2b3c-7d4e-8f5a-6b7c8d9e0f1a",
+    "slug": "dst_4k2m9x0a7qpe",
+    "name": "production",
+    "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:dst_4k2m9x0a7qpe"
+  },
+  "additionalEventData": { "autoCreated": true },
+  "errorCode": null,
+  "errorMessage": null,
+  "resources": [
+    { "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:dst_4k2m9x0a7qpe", "type": "Dataset" }
+  ],
+  "requestId": "0199a3f4-3c4d-7e5f-8a6b-7c8d9e0f1a2b"
+}

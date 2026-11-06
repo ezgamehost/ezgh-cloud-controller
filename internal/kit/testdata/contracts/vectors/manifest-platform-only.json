@@ -1,0 +1,21 @@
+{
+  "description": "[being built] Platform-only actions (contracts/registration.md, \"Platform-only actions\"), each case on examples/widgets.registration-request.json with one action's platformOnly (null: left out) and managedPolicies set: the case's own action, or else the top-level action. registrations: the stored platformOnly (null: absent, exactly as before) and the registration's digest. rules: whether the schema accepts it and the kits' issues (paths; org-api's are the same). changes: the namespace registered as from, then as to: allowed (and the digest after) or refused with 409 and issues (paths; org-api only, the kits keep no registered state).",
+  "action": "widgets.widgets.create",
+  "registrations": [
+    {"name": "without platformOnly: the stored form and digest are exactly as before", "platformOnly": null, "managedPolicies": ["WidgetsFullAccess"], "stored": null, "digest": "sha256:afc16f01c8db3c19a757c6f6e558bf97c0b0940df77c7bb1a139f34d9f526f69"},
+    {"name": "in no managed policy, without platformOnly", "platformOnly": null, "managedPolicies": [], "stored": null, "digest": "sha256:922d47c11f9b332017b8c2b6a8e6d316faa8e5dbc031f5b46cdfdabad99e6886"},
+    {"name": "platformOnly is stored and digested", "platformOnly": true, "managedPolicies": [], "stored": true, "digest": "sha256:0b37711c0e8bb647cbedf6171ac58ba183783104f8d4a48998654c1dbb1cbbc5"}
+  ],
+  "rules": [
+    {"name": "left out", "platformOnly": null, "managedPolicies": ["WidgetsFullAccess"], "schema": true, "kit": []},
+    {"name": "platformOnly in no managed policy", "platformOnly": true, "managedPolicies": [], "schema": true, "kit": []},
+    {"name": "platformOnly in a managed policy", "platformOnly": true, "managedPolicies": ["WidgetsFullAccess"], "schema": false, "kit": ["actions.2.platformOnly"]},
+    {"name": "platformOnly is only ever true", "platformOnly": false, "managedPolicies": [], "schema": false},
+    {"name": "a platform-only list action: list and read actions are in ReadOnlyAccess", "action": "widgets.widgets.list", "platformOnly": true, "managedPolicies": [], "schema": true, "kit": ["actions.0.managedPolicies"]},
+    {"name": "a platform-only read action: likewise", "action": "widgets.widgets.get", "platformOnly": true, "managedPolicies": [], "schema": true, "kit": ["actions.1.managedPolicies"]}
+  ],
+  "changes": [
+    {"name": "adding platformOnly to an action registered without it: it changes no grant", "from": {"platformOnly": null, "managedPolicies": []}, "to": {"platformOnly": true, "managedPolicies": []}, "allowed": true, "digest": "sha256:0b37711c0e8bb647cbedf6171ac58ba183783104f8d4a48998654c1dbb1cbbc5"},
+    {"name": "removing it is refused", "from": {"platformOnly": true, "managedPolicies": []}, "to": {"platformOnly": null, "managedPolicies": []}, "allowed": false, "issues": ["actions.2.platformOnly"]}
+  ]
+}

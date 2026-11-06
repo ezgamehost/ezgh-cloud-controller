@@ -1,0 +1,74 @@
+{
+  "description": "Signed cursors: base64url(payload) + \".\" + base64url(HMAC-SHA256(secret, payload)), unpadded, where payload is the compact JSON {\"v\":1,\"org\":…,\"scope\":…,\"key\":…} in that key order. Every refusal is 400 invalid_cursor to the caller; the reasons are for tests.",
+  "secret": "test-cursor-secret-do-not-use-0123456789abcdef",
+  "encode": [
+    {
+      "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+      "scope": "widgets:0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+      "key": [
+        "2026-09-28T10:00:00.000Z",
+        "0199a3d0-1a2b-7c3d-8e4f-5a6b7c8d9e0f"
+      ],
+      "cursor": "eyJ2IjoxLCJvcmciOiIwMTk5YTNjMi01YjFlLTdkNDAtOWYzYS0yYzhlNmIxZDRmNzAiLCJzY29wZSI6IndpZGdldHM6MDE5OWEzYzItNmMyZi03ZTUxLThhNGItM2Q5ZjdjMmU1YTgxIiwia2V5IjpbIjIwMjYtMDktMjhUMTA6MDA6MDAuMDAwWiIsIjAxOTlhM2QwLTFhMmItN2MzZC04ZTRmLTVhNmI3YzhkOWUwZiJdfQ.J-q3LNQIifF9yGWyrrLYtTojv5zTd2TJ_RC1LSYYn8Y"
+    }
+  ],
+  "decode": [
+    {
+      "name": "valid",
+      "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+      "scope": "widgets:0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+      "cursor": "eyJ2IjoxLCJvcmciOiIwMTk5YTNjMi01YjFlLTdkNDAtOWYzYS0yYzhlNmIxZDRmNzAiLCJzY29wZSI6IndpZGdldHM6MDE5OWEzYzItNmMyZi03ZTUxLThhNGItM2Q5ZjdjMmU1YTgxIiwia2V5IjpbIjIwMjYtMDktMjhUMTA6MDA6MDAuMDAwWiIsIjAxOTlhM2QwLTFhMmItN2MzZC04ZTRmLTVhNmI3YzhkOWUwZiJdfQ.J-q3LNQIifF9yGWyrrLYtTojv5zTd2TJ_RC1LSYYn8Y",
+      "expected": {
+        "key": [
+          "2026-09-28T10:00:00.000Z",
+          "0199a3d0-1a2b-7c3d-8e4f-5a6b7c8d9e0f"
+        ]
+      }
+    },
+    {
+      "name": "another organization",
+      "organizationId": "0199a3c2-7d30-7f62-9b5c-4e0a8d3f6b92",
+      "scope": "widgets:0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+      "cursor": "eyJ2IjoxLCJvcmciOiIwMTk5YTNjMi01YjFlLTdkNDAtOWYzYS0yYzhlNmIxZDRmNzAiLCJzY29wZSI6IndpZGdldHM6MDE5OWEzYzItNmMyZi03ZTUxLThhNGItM2Q5ZjdjMmU1YTgxIiwia2V5IjpbIjIwMjYtMDktMjhUMTA6MDA6MDAuMDAwWiIsIjAxOTlhM2QwLTFhMmItN2MzZC04ZTRmLTVhNmI3YzhkOWUwZiJdfQ.J-q3LNQIifF9yGWyrrLYtTojv5zTd2TJ_RC1LSYYn8Y",
+      "expected": {
+        "error": "wrong_organization"
+      }
+    },
+    {
+      "name": "another scope (other filters)",
+      "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+      "scope": "widgets:0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81:status=running",
+      "cursor": "eyJ2IjoxLCJvcmciOiIwMTk5YTNjMi01YjFlLTdkNDAtOWYzYS0yYzhlNmIxZDRmNzAiLCJzY29wZSI6IndpZGdldHM6MDE5OWEzYzItNmMyZi03ZTUxLThhNGItM2Q5ZjdjMmU1YTgxIiwia2V5IjpbIjIwMjYtMDktMjhUMTA6MDA6MDAuMDAwWiIsIjAxOTlhM2QwLTFhMmItN2MzZC04ZTRmLTVhNmI3YzhkOWUwZiJdfQ.J-q3LNQIifF9yGWyrrLYtTojv5zTd2TJ_RC1LSYYn8Y",
+      "expected": {
+        "error": "wrong_scope"
+      }
+    },
+    {
+      "name": "payload edited",
+      "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+      "scope": "widgets:0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+      "cursor": "fyJ2IjoxLCJvcmciOiIwMTk5YTNjMi01YjFlLTdkNDAtOWYzYS0yYzhlNmIxZDRmNzAiLCJzY29wZSI6IndpZGdldHM6MDE5OWEzYzItNmMyZi03ZTUxLThhNGItM2Q5ZjdjMmU1YTgxIiwia2V5IjpbIjIwMjYtMDktMjhUMTA6MDA6MDAuMDAwWiIsIjAxOTlhM2QwLTFhMmItN2MzZC04ZTRmLTVhNmI3YzhkOWUwZiJdfQ.J-q3LNQIifF9yGWyrrLYtTojv5zTd2TJ_RC1LSYYn8Y",
+      "expected": {
+        "error": "tampered"
+      }
+    },
+    {
+      "name": "not two parts",
+      "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+      "scope": "widgets:0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+      "cursor": "abc",
+      "expected": {
+        "error": "malformed"
+      }
+    },
+    {
+      "name": "a version this API doesn't issue",
+      "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+      "scope": "widgets:0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+      "cursor": "eyJ2IjoyLCJvcmciOiIwMTk5YTNjMi01YjFlLTdkNDAtOWYzYS0yYzhlNmIxZDRmNzAiLCJzY29wZSI6IndpZGdldHM6MDE5OWEzYzItNmMyZi03ZTUxLThhNGItM2Q5ZjdjMmU1YTgxIiwia2V5IjpbIjIwMjYtMDktMjhUMTA6MDA6MDAuMDAwWiIsIjAxOTlhM2QwLTFhMmItN2MzZC04ZTRmLTVhNmI3YzhkOWUwZiJdfQ.Cz8uw9xJq1rRNByJTI38rp_HfVivLJNXGZ60Th8eh0w",
+      "expected": {
+        "error": "version"
+      }
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "organization": {
+    "id": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+    "name": "Acme",
+    "slug": "org_k3f9a0x2m7qp",
+    "resourceName": "ezgh::org_k3f9a0x2m7qp",
+    "createdAt": "2026-09-01T08:00:00.000Z",
+    "updatedAt": "2026-09-01T08:00:00.000Z",
+    "isRoot": false
+  },
+  "principal": {
+    "type": "bot",
+    "id": "0199a3c5-1e2f-7a31-9b4c-5d6e7f8091a2"
+  },
+  "apiKeyId": "0199a430-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+  "userIdentity": {
+    "type": "Bot",
+    "principalId": "0199a3c5-1e2f-7a31-9b4c-5d6e7f8091a2",
+    "userName": "deployer",
+    "isRoot": false,
+    "accessKeyId": "0199a430-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+    "sessionContext": {
+      "credential": "apiKey",
+      "sessionIssuedAt": null,
+      "ssoProviderId": null,
+      "mfaAuthenticated": false,
+      "sourceIdentity": {
+        "type": "OidcSubject",
+        "principalId": "0199a42a-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+        "userName": "repo:acme/app:environment:production"
+      }
+    },
+    "invokedBy": null
+  },
+  "resource": "ezgh::org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2",
+  "allowed": [
+    "projects.get"
+  ],
+  "allowedSomewhere": [
+    "organizations.get",
+    "projects.list",
+    "projects.get"
+  ]
+}

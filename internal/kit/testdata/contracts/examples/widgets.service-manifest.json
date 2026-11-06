@@ -1,0 +1,50 @@
+{
+  "manifestVersion": 1,
+  "namespace": "widgets",
+  "displayName": "Widgets",
+  "description": "The example product: widgets that run inside a project and are billed by the second they run.",
+  "api": { "hostname": "widgets.ezghcloud.com", "port": 4700 },
+  "resourceTypes": [
+    { "name": "widget", "prefix": "wgt", "parent": "project", "regional": true, "description": "A widget: small or large, running or stopped." }
+  ],
+  "managedPolicies": [
+    { "name": "WidgetsFullAccess", "description": "Create, change, start, stop and delete widgets." },
+    { "name": "WidgetsReadOnlyAccess", "description": "View widgets and their operations." }
+  ],
+  "actions": [
+    { "id": "widgets.widgets.list", "description": "List widgets", "resource": "project", "accessLevel": "list", "managedPolicies": ["ReadOnlyAccess", "WidgetsFullAccess", "WidgetsReadOnlyAccess"] },
+    { "id": "widgets.widgets.get", "description": "View widgets and their operations", "resource": "widget", "accessLevel": "read", "managedPolicies": ["ReadOnlyAccess", "WidgetsFullAccess", "WidgetsReadOnlyAccess"] },
+    { "id": "widgets.widgets.create", "description": "Create widgets", "resource": "project", "accessLevel": "write", "managedPolicies": ["WidgetsFullAccess"] },
+    { "id": "widgets.widgets.update", "description": "Rename, resize and tag widgets", "resource": "widget", "accessLevel": "write", "managedPolicies": ["WidgetsFullAccess"] },
+    { "id": "widgets.widgets.start", "description": "Start widgets", "resource": "widget", "accessLevel": "write", "managedPolicies": ["WidgetsFullAccess"] },
+    { "id": "widgets.widgets.stop", "description": "Stop widgets", "resource": "widget", "accessLevel": "write", "managedPolicies": ["WidgetsFullAccess"] },
+    { "id": "widgets.widgets.delete", "description": "Delete widgets", "resource": "widget", "accessLevel": "write", "managedPolicies": ["WidgetsFullAccess"] },
+    { "id": "widgets.operations.list", "description": "List widget operations", "resource": "organization", "accessLevel": "list", "managedPolicies": ["ReadOnlyAccess", "WidgetsFullAccess", "WidgetsReadOnlyAccess"] }
+  ],
+  "endpoints": [
+    { "method": "GET", "path": "/health", "auth": "none", "trail": null },
+    { "method": "GET", "path": "/ready", "auth": "none", "trail": null },
+    { "method": "GET", "path": "/openapi.json", "auth": "none", "trail": null },
+    { "method": "GET", "path": "/v1/organizations/:orgId/projects/:projectId/widgets", "auth": "caller", "action": "widgets.widgets.list", "quotas": ["widgets.api.requestsPerPeriod", "widgets.api.concurrentRequests"], "trail": { "eventName": "ListWidgets" } },
+    { "method": "POST", "path": "/v1/organizations/:orgId/projects/:projectId/widgets", "auth": "caller", "action": "widgets.widgets.create", "async": true, "idempotencyKey": true, "quotas": ["widgets.api.requestsPerPeriod", "widgets.api.concurrentRequests", "widgets.widgetsPerProject", "widgets.largeWidgetsPerOrganization", "widgets.widgetCreatesPerMinute"], "blockedBySpendControls": true, "trail": { "eventName": "CreateWidget", "responseElements": ["target"] } },
+    { "method": "GET", "path": "/v1/organizations/:orgId/projects/:projectId/widgets/:widgetId", "auth": "caller", "action": "widgets.widgets.get", "quotas": ["widgets.api.requestsPerPeriod", "widgets.api.concurrentRequests"], "trail": { "eventName": "GetWidget" } },
+    { "method": "PATCH", "path": "/v1/organizations/:orgId/projects/:projectId/widgets/:widgetId", "auth": "caller", "action": "widgets.widgets.update", "idempotencyKey": true, "quotas": ["widgets.api.requestsPerPeriod", "widgets.api.concurrentRequests", "widgets.largeWidgetsPerOrganization"], "blockedBySpendControls": true, "trail": { "eventName": "UpdateWidget" } },
+    { "method": "POST", "path": "/v1/organizations/:orgId/projects/:projectId/widgets/:widgetId/start", "auth": "caller", "action": "widgets.widgets.start", "quotas": ["widgets.api.requestsPerPeriod", "widgets.api.concurrentRequests"], "async": true, "idempotencyKey": true, "blockedBySpendControls": true, "trail": { "eventName": "StartWidget", "responseElements": ["target"] } },
+    { "method": "POST", "path": "/v1/organizations/:orgId/projects/:projectId/widgets/:widgetId/stop", "auth": "caller", "action": "widgets.widgets.stop", "quotas": ["widgets.api.requestsPerPeriod", "widgets.api.concurrentRequests"], "async": true, "idempotencyKey": true, "trail": { "eventName": "StopWidget", "responseElements": ["target"] } },
+    { "method": "DELETE", "path": "/v1/organizations/:orgId/projects/:projectId/widgets/:widgetId", "auth": "caller", "action": "widgets.widgets.delete", "quotas": ["widgets.api.requestsPerPeriod", "widgets.api.concurrentRequests"], "async": true, "idempotencyKey": true, "trail": { "eventName": "DeleteWidget", "responseElements": ["target"] } },
+    { "method": "GET", "path": "/v1/organizations/:orgId/operations", "auth": "caller", "action": "widgets.operations.list", "quotas": ["widgets.api.requestsPerPeriod", "widgets.api.concurrentRequests"], "trail": { "eventName": "ListOperations" } },
+    { "method": "GET", "path": "/v1/organizations/:orgId/operations/:operationId", "auth": "operation", "trail": null },
+    { "method": "DELETE", "path": "/v1/organizations/:orgId/operations/:operationId", "auth": "operation", "trail": { "eventName": "CancelOperation" } },
+    { "method": "GET", "path": "/internal/v1/usage/totals", "auth": "service", "trail": null },
+    { "method": "GET", "path": "/internal/v1/quotas/usage", "auth": "service", "trail": null }
+  ],
+  "quotas": [
+    { "id": "widgets.widgetsPerProject", "displayName": "Widgets per project", "description": "Widgets that can exist in one project at a time, in any state.", "kind": "allocation", "scope": "project", "default": 20, "tierDefaults": { "trial": 5 }, "unit": "widget", "adjustable": true, "max": 1000 },
+    { "id": "widgets.largeWidgetsPerOrganization", "displayName": "Large widgets per organization", "description": "Widgets of size large that can exist in the organization at a time.", "kind": "allocation", "scope": "organization", "default": 5, "tierDefaults": { "trial": 1 }, "unit": "widget", "adjustable": true, "max": 200 },
+    { "id": "widgets.widgetCreatesPerMinute", "displayName": "Widget creations per minute", "description": "Create requests accepted per minute, across the organization.", "kind": "rate", "scope": "organization", "default": 30, "unit": "request", "window": "PT1M", "burst": 30, "adjustable": true },
+    { "id": "widgets.api.requestsPerPeriod", "displayName": "API requests per billing period", "description": "Requests to the widgets API in the organization's billing period.", "kind": "usage", "scope": "organization", "default": 1000000, "tierDefaults": { "trial": 10000 }, "unit": "request", "adjustable": true },
+    { "id": "widgets.api.concurrentRequests", "displayName": "Concurrent API requests", "description": "Requests to the widgets API in flight at once, across the organization.", "kind": "concurrency", "scope": "organization", "default": 50, "unit": "request", "leaseTtl": "PT1M", "adjustable": true }
+  ],
+  "metering": { "producer": "widgets", "meters": ["widgets.widget.uptime", "widgets.widget.storage"] },
+  "serviceCredentials": { "issuerPrefix": "wk" }
+}

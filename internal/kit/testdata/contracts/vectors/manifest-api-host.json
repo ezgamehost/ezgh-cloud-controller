@@ -1,0 +1,11 @@
+{
+  "description": "[being built] api.hostname: <namespace>.ezghcloud.com, or <namespace>-api.ezghcloud.com, which any product may choose and a registry product must use (contracts/registration.md). Each case is checked by scripts/lib/manifest.mjs and the Go kit's manifest.Check.",
+  "cases": [
+    { "name": "the bare form", "namespace": "widgets", "hostname": "widgets.ezghcloud.com", "registry": false, "valid": true },
+    { "name": "the -api form, chosen", "namespace": "workflows", "hostname": "workflows-api.ezghcloud.com", "registry": false, "valid": true },
+    { "name": "another suffix", "namespace": "workflows", "hostname": "workflows-x.ezghcloud.com", "registry": false, "valid": false },
+    { "name": "another namespace's host", "namespace": "workflows", "hostname": "widgets-api.ezghcloud.com", "registry": false, "valid": false },
+    { "name": "a registry product on the -api form", "namespace": "registry", "hostname": "registry-api.ezghcloud.com", "registry": true, "valid": true },
+    { "name": "a registry product on the bare form", "namespace": "registry", "hostname": "registry.ezghcloud.com", "registry": true, "valid": false }
+  ]
+}

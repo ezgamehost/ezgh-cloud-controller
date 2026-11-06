@@ -1,0 +1,35 @@
+{
+  "product": "mcpcentral",
+  "key": "sso-group:0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81:0199a3f4-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+  "id": "0199a400-5e6f-7a81-9b2c-3d4e5f6a7b8c",
+  "name": "MCP Central: Engineering",
+  "slug": "pol_8e3c1a5b7d9f",
+  "resourceName": "ezgh::org_k3f9a0x2m7qp:pol_8e3c1a5b7d9f",
+  "description": "Granted by MCP Central's mapping of the Engineering directory group.",
+  "document": {
+    "statements": [
+      {
+        "effect": "allow",
+        "actions": [
+          "mcpcentral.gateways.connect",
+          "mcpcentral.servers.use",
+          "mcpcentral.tools.call",
+          "mcpcentral.connections.connect",
+          "mcpcentral.connections.disconnect"
+        ],
+        "resources": [
+          "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:*"
+        ]
+      }
+    ]
+  },
+  "attachments": [
+    {
+      "principalType": "ssoGroup",
+      "principalId": "0199a3f4-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+      "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:dir_4k2m9x0a7qpe:dgp_7c2e5a81d4f7"
+    }
+  ],
+  "createdAt": "2026-10-04T10:00:00.000Z",
+  "updatedAt": "2026-10-04T10:00:00.000Z"
+}

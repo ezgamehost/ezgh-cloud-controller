@@ -1,0 +1,46 @@
+{
+  "manifestVersion": 1,
+  "namespace": "obs",
+  "displayName": "Observability",
+  "description": "Customer telemetry: OTLP ingest into datasets, one per environment, and search over them.",
+  "orgApi": { "operations": ["ingestKeys.resolve", "ingestKeys.events", "ingestCredentials.resolve"] },
+  "api": { "hostname": "obs.ezghcloud.com", "port": 5300 },
+  "ingest": { "hostname": "obs-ingest.ezghcloud.com", "port": 5400, "grpcPort": 5401 },
+  "live": { "hostname": "obs-live.ezghcloud.com", "port": 5550 },
+  "resourceTypes": [
+    { "name": "dataset", "prefix": "dst", "parent": "project", "regional": true, "description": "A dataset: one environment's telemetry in a project." }
+  ],
+  "managedPolicies": [
+    { "name": "ObsFullAccess", "description": "Manage datasets and send telemetry." },
+    { "name": "ObsReadOnlyAccess", "description": "View datasets and read their telemetry." }
+  ],
+  "actions": [
+    { "id": "obs.datasets.list", "description": "List datasets", "resource": "project", "accessLevel": "list", "managedPolicies": ["ReadOnlyAccess", "ObsFullAccess", "ObsReadOnlyAccess"] },
+    { "id": "obs.datasets.get", "description": "View datasets", "resource": "dataset", "accessLevel": "read", "managedPolicies": ["ReadOnlyAccess", "ObsFullAccess", "ObsReadOnlyAccess"] },
+    { "id": "obs.datasets.create", "description": "Create datasets", "resource": "project", "accessLevel": "write", "managedPolicies": ["ObsFullAccess"] },
+    { "id": "obs.logs.ingest", "description": "Send logs with a project ingest key", "resource": "project", "accessLevel": "write", "managedPolicies": ["ObsFullAccess"], "ingest": true },
+    { "id": "obs.logs.search", "description": "Search and tail log records (returns log content)", "resource": "dataset", "accessLevel": "read", "managedPolicies": ["ReadOnlyAccess", "ObsFullAccess", "ObsReadOnlyAccess"] },
+    { "id": "obs.metrics.ingest", "description": "Send metrics (OTLP data points or Prometheus remote write) to a project's datasets with a project ingest key", "resource": "project", "accessLevel": "write", "managedPolicies": ["ObsFullAccess"], "ingest": true },
+    { "id": "obs.metrics.query", "description": "Query a dataset's metrics with PromQL (returns metric data and label values)", "resource": "dataset", "accessLevel": "read", "managedPolicies": ["ReadOnlyAccess", "ObsFullAccess", "ObsReadOnlyAccess"] }
+  ],
+  "endpoints": [
+    { "method": "GET", "path": "/health", "auth": "none", "trail": null },
+    { "method": "GET", "path": "/ready", "auth": "none", "trail": null },
+    { "method": "GET", "path": "/openapi.json", "auth": "none", "trail": null },
+    { "method": "GET", "path": "/v1/organizations/:orgId/projects/:projectId/obs/datasets", "auth": "caller", "action": "obs.datasets.list", "trail": { "eventName": "ListDatasets" } },
+    { "method": "POST", "path": "/v1/organizations/:orgId/projects/:projectId/obs/datasets", "auth": "caller", "action": "obs.datasets.create", "idempotencyKey": true, "quotas": ["obs.datasets.perProject"], "trail": { "eventName": "CreateDataset" } },
+    { "method": "GET", "path": "/v1/organizations/:orgId/projects/:projectId/obs/datasets/:datasetId", "auth": "caller", "action": "obs.datasets.get", "trail": { "eventName": "GetDataset" } },
+    { "method": "POST", "path": "/v1/organizations/:orgId/projects/:projectId/obs/datasets/:datasetId/logs/tail", "host": "live", "component": "live", "auth": "caller", "action": "obs.logs.search", "idempotencyException": "computation", "timeoutSeconds": 900, "trail": { "eventName": "TailLogs", "sensitive": ["filters"] } },
+    { "method": "GET", "path": "/v1/organizations/:orgId/projects/:projectId/obs/prometheus/api/v1/query", "auth": "caller", "action": "obs.metrics.query", "errorModel": "prometheus", "trail": { "eventName": "QueryMetrics", "eventCategory": "Data", "sensitive": ["query"] } },
+    { "method": "POST", "path": "/v1/organizations/:orgId/projects/:projectId/obs/prometheus/api/v1/query", "auth": "caller", "action": "obs.metrics.query", "errorModel": "prometheus", "idempotencyException": "computation", "trail": { "eventName": "QueryMetrics", "eventCategory": "Data", "sensitive": ["query"] } },
+    { "method": "POST", "path": "/v1/logs", "host": "ingest", "protocol": "http", "auth": "ingestKey", "action": "obs.logs.ingest", "trail": null },
+    { "method": "POST", "path": "/v1/metrics", "host": "ingest", "protocol": "http", "auth": "ingestKey", "action": "obs.metrics.ingest", "trail": null },
+    { "method": "POST", "path": "/api/v1/write", "host": "ingest", "protocol": "http", "auth": "ingestKey", "action": "obs.metrics.ingest", "trail": null },
+    { "method": "POST", "path": "/opentelemetry.proto.collector.logs.v1.LogsService/Export", "host": "ingest", "protocol": "grpc", "auth": "ingestKey", "action": "obs.logs.ingest", "trail": null },
+    { "method": "POST", "path": "/internal/v1/datasets/ensure", "auth": "service", "trail": null }
+  ],
+  "quotas": [
+    { "id": "obs.datasets.perProject", "displayName": "Datasets per project", "description": "Datasets in one project, including those created automatically by ingest.", "kind": "allocation", "scope": "project", "default": 100, "unit": "dataset" }
+  ],
+  "serviceCredentials": { "issuerPrefix": "ob" }
+}

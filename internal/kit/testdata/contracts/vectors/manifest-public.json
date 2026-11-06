@@ -1,0 +1,14 @@
+[
+  {"name": "public metadata and redirect endpoints on both hosts and components", "valid": true},
+  {"name": "a public endpoint is unauthenticated", "endpoints": {"GET /.well-known/jwks.json": {"auth": "caller", "action": "mcpcentral.gateways.get"}}, "valid": false},
+  {"name": "a public endpoint is a GET", "endpoints": {"GET /v1/oauth/callback": {"method": "POST"}}, "valid": false},
+  {"name": "a public endpoint is never recorded", "endpoints": {"GET /v1/oauth/callback": {"trail": {"eventName": "ConnectServerCallback"}}}, "valid": false},
+  {"name": "only metadata or redirect", "endpoints": {"GET /.well-known/jwks.json": {"public": "document"}}, "valid": false},
+  {"name": "an unauthenticated endpoint that isn't public or the kit's", "endpoints": {"GET /.well-known/jwks.json": {"public": null}}, "valid": false},
+  {"name": "the kit's own endpoints aren't public endpoints", "endpoints": {"GET /health": {"public": "metadata"}}, "valid": false},
+  {"name": "never under /internal/", "endpoints": {"GET /v1/oauth/callback": {"path": "/internal/v1/oauth/callback"}}, "valid": false},
+  {"name": "a public endpoint names no action", "endpoints": {"GET /sign-in": {"action": "mcpcentral.gateways.connect"}}, "valid": false},
+  {"name": "a public endpoint consumes no quotas", "manifest": {"quotas": [{"id": "mcpcentral.signIns.rate", "displayName": "Sign-ins", "description": "x", "kind": "rate", "scope": "organization", "default": 10, "unit": "request", "window": "PT1M"}]}, "endpoints": {"GET /sign-in": {"quotas": ["mcpcentral.signIns.rate"]}}, "valid": false},
+  {"name": "a public redirect under /v1/organizations/:orgId", "add": [{"method": "GET", "path": "/v1/organizations/:orgId/oauth/callback", "auth": "none", "public": "redirect", "trail": null}], "valid": true},
+  {"name": "a public endpoint overlapping another in its component", "add": [{"method": "GET", "path": "/callback", "host": "edge", "component": "edge", "auth": "none", "public": "metadata", "trail": null}], "valid": false}
+]

@@ -1,0 +1,37 @@
+{
+  "eventVersion": "1.0",
+  "eventId": "0199a3f6-4d5e-7f60-8a1b-2c3d4e5f6a7b",
+  "eventTime": "2026-10-02T09:06:31.000Z",
+  "eventType": "ApiCall",
+  "eventCategory": "Management",
+  "eventSource": "obs.ezghcloud.com",
+  "eventName": "CreateService",
+  "readOnly": false,
+  "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+  "projectId": "0199a3c2-6c2f-7e51-8a4b-3d9f7c2e5a81",
+  "userIdentity": {
+    "type": "IngestKey",
+    "principalId": "0199a3c4-2f30-7b42-8c5d-6e7f8091a2b3",
+    "userName": null,
+    "isRoot": false,
+    "accessKeyId": "0199a3c4-2f30-7b42-8c5d-6e7f8091a2b3",
+    "sessionContext": null,
+    "invokedBy": null
+  },
+  "sourceIpAddress": null,
+  "userAgent": null,
+  "requestParameters": { "key": "checkout/api" },
+  "responseElements": {
+    "id": "0199a3f6-5e6f-7a71-8b2c-3d4e5f6a7b8c",
+    "slug": "svc_7q2m4x9k0a3b",
+    "name": "checkout/api",
+    "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:svc_7q2m4x9k0a3b"
+  },
+  "additionalEventData": { "autoCreated": true },
+  "errorCode": null,
+  "errorMessage": null,
+  "resources": [
+    { "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:svc_7q2m4x9k0a3b", "type": "Service" }
+  ],
+  "requestId": null
+}

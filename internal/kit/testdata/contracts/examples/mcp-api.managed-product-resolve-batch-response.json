@@ -1,0 +1,20 @@
+{
+  "items": [
+    {
+      "objectId": "0199a402-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+      "kind": "mcpcentral.connection",
+      "version": 3,
+      "found": true,
+      "digest": "3f2a9c1e5b7d4f60a8e2c4b6d8f0a1c3e5b7d9f1a3c5e7b9d1f3a5c7e9b1d3f5",
+      "fields": {
+        "header.Authorization": "Bearer upstream-token-example"
+      }
+    },
+    {
+      "objectId": "0199a402-2b3c-7d4e-8f50-6a7b8c9d0e1f",
+      "kind": "mcpcentral.connection",
+      "version": 1,
+      "found": false
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "manifestVersion": 1,
+  "namespace": "blockstore",
+  "displayName": "Block Storage",
+  "description": "An excerpt of blockstore-stack's manifest: a receiver of delegated calls from compute (contracts/identity-and-authz.md, \"Delegated checks\").",
+  "orgApi": { "operations": ["permissions.batch", "permissions.delegated"] },
+  "delegation": {
+    "callers": [
+      { "namespace": "compute", "actions": ["blockstore.volumes.create", "blockstore.volumes.attach", "blockstore.volumes.detach"] }
+    ]
+  },
+  "api": { "hostname": "blockstore-api.ezghcloud.com", "port": 7600 },
+  "resourceTypes": [
+    { "name": "volume", "prefix": "vol", "parent": "project", "regional": true, "description": "A block storage volume: its type, size, IOPS, throughput and the instance it's attached to." }
+  ],
+  "managedPolicies": [
+    { "name": "BlockstoreFullAccess", "description": "Create, change, resize, attach, detach and delete volumes; create, restore and delete snapshots." },
+    { "name": "BlockstoreReadOnlyAccess", "description": "View volumes, snapshots and their operations." }
+  ],
+  "actions": [
+    { "id": "blockstore.volumes.list", "description": "List volumes", "resource": "project", "accessLevel": "list", "managedPolicies": ["ReadOnlyAccess", "BlockstoreFullAccess", "BlockstoreReadOnlyAccess"] },
+    { "id": "blockstore.volumes.get", "description": "View volumes and their operations", "resource": "volume", "accessLevel": "read", "managedPolicies": ["ReadOnlyAccess", "BlockstoreFullAccess", "BlockstoreReadOnlyAccess"] },
+    { "id": "blockstore.volumes.create", "description": "Create volumes, including an instance's volumes at launch", "resource": "volume", "accessLevel": "write", "managedPolicies": ["BlockstoreFullAccess"] },
+    { "id": "blockstore.volumes.attach", "description": "Attach volumes to instances", "resource": "volume", "accessLevel": "write", "managedPolicies": ["BlockstoreFullAccess"] },
+    { "id": "blockstore.volumes.detach", "description": "Detach volumes from instances", "resource": "volume", "accessLevel": "write", "managedPolicies": ["BlockstoreFullAccess"] }
+  ],
+  "endpoints": [
+    { "method": "GET", "path": "/health", "auth": "none", "trail": null },
+    { "method": "GET", "path": "/ready", "auth": "none", "trail": null },
+    { "method": "GET", "path": "/openapi.json", "auth": "none", "trail": null },
+    { "method": "POST", "path": "/v1/organizations/:orgId/projects/:projectId/volumes", "auth": "caller", "action": "blockstore.volumes.create", "idempotencyKey": true, "async": true, "trail": { "eventName": "CreateVolume" } },
+    { "method": "POST", "path": "/internal/v1/volumes", "auth": "delegated", "action": "blockstore.volumes.create", "async": true, "trail": { "eventName": "CreateVolume" } },
+    { "method": "POST", "path": "/internal/v1/attachments", "auth": "delegated", "action": "blockstore.volumes.attach", "trail": { "eventName": "AttachVolume" } },
+    { "method": "GET", "path": "/internal/v1/volumes/:volumeSlug", "auth": "service", "trail": null }
+  ],
+  "quotas": [],
+  "serviceCredentials": { "issuerPrefix": "bsk" }
+}

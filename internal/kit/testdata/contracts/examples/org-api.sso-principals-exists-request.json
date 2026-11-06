@@ -1,0 +1,13 @@
+{
+  "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+  "principals": [
+    {
+      "principalType": "ssoUser",
+      "id": "0199a3f1-1a2b-7c3d-8e4f-5a6b7c8d9e0f"
+    },
+    {
+      "principalType": "ssoGroup",
+      "id": "0199a3f4-1a2b-7c3d-8e4f-5a6b7c8d9e0f"
+    }
+  ]
+}

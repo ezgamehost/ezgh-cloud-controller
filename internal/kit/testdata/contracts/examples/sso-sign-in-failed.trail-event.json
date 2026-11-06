@@ -1,0 +1,38 @@
+{
+  "eventVersion": "1.0",
+  "eventId": "0199a3f3-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+  "eventTime": "2026-09-30T09:00:00.000Z",
+  "eventType": "SignIn",
+  "eventCategory": "Management",
+  "eventSource": "sso.ezghcloud.com",
+  "eventName": "SignInFailed",
+  "readOnly": false,
+  "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+  "projectId": null,
+  "userIdentity": {
+    "type": "SsoUser",
+    "principalId": null,
+    "userName": "HIDDEN_DUE_TO_SECURITY_REASONS",
+    "isRoot": false,
+    "accessKeyId": null,
+    "sessionContext": null,
+    "invokedBy": null
+  },
+  "sourceIpAddress": "203.0.113.9",
+  "userAgent": "Mozilla/5.0",
+  "requestParameters": {
+    "directoryId": "0199a3f0-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+    "userName": "HIDDEN_DUE_TO_SECURITY_REASONS"
+  },
+  "responseElements": null,
+  "additionalEventData": null,
+  "errorCode": "unauthenticated",
+  "errorMessage": "Sign-in failed",
+  "resources": [
+    {
+      "resourceName": "ezgh:us-west-1:org_k3f9a0x2m7qp:dir_4k2m9x0a7qpe",
+      "type": "Directory"
+    }
+  ],
+  "requestId": "0199a3f3-2a3b-7c4d-8e5f-6a7b8c9d0e1f"
+}

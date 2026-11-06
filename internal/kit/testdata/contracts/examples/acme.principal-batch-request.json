@@ -1,0 +1,7 @@
+{
+  "organizationId": "0199a3c2-5b1e-7d40-9f3a-2c8e6b1d4f70",
+  "principal": { "type": "user", "id": "jtMJXwL0R8aB3cD4eF5gH6iJ" },
+  "checks": [
+    { "action": "certificates.certificateAuthorities.issue", "resource": "ezgh:us-west-1:org_k3f9a0x2m7qp:prj_g7h8i9j0k1l2:pca_7m2k9x0a4qpe" }
+  ]
+}

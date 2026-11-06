@@ -1,0 +1,87 @@
+{
+  "description": "[being built] Registry hosts and registry-host endpoints (contracts/registration.md, \"Registry endpoints\"). manifest is a valid registry excerpt (registry-stack's data plane on registry.ezghcloud.com, its API moved to registry-api.ezghcloud.com); each case changes it as scripts/lib/manifest-cases.mjs does, and an invalid case's issue is a path both scripts/lib/manifest.mjs and the Go kit's manifest.Check report.",
+  "manifest": {
+    "manifestVersion": 1,
+    "namespace": "registry",
+    "displayName": "Container Registry",
+    "description": "Private and public OCI container image repositories, pushed and pulled with standard clients.",
+    "api": { "hostname": "registry-api.ezghcloud.com", "port": 5800 },
+    "registry": { "domain": "registry.ezghcloud.com", "port": 5801 },
+    "resourceTypes": [
+      { "name": "repository", "prefix": "rep", "parent": "project", "regional": true, "description": "A container image repository, <scope>/<image>, private or public." }
+    ],
+    "managedPolicies": [
+      { "name": "RegistryFullAccess", "description": "Create and delete repositories; push, pull and delete images." },
+      { "name": "RegistryPullAccess", "description": "See repositories and pull images." }
+    ],
+    "actions": [
+      { "id": "registry.repositories.list", "description": "List repositories", "resource": "project", "accessLevel": "list", "managedPolicies": ["ReadOnlyAccess", "RegistryFullAccess", "RegistryPullAccess"] },
+      { "id": "registry.images.list", "description": "List a repository's images and tags", "resource": "repository", "accessLevel": "list", "managedPolicies": ["ReadOnlyAccess", "RegistryFullAccess", "RegistryPullAccess"] },
+      { "id": "registry.images.pull", "description": "Pull images", "resource": "repository", "accessLevel": "write", "managedPolicies": ["RegistryFullAccess", "RegistryPullAccess"] },
+      { "id": "registry.images.push", "description": "Push images", "resource": "repository", "accessLevel": "write", "managedPolicies": ["RegistryFullAccess"] },
+      { "id": "registry.images.delete", "description": "Delete images and tags", "resource": "repository", "accessLevel": "write", "managedPolicies": ["RegistryFullAccess"] }
+    ],
+    "endpoints": [
+      { "method": "GET", "path": "/health", "auth": "none", "trail": null },
+      { "method": "GET", "path": "/openapi.json", "auth": "none", "trail": null },
+      { "method": "GET", "path": "/v1/organizations/:orgId/projects/:projectId/repositories", "auth": "caller", "action": "registry.repositories.list", "trail": { "eventName": "ListRepositories" } },
+      { "method": "GET", "path": "/v2/", "host": "registry", "auth": "none", "trail": null },
+      { "method": "GET", "path": "/v2/token", "host": "registry", "auth": "none", "trail": null },
+      { "method": "POST", "path": "/v2/token", "host": "registry", "auth": "none", "trail": null },
+      { "method": "GET", "path": "/v2/<name>/manifests/<reference>", "host": "registry", "auth": "registry", "action": "registry.images.pull", "trail": { "eventName": "PullImage", "eventCategory": "Data" } },
+      { "method": "HEAD", "path": "/v2/<name>/manifests/<reference>", "host": "registry", "auth": "registry", "action": "registry.images.pull", "trail": null },
+      { "method": "PUT", "path": "/v2/<name>/manifests/<reference>", "host": "registry", "auth": "registry", "action": "registry.images.push", "trail": { "eventName": "PutImage" } },
+      { "method": "DELETE", "path": "/v2/<name>/manifests/<reference>", "host": "registry", "auth": "registry", "action": "registry.images.delete", "trail": { "eventName": "DeleteManifest" } },
+      { "method": "GET", "path": "/v2/<name>/blobs/<digest>", "host": "registry", "auth": "registry", "action": "registry.images.pull", "trail": null },
+      { "method": "HEAD", "path": "/v2/<name>/blobs/<digest>", "host": "registry", "auth": "registry", "action": "registry.images.pull", "trail": null },
+      { "method": "DELETE", "path": "/v2/<name>/blobs/<digest>", "host": "registry", "auth": "registry", "action": "registry.images.delete", "trail": null },
+      { "method": "POST", "path": "/v2/<name>/blobs/uploads/", "host": "registry", "auth": "registry", "action": "registry.images.push", "trail": null },
+      { "method": "GET", "path": "/v2/<name>/blobs/uploads/<session>", "host": "registry", "auth": "registry", "action": "registry.images.push", "trail": null },
+      { "method": "PATCH", "path": "/v2/<name>/blobs/uploads/<session>", "host": "registry", "auth": "registry", "action": "registry.images.push", "trail": null },
+      { "method": "PUT", "path": "/v2/<name>/blobs/uploads/<session>", "host": "registry", "auth": "registry", "action": "registry.images.push", "trail": null },
+      { "method": "DELETE", "path": "/v2/<name>/blobs/uploads/<session>", "host": "registry", "auth": "registry", "action": "registry.images.push", "trail": null },
+      { "method": "GET", "path": "/v2/<name>/tags/list", "host": "registry", "auth": "registry", "action": "registry.images.list", "trail": null }
+    ],
+    "quotas": []
+  },
+  "cases": [
+    { "name": "the registry excerpt as it is: registry.ezghcloud.com, with the API on registry-api.ezghcloud.com", "valid": true },
+    { "name": "a registry write may be recorded with a trail entry", "endpoints": { "POST /v2/<name>/blobs/uploads/": { "trail": { "eventName": "StartUpload" } } }, "valid": true },
+    { "name": "a registry read may be recorded", "endpoints": { "GET /v2/<name>/tags/list": { "trail": { "eventName": "ListImageTags", "eventCategory": "Data" } } }, "valid": true },
+    { "name": "a registry write may be blocked by spend controls", "endpoints": { "PUT /v2/<name>/manifests/<reference>": { "blockedBySpendControls": true } }, "valid": true },
+    { "name": "a manifest serving only some OCI routes", "remove": ["DELETE /v2/<name>/blobs/<digest>", "GET /v2/<name>/tags/list", "POST /v2/token"], "valid": true },
+
+    { "name": "the registry host is required", "manifest": { "registry": null }, "issue": "registry", "valid": false },
+    { "name": "no registry host without registry endpoints", "remove": ["GET /v2/", "GET /v2/token", "POST /v2/token", "GET /v2/<name>/manifests/<reference>", "HEAD /v2/<name>/manifests/<reference>", "PUT /v2/<name>/manifests/<reference>", "DELETE /v2/<name>/manifests/<reference>", "GET /v2/<name>/blobs/<digest>", "HEAD /v2/<name>/blobs/<digest>", "DELETE /v2/<name>/blobs/<digest>", "POST /v2/<name>/blobs/uploads/", "GET /v2/<name>/blobs/uploads/<session>", "PATCH /v2/<name>/blobs/uploads/<session>", "PUT /v2/<name>/blobs/uploads/<session>", "DELETE /v2/<name>/blobs/uploads/<session>", "GET /v2/<name>/tags/list"], "issue": "registry", "valid": false },
+    { "name": "the registry domain is under ezghcloud.com", "manifest": { "registry": { "domain": "registry.ezgh.app", "port": 5801 } }, "issue": "registry.domain", "valid": false },
+    { "name": "the registry domain is exactly <namespace>.ezghcloud.com, not a name under it", "manifest": { "registry": { "domain": "cr.registry.ezghcloud.com", "port": 5801 } }, "issue": "registry.domain", "valid": false },
+    { "name": "the registry domain isn't the API host", "manifest": { "registry": { "domain": "registry-api.ezghcloud.com", "port": 5801 } }, "issue": "registry.domain", "valid": false },
+    { "name": "a registry host on <namespace>.ezghcloud.com moves the API to <namespace>-api.ezghcloud.com", "manifest": { "api": { "hostname": "registry.ezghcloud.com", "port": 5800 } }, "issue": "api.hostname", "valid": false },
+    { "name": "without a registry host the API may still choose <namespace>-api.ezghcloud.com", "manifest": { "registry": null, "api": { "hostname": "registry-api.ezghcloud.com", "port": 5800 } }, "remove": ["GET /v2/", "GET /v2/token", "POST /v2/token", "GET /v2/<name>/manifests/<reference>", "HEAD /v2/<name>/manifests/<reference>", "PUT /v2/<name>/manifests/<reference>", "DELETE /v2/<name>/manifests/<reference>", "GET /v2/<name>/blobs/<digest>", "HEAD /v2/<name>/blobs/<digest>", "DELETE /v2/<name>/blobs/<digest>", "POST /v2/<name>/blobs/uploads/", "GET /v2/<name>/blobs/uploads/<session>", "PATCH /v2/<name>/blobs/uploads/<session>", "PUT /v2/<name>/blobs/uploads/<session>", "DELETE /v2/<name>/blobs/uploads/<session>", "GET /v2/<name>/tags/list"], "valid": true },
+    { "name": "a registry domain that isn't the namespace's is refused (a product never claims another product's host)", "manifest": { "registry": { "domain": "cr.ezghcloud.com", "port": 5801 } }, "issue": "registry.domain", "valid": false },
+    { "name": "a registry domain that isn't the namespace's is refused with the API on <namespace>.ezghcloud.com too", "manifest": { "api": { "hostname": "registry.ezghcloud.com", "port": 5800 }, "registry": { "domain": "cr.ezghcloud.com", "port": 5801 } }, "issue": "registry.domain", "valid": false },
+    { "name": "any registry host moves the API to <namespace>-api.ezghcloud.com", "manifest": { "api": { "hostname": "registry.ezghcloud.com", "port": 5800 }, "registry": { "domain": "cr.ezghcloud.com", "port": 5801 } }, "issue": "api.hostname", "valid": false },
+    { "name": "the registry port isn't api.port", "manifest": { "registry": { "domain": "registry.ezghcloud.com", "port": 5800 } }, "issue": "registry.port", "valid": false },
+    { "name": "the registry port is 1024-65535", "manifest": { "registry": { "domain": "registry.ezghcloud.com", "port": 443 } }, "issue": "registry.port", "valid": false },
+    { "name": "HEAD only on the registry host", "add": [{ "method": "HEAD", "path": "/v1/organizations/:orgId/projects/:projectId/repositories", "auth": "caller", "action": "registry.repositories.list", "trail": null }], "issue": "endpoints.19.method", "valid": false },
+    { "name": "a path outside the OCI set", "endpoints": { "GET /v2/<name>/manifests/<reference>": { "path": "/v2/_catalog" } }, "issue": "endpoints.6.path", "valid": false },
+    { "name": "an OCI path without its trailing slash", "endpoints": { "GET /v2/": { "path": "/v2" } }, "issue": "endpoints.3.path", "valid": false },
+    { "name": "a method the OCI path doesn't take", "endpoints": { "GET /v2/<name>/tags/list": { "method": "POST" } }, "issue": "endpoints.18.method", "valid": false },
+    { "name": "HEAD on an upload session", "add": [{ "method": "HEAD", "path": "/v2/<name>/blobs/uploads/<session>", "host": "registry", "auth": "registry", "action": "registry.images.push", "trail": null }], "issue": "endpoints.19.method", "valid": false },
+    { "name": "the same registry route twice", "add": [{ "method": "GET", "path": "/v2/<name>/tags/list", "host": "registry", "auth": "registry", "action": "registry.images.list", "trail": null }], "issue": "endpoints.19.path", "valid": false },
+    { "name": "auth none only on /v2/ and /v2/token", "endpoints": { "GET /v2/<name>/manifests/<reference>": { "auth": "none", "action": null, "trail": null } }, "issue": "endpoints.6.auth", "valid": false },
+    { "name": "auth registry names its action", "endpoints": { "GET /v2/<name>/manifests/<reference>": { "action": null } }, "issue": "endpoints.6.action", "valid": false },
+    { "name": "auth none names no action", "endpoints": { "GET /v2/token": { "action": "registry.images.pull" } }, "issue": "endpoints.4.action", "valid": false },
+    { "name": "registry-host endpoints are auth registry or none", "endpoints": { "GET /v2/<name>/manifests/<reference>": { "auth": "caller" } }, "issue": "endpoints.6.auth", "valid": false },
+    { "name": "auth registry only on the registry host", "add": [{ "method": "GET", "path": "/v1/organizations/:orgId/projects/:projectId/images", "auth": "registry", "action": "registry.images.list", "trail": null }], "issue": "endpoints.19.auth", "valid": false },
+    { "name": "an unauthenticated registry endpoint isn't recorded", "endpoints": { "GET /v2/": { "trail": { "eventName": "CheckRegistry" } } }, "issue": "endpoints.3.trail", "valid": false },
+    { "name": "no Idempotency-Key on the registry host", "endpoints": { "PUT /v2/<name>/manifests/<reference>": { "idempotencyKey": true } }, "issue": "endpoints.8.idempotencyKey", "valid": false },
+    { "name": "registry endpoints name no component", "endpoints": { "GET /v2/<name>/manifests/<reference>": { "component": "api" } }, "issue": "endpoints.6.component", "valid": false },
+    { "name": "registry endpoints are never asynchronous", "endpoints": { "PUT /v2/<name>/manifests/<reference>": { "async": true } }, "issue": "endpoints.8.async", "valid": false },
+    { "name": "registry endpoints consume no quotas", "manifest": { "quotas": [{ "id": "registry.pushesPerMinute", "displayName": "Pushes per minute", "description": "x", "kind": "rate", "scope": "organization", "unit": "request", "default": 10, "window": "PT1M" }] }, "endpoints": { "PUT /v2/<name>/manifests/<reference>": { "quotas": ["registry.pushesPerMinute"] } }, "issue": "endpoints.8.quotas", "valid": false },
+    { "name": "registry endpoints keep the server's timeouts", "endpoints": { "PATCH /v2/<name>/blobs/uploads/<session>": { "timeoutSeconds": 900 } }, "issue": "endpoints.15.timeoutSeconds", "valid": false },
+    { "name": "registry endpoints aren't public endpoints", "endpoints": { "GET /v2/token": { "public": "metadata" } }, "issue": "endpoints.4.public", "valid": false },
+    { "name": "registry endpoints don't narrow credentials", "endpoints": { "GET /v2/<name>/manifests/<reference>": { "credentials": "bearer" } }, "issue": "endpoints.6.credentials", "valid": false },
+    { "name": "registry endpoints are HTTP", "endpoints": { "GET /v2/<name>/manifests/<reference>": { "protocol": "grpc" } }, "issue": "endpoints.6.protocol", "valid": false }
+  ]
+}
