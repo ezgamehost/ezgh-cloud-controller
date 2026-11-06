@@ -16,7 +16,7 @@ import (
 	"github.com/ezgamehost/ezgh-cloud-controller/internal/ezghclient/apiclient"
 )
 
-// Event reasons (plan calls).
+// Event reasons.
 const (
 	MissingPermission      = "MissingPermission"
 	QuotaExceeded          = "QuotaExceeded"

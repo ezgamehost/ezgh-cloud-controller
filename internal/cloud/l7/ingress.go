@@ -34,7 +34,7 @@ import (
 	"github.com/ezgamehost/ezgh-cloud-controller/internal/ezghclient"
 )
 
-// Ingress annotations (plan calls), beside lb's lb.ezghcloud.com/certificates.
+// Ingress annotations, beside lb's lb.ezghcloud.com/certificates.
 const (
 	// GroupAnnotation puts Ingresses of one namespace on one load balancer; the same group name in
 	// another namespace is another group (no cross-namespace sharing in v1).
