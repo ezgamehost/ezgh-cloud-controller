@@ -624,15 +624,17 @@ func SetGatewayStatus(gw *gatewayv1.Gateway, st Status, programmed bool, why str
 	old := gw.Status.Listeners
 	gw.Status.Listeners = nil
 	for _, ls := range st.Listeners {
+		// Merged, even with no old listener: SetStatusCondition sets the transition time the CRD requires.
+		var conds []metav1.Condition
 		for _, o := range old {
 			if o.Name == ls.Name {
-				conds := o.Conditions
-				for _, c := range ls.Conditions {
-					meta.SetStatusCondition(&conds, c)
-				}
-				ls.Conditions = conds
+				conds = o.Conditions
 			}
 		}
+		for _, c := range ls.Conditions {
+			meta.SetStatusCondition(&conds, c)
+		}
+		ls.Conditions = conds
 		p := condition("Programmed", true, "Programmed", "", gen)
 		if !st.Valid[ls.Name] {
 			p = condition("Programmed", false, "Invalid", "The listener isn't valid", gen)
@@ -657,7 +659,7 @@ func SetRouteParents(route *gatewayv1.HTTPRoute, gw *gatewayv1.Gateway, want []g
 		// A condition no longer reported (PartiallyInvalid) goes.
 		return slices.DeleteFunc(conds, func(c metav1.Condition) bool { return meta.FindStatusCondition(w.Conditions, c.Type) == nil })
 	}
-	var out []gatewayv1.RouteParentStatus
+	out := []gatewayv1.RouteParentStatus{} // the CRD requires parents, even empty
 	for _, p := range route.Status.Parents {
 		if p.ControllerName != ControllerName || !refersTo(p.ParentRef, route.Namespace, gw) {
 			out = append(out, p)

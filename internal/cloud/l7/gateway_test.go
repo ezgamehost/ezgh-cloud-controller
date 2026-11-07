@@ -282,7 +282,7 @@ func newGatewayReconciler(t *testing.T, objs ...client.Object) (*GatewayReconcil
 	f, c := newFake(t)
 	class := &gatewayv1.GatewayClass{ObjectMeta: metav1.ObjectMeta{Name: ClassName}, Spec: gatewayv1.GatewayClassSpec{ControllerName: ControllerName}}
 	k := fake.NewClientBuilder().WithScheme(gatewayScheme(t)).WithObjects(append(objs, class)...).
-		WithStatusSubresource(&gatewayv1.Gateway{}, &gatewayv1.HTTPRoute{}, &gatewayv1.GatewayClass{}).Build()
+		WithStatusSubresource(&gatewayv1.Gateway{}, &gatewayv1.HTTPRoute{}, &gatewayv1.GatewayClass{}).WithInterceptorFuncs(crdChecked).Build()
 	rec := events.NewFakeRecorder(100)
 	return &GatewayReconciler{Client: k, Clients: c, Config: func() (config.Config, error) { return testCfg, nil }, Recorder: rec}, k, rec, f
 }
@@ -378,7 +378,8 @@ func TestRouteStatusWrittenOnce(t *testing.T) {
 		// An old transition time, which a lookup that misses the entry would replace.
 		got.Status.Parents[0].Conditions[i].LastTransitionTime = metav1.NewTime(time.Unix(1e9, 0))
 	}
-	other := gatewayv1.RouteParentStatus{ParentRef: gatewayv1.ParentReference{Name: "theirs"}, ControllerName: "example.com/other"}
+	other := gatewayv1.RouteParentStatus{ParentRef: gatewayv1.ParentReference{Name: "theirs"}, ControllerName: "example.com/other",
+		Conditions: []metav1.Condition{{Type: "Accepted", Status: metav1.ConditionTrue, Reason: "Accepted", LastTransitionTime: metav1.NewTime(time.Unix(1e9, 0))}}}
 	got.Status.Parents = append([]gatewayv1.RouteParentStatus{other}, got.Status.Parents...)
 	if err := k.Status().Update(ctx, &got); err != nil {
 		t.Fatal(err)
