@@ -20,14 +20,19 @@ import (
 	"github.com/ezgamehost/ezgh-cloud-controller/internal/ezghclient"
 )
 
-// tlsSecret is a valid kubernetes.io/tls Secret for host.
+// tlsSecret is a valid kubernetes.io/tls Secret for host; for "", one with no DNS names and CN
+// "default", as Gateway API conformance's.
 func tlsSecret(t *testing.T, ns, name, host string) *corev1.Secret {
 	t.Helper()
 	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
-	tmpl := &x509.Certificate{SerialNumber: big.NewInt(1), Subject: pkix.Name{CommonName: host}, DNSNames: []string{host},
+	cn, names := host, []string{host}
+	if host == "" {
+		cn, names = "default", nil
+	}
+	tmpl := &x509.Certificate{SerialNumber: big.NewInt(1), Subject: pkix.Name{CommonName: cn}, DNSNames: names,
 		NotBefore: time.Now().Add(-time.Hour), NotAfter: time.Now().Add(time.Hour)}
 	der, err := x509.CreateCertificate(rand.Reader, tmpl, tmpl, &key.PublicKey, key)
 	if err != nil {

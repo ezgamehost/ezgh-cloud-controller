@@ -160,6 +160,39 @@ func TestTLSSecretImportedOrRefused(t *testing.T) {
 	}
 }
 
+// A Secret with no DNS names serves only as the group's one certificate (lb-api takes it only as a
+// listener's default); beside another, it's refused.
+func TestIngressNamelessSecretOnlyAlone(t *testing.T) {
+	ing := ingress("shop", "web", 0, nil, hostRule("shop.example.com", path(networkingv1.PathTypePrefix, "/", backend("web", 80))))
+	ing.Spec.TLS = []networkingv1.IngressTLS{{SecretName: "default"}}
+	secrets := map[string]*corev1.Secret{"shop/default": tlsSecret(t, "shop", "default", "")}
+	m, refused := FromIngresses("shop/web", []*networkingv1.Ingress{ing}, services(svc("shop", "web", port("", 80))), secrets, testCfg)
+	if len(refused["shop/web"]) != 0 || len(m.Listeners) != 2 || fmt.Sprint(m.Listeners[1].Secrets) != "[shop/default]" || m.Secrets["shop/default"] == nil {
+		t.Fatal(m.Listeners, refused)
+	}
+	ing.Annotations = map[string]string{CertificatesAnnotation: "crt_aaaaaaaaaaaa"}
+	m, refused = FromIngresses("shop/web", []*networkingv1.Ingress{ing}, services(svc("shop", "web", port("", 80))), secrets, testCfg)
+	r := refused["shop/web"]
+	if len(r) != 1 || r[0].Reason != InvalidCertificate || !strings.Contains(r[0].Message, "shop/default has no DNS names") {
+		t.Fatal(r)
+	}
+	if len(m.Listeners) != 2 || fmt.Sprint(m.Listeners[1].Certificates) != "[crt_aaaaaaaaaaaa]" || len(m.Listeners[1].Secrets) != 0 || len(m.Secrets) != 0 {
+		t.Fatal(m.Listeners, len(m.Secrets))
+	}
+	// Two with no names: the first serves, the other is refused to the Ingress naming it.
+	other := ingress("shop", "other", 1, nil)
+	other.Spec.TLS = []networkingv1.IngressTLS{{SecretName: "other"}}
+	ing.Annotations = nil
+	secrets["shop/other"] = tlsSecret(t, "shop", "other", "")
+	m, refused = FromIngresses("shop/web", []*networkingv1.Ingress{ing, other}, services(svc("shop", "web", port("", 80))), secrets, testCfg)
+	if r := refused["shop/other"]; len(refused["shop/web"]) != 0 || len(r) != 1 || !strings.Contains(r[0].Message, "shop/other has no DNS names") {
+		t.Fatal(refused)
+	}
+	if len(m.Listeners) != 2 || fmt.Sprint(m.Listeners[1].Secrets) != "[shop/default]" || len(m.Secrets) != 1 {
+		t.Fatal(m.Listeners, len(m.Secrets))
+	}
+}
+
 func TestMissingServiceIs503(t *testing.T) {
 	ing := ingress("shop", "web", 0, nil, hostRule("", path(networkingv1.PathTypePrefix, "/", backend("gone", 80)), path(networkingv1.PathTypePrefix, "/x", backend("web", 81))))
 	m, refused := FromIngresses("shop/web", []*networkingv1.Ingress{ing}, services(svc("shop", "web", port("", 80))), nil, testCfg)

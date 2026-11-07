@@ -258,6 +258,64 @@ func TestSecretCertificateRefs(t *testing.T) {
 	}
 }
 
+// A Secret with no DNS names covers no hostname: lb-api takes it only as a listener's default
+// certificate, so it serves only as its port's one certificate.
+func TestNamelessSecretOnlyAlone(t *testing.T) {
+	https := func(name, host string, opts string, secrets ...string) gatewayv1.Listener {
+		l := allNamespaces(listener(name, gatewayv1.HTTPSProtocolType, 443, host))
+		l.TLS = &gatewayv1.ListenerTLSConfig{}
+		if opts != "" {
+			l.TLS.Options = map[gatewayv1.AnnotationKey]gatewayv1.AnnotationValue{CertificatesOption: gatewayv1.AnnotationValue(opts)}
+		}
+		for _, s := range secrets {
+			l.TLS.CertificateRefs = append(l.TLS.CertificateRefs, gatewayv1.SecretObjectReference{Name: gatewayv1.ObjectName(s)})
+		}
+		return l
+	}
+	in := input()
+	in.Secrets = map[string]*corev1.Secret{"infra/named": tlsSecret(t, "infra", "named", "a.example.com"), "infra/default": tlsSecret(t, "infra", "default", ""),
+		"infra/other": tlsSecret(t, "infra", "other", "")}
+	refused := func(st Status, i int) {
+		t.Helper()
+		c := meta.FindStatusCondition(st.Listeners[i].Conditions, "ResolvedRefs")
+		if c.Status != metav1.ConditionFalse || c.Reason != "InvalidCertificateRef" || !strings.Contains(c.Message, "infra/default has no DNS names") {
+			t.Fatal(c)
+		}
+	}
+
+	// Alone on its port, it's the default.
+	m, st := FromGateway(gateway(https("b", "", "", "default")), in, testCfg)
+	if len(m.Listeners) != 1 || fmt.Sprint(m.Listeners[0].Secrets) != "[infra/default]" || m.Secrets["infra/default"] == nil || !st.Valid["b"] {
+		t.Fatal(m.Listeners, st.Listeners)
+	}
+	// Twice, it's still the port's one certificate.
+	m, st = FromGateway(gateway(https("a", "a.example.com", "", "default"), https("b", "", "", "default")), in, testCfg)
+	if len(m.Listeners) != 1 || fmt.Sprint(m.Listeners[0].Secrets) != "[infra/default]" || !st.Valid["a"] || !st.Valid["b"] ||
+		meta.FindStatusCondition(st.Listeners[1].Conditions, "ResolvedRefs").Status != metav1.ConditionTrue {
+		t.Fatal(m.Listeners, st.Listeners)
+	}
+	// Beside another with no names, the first is the port's one certificate.
+	m, st = FromGateway(gateway(https("a", "a.example.com", "", "default"), https("b", "", "", "other")), in, testCfg)
+	if len(m.Listeners) != 1 || fmt.Sprint(m.Listeners[0].Secrets) != "[infra/default]" || m.Secrets["infra/other"] != nil || !st.Valid["a"] || st.Valid["b"] {
+		t.Fatal(m.Listeners, len(m.Secrets), st.Valid)
+	}
+	if c := meta.FindStatusCondition(st.Listeners[1].Conditions, "ResolvedRefs"); c.Status != metav1.ConditionFalse || !strings.Contains(c.Message, "infra/other has no DNS names") {
+		t.Fatal(c)
+	}
+	// Beside another listener's certificate, its listener has none left.
+	m, st = FromGateway(gateway(https("a", "a.example.com", "", "named"), https("b", "", "", "default")), in, testCfg)
+	if len(m.Listeners) != 1 || fmt.Sprint(m.Listeners[0].Secrets) != "[infra/named]" || m.Secrets["infra/default"] != nil || st.Valid["b"] || !st.Valid["a"] {
+		t.Fatal(m.Listeners, len(m.Secrets), st.Valid)
+	}
+	refused(st, 1)
+	// Beside its own listener's crt_, the listener serves that.
+	m, st = FromGateway(gateway(https("b", "", "crt_aaaaaaaaaaaa", "default")), in, testCfg)
+	if len(m.Listeners) != 1 || fmt.Sprint(m.Listeners[0].Certificates) != "[crt_aaaaaaaaaaaa]" || len(m.Listeners[0].Secrets) != 0 || len(m.Secrets) != 0 || !st.Valid["b"] {
+		t.Fatal(m.Listeners, len(m.Secrets))
+	}
+	refused(st, 0)
+}
+
 // Only a grant in the Secret's namespace, from Gateways in the Gateway's, to that Secret (or all
 // Secrets) permits a certificateRef there.
 func TestSecretReferenceGrants(t *testing.T) {

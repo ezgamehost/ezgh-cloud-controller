@@ -147,6 +147,35 @@ func FromGateway(gw *gatewayv1.Gateway, in GatewayInput, cfg config.Config) (Mod
 		st.Valid[spec.Name] = l.valid && l.kinds
 	}
 
+	// A Secret with no DNS names serves only as its port's one certificate (soleNameless).
+	portCerts, portSecrets := map[gatewayv1.PortNumber][]string{}, map[gatewayv1.PortNumber][]string{}
+	for _, l := range listeners {
+		if st.Valid[l.spec.Name] {
+			portCerts[l.spec.Port] = appendNew(portCerts[l.spec.Port], l.certs...)
+			portSecrets[l.spec.Port] = appendNew(portSecrets[l.spec.Port], l.secrets...)
+		}
+	}
+	for _, l := range listeners {
+		if !st.Valid[l.spec.Name] {
+			continue
+		}
+		keep, had := soleNameless(portCerts[l.spec.Port], portSecrets[l.spec.Port], m.Secrets), len(l.secrets)
+		l.secrets = slices.DeleteFunc(l.secrets, func(ref string) bool {
+			if ref == keep || !nameless(m.Secrets[ref]) {
+				return false
+			}
+			// The first problem stays the reason.
+			if i := slices.IndexFunc(l.status.Conditions, func(c metav1.Condition) bool { return c.Type == "ResolvedRefs" }); l.status.Conditions[i].Status == metav1.ConditionTrue {
+				l.status.Conditions[i] = condition("ResolvedRefs", false, "InvalidCertificateRef",
+					fmt.Sprintf("Secret %s has no DNS names, so it can only be port %d's one certificate, and the port has others", ref, l.spec.Port), gen)
+			}
+			return true
+		})
+		if len(l.secrets) < had && len(l.certs)+len(l.secrets) == 0 {
+			l.valid, st.Valid[l.spec.Name] = false, false
+		}
+	}
+
 	routes := slices.Clone(in.Routes)
 	slices.SortFunc(routes, func(a, b gatewayv1.HTTPRoute) int {
 		return cmp.Or(a.CreationTimestamp.Compare(b.CreationTimestamp.Time), cmp.Compare(a.Namespace+"/"+a.Name, b.Namespace+"/"+b.Name))

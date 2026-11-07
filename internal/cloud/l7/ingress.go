@@ -104,6 +104,7 @@ func FromIngresses(group string, ings []*networkingv1.Ingress, services map[stri
 		m.Key = "ing-" + string(ings[0].UID)
 	}
 	var certs, secretRefs []string
+	namedBy := map[string]string{} // a Secret's first Ingress
 	var rules []Rule
 	var def *Action
 	redirect := false
@@ -140,7 +141,7 @@ func FromIngresses(group string, ings []*networkingv1.Ingress, services map[stri
 			}
 			m.Secrets[ref] = secrets[ref]
 			if !slices.Contains(secretRefs, ref) {
-				secretRefs = append(secretRefs, ref)
+				secretRefs, namedBy[ref] = append(secretRefs, ref), key
 			}
 		}
 		backend := func(b networkingv1.IngressBackend) Action {
@@ -176,6 +177,16 @@ func FromIngresses(group string, ings []*networkingv1.Ingress, services map[stri
 		a := fixed(404)
 		def = &a
 	}
+	keep := soleNameless(certs, secretRefs, m.Secrets)
+	secretRefs = slices.DeleteFunc(secretRefs, func(ref string) bool {
+		if ref == keep || !nameless(m.Secrets[ref]) {
+			return false
+		}
+		delete(m.Secrets, ref)
+		refused[namedBy[ref]] = append(refused[namedBy[ref]], lb.Refusal{Reason: InvalidCertificate,
+			Message: fmt.Sprintf("Secret %s has no DNS names, so it can only be the group's one certificate, and the group has others", ref)})
+		return true
+	})
 	https := len(certs)+len(secretRefs) > 0
 	httpListener := Listener{Port: 80, Protocol: "http", Default: *def, Rules: rules}
 	if redirect && https {
@@ -262,6 +273,30 @@ func invalidTLS(s *corev1.Secret) string {
 		return "isn't a valid certificate and key pair"
 	}
 	return ""
+}
+
+// nameless reports whether a usable TLS Secret's certificate has no DNS names. Imported, it covers
+// no hostname, and lb-api takes it only as a listener's default certificate (HAProxy would choose
+// an SNI certificate by its CN), so it serves only as a port's one certificate.
+func nameless(s *corev1.Secret) bool {
+	pair, err := tls.X509KeyPair(s.Data[corev1.TLSCertKey], s.Data[corev1.TLSPrivateKeyKey])
+	return err == nil && pair.Leaf != nil && len(pair.Leaf.DNSNames) == 0
+}
+
+// soleNameless is the Secret with no DNS names that a port's certificates (crt_ IDs) and Secrets
+// keep: the first, when nothing else is there to have names; else none, and every one goes.
+func soleNameless(certs, refs []string, secrets map[string]*corev1.Secret) string {
+	if len(certs) > 0 {
+		return ""
+	}
+	first := ""
+	for _, ref := range refs {
+		if !nameless(secrets[ref]) {
+			return ""
+		}
+		first = cmp.Or(first, ref)
+	}
+	return first
 }
 
 // IngressReconciler keeps one load balancer per Ingress group. Its requests are groups
