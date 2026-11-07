@@ -54,7 +54,7 @@ func Setup(env *run.Env) error {
 	ing := &IngressReconciler{Client: k, Clients: env.Clients, Config: env.Config, Recorder: rec}
 	err := ctrl.NewControllerManagedBy(mgr).Named("l7-ingress").
 		Watches(&networkingv1.Ingress{}, handler.EnqueueRequestsFromMapFunc(IngressRequests)).
-		Watches(&corev1.Service{}, handler.EnqueueRequestsFromMapFunc(IngressesNaming(k)), builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		Watches(&corev1.Service{}, handler.EnqueueRequestsFromMapFunc(IngressesNaming(k)), builder.WithPredicates(lb.ServiceChanged)).
 		Watches(&corev1.Secret{}, handler.EnqueueRequestsFromMapFunc(IngressesNaming(k))).
 		WithOptions(opts).Complete(ing)
 	if err != nil {
@@ -74,7 +74,7 @@ func Setup(env *run.Env) error {
 		Watches(&gatewayv1.GatewayClass{}, handler.EnqueueRequestsFromMapFunc(all)).
 		Watches(&gatewayv1.ReferenceGrant{}, handler.EnqueueRequestsFromMapFunc(all)).
 		Watches(&corev1.Namespace{}, handler.EnqueueRequestsFromMapFunc(all), builder.WithPredicates(predicate.LabelChangedPredicate{})).
-		Watches(&corev1.Service{}, handler.EnqueueRequestsFromMapFunc(ServiceGateways(k)), builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		Watches(&corev1.Service{}, handler.EnqueueRequestsFromMapFunc(ServiceGateways(k)), builder.WithPredicates(lb.ServiceChanged)).
 		Watches(&corev1.Secret{}, handler.EnqueueRequestsFromMapFunc(SecretGateways(k))).
 		WithOptions(opts).Complete(gw)
 }

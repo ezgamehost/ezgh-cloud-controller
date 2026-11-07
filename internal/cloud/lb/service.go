@@ -6,7 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"strconv"
+	"maps"
 	"strings"
 	"sync"
 	"time"
@@ -22,6 +22,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -58,7 +59,7 @@ func Setup(env *run.Env, feeds ...Feed) error {
 	}
 	svc := &ServiceReconciler{Client: mgr.GetClient(), Clients: env.Clients, Config: env.Config, Recorder: rec}
 	err := ctrl.NewControllerManagedBy(mgr).Named("lb-service").
-		For(&corev1.Service{}, builder.WithPredicates(predicate.Or(predicate.GenerationChangedPredicate{}, predicate.AnnotationChangedPredicate{}))).
+		For(&corev1.Service{}, builder.WithPredicates(ServiceChanged)).
 		WithOptions(controller.Options{RateLimiter: run.RateLimiter()}).
 		Complete(svc)
 	if err != nil {
@@ -79,6 +80,15 @@ func Setup(env *run.Env, feeds ...Feed) error {
 	mgr.GetWebhookServer().Register(WebhookPath, &webhook.Admission{Handler: &Webhook{Client: mgr.GetClient(), Backends: backends}})
 	return nil
 }
+
+// ServiceChanged passes a Service's updates to its spec, annotations or deletion, and not status
+// writes. Services carry no metadata.generation, so a generation predicate never passes one.
+var ServiceChanged = predicate.Funcs{UpdateFunc: func(e event.UpdateEvent) bool {
+	o, ok := e.ObjectOld.(*corev1.Service)
+	n, ok2 := e.ObjectNew.(*corev1.Service)
+	return !ok || !ok2 || !equality.Semantic.DeepEqual(o.Spec, n.Spec) || !maps.Equal(o.Annotations, n.Annotations) ||
+		o.DeletionTimestamp.IsZero() != n.DeletionTimestamp.IsZero()
+}}
 
 // ServiceReconciler keeps one load balancer per LoadBalancer Service.
 type ServiceReconciler struct {
@@ -223,7 +233,8 @@ func (r *ServiceReconciler) warn(svc *corev1.Service, refused []Refusal) {
 	}
 }
 
-// fingerprint changes when the Service's spec or any of its lb.ezghcloud.com/ annotations do.
+// fingerprint changes when the Service's spec or any of its lb.ezghcloud.com/ annotations do (by
+// content: a Service has no generation).
 func fingerprint(svc *corev1.Service) string {
 	ann := map[string]string{}
 	for k, v := range svc.Annotations {
@@ -232,7 +243,8 @@ func fingerprint(svc *corev1.Service) string {
 		}
 	}
 	data, _ := json.Marshal(ann) // map keys are sorted
-	sum := sha256.Sum256(append(strconv.AppendInt(nil, svc.Generation, 10), data...))
+	spec, _ := json.Marshal(svc.Spec)
+	sum := sha256.Sum256(append(spec, data...))
 	return hex.EncodeToString(sum[:8])
 }
 

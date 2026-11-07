@@ -7,12 +7,14 @@ import (
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/events"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/ezgamehost/ezgh-cloud-controller/internal/cloud/config"
@@ -514,5 +516,44 @@ func TestOldAnnotationHealedOnce(t *testing.T) {
 	}
 	if f.pipGets != 1 {
 		t.Fatal(f.pipGets)
+	}
+}
+
+// kube-apiserver never sets a Service's metadata.generation, so a change must be seen in the
+// object itself: a deletion (the finalizer's cue), a spec change and an annotation change pass, a
+// status write (ours) doesn't.
+func TestServiceChangedWithoutGeneration(t *testing.T) {
+	old := twoPorts()
+	passes := func(mod func(*corev1.Service)) bool {
+		n := old.DeepCopy()
+		mod(n)
+		return ServiceChanged.Update(event.UpdateEvent{ObjectOld: old, ObjectNew: n})
+	}
+	now := metav1.Now()
+	for name, mod := range map[string]func(*corev1.Service){
+		"deleted":    func(s *corev1.Service) { s.DeletionTimestamp = &now },
+		"port":       func(s *corev1.Service) { s.Spec.Ports[0].Port = 81 },
+		"type":       func(s *corev1.Service) { s.Spec.Type = corev1.ServiceTypeClusterIP },
+		"annotation": func(s *corev1.Service) { s.Annotations = map[string]string{Prefix + "subnet": "sbn_b"} },
+	} {
+		if !passes(mod) {
+			t.Errorf("%s: not reconciled", name)
+		}
+	}
+	if passes(func(s *corev1.Service) {
+		s.Status.LoadBalancer.Ingress = []corev1.LoadBalancerIngress{{IP: "203.0.113.7"}}
+		s.ResourceVersion = "2"
+	}) {
+		t.Error("a status write reconciled")
+	}
+}
+
+// A failed create is retried when the Service's spec changes, though its generation never does.
+func TestFingerprintFollowsSpec(t *testing.T) {
+	a := twoPorts()
+	b := a.DeepCopy()
+	b.Spec.Ports[0].Port = 81
+	if a.Generation != 0 || fingerprint(a) == fingerprint(b) {
+		t.Fatal("a spec change keeps the fingerprint")
 	}
 }
