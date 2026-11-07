@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,8 +30,19 @@ const (
 	NoMountTarget          = "NoMountTarget"
 )
 
-// Describe is err's event reason and message.
+// Describe is err's event reason and message, at most maxNote bytes.
 func Describe(err error) (reason, message string) {
+	reason, message = describe(err)
+	if len(message) > maxNote {
+		message = strings.ToValidUTF8(message[:maxNote-3], "") + "..."
+	}
+	return reason, message
+}
+
+// maxNote is under events.k8s.io/v1's 1 KiB limit on an event's note.
+const maxNote = 1000
+
+func describe(err error) (reason, message string) {
 	if p, ok := ezghclient.AsPermission(err); ok {
 		if p.Action == "" {
 			return MissingPermission, "The cluster's Bot was refused: " + p.Message + ". Grant the permission on the Bot, or attach KubernetesClusterAccess."
@@ -48,7 +60,15 @@ func Describe(err error) (reason, message string) {
 		return CredentialsUnavailable, fmt.Sprintf("%s refused the cluster's credentials: %s", e.Service, e.Error())
 	}
 	if e, ok := apiclient.AsError(err); ok {
-		return EZGHAPIError, fmt.Sprintf("%s answered %d: %s", e.Service, e.Status, e.Error())
+		msg := fmt.Sprintf("%s answered %d: %s", e.Service, e.Status, e.Error())
+		var issues []string
+		for _, is := range e.Issues {
+			issues = append(issues, strings.TrimSpace(is.Path+" "+is.Message))
+		}
+		if len(issues) > 0 {
+			msg += ": " + strings.Join(issues, "; ")
+		}
+		return EZGHAPIError, msg
 	}
 	var t *apiclient.TransportError
 	if errors.As(err, &t) {

@@ -31,9 +31,10 @@ func TestConformance(t *testing.T) {
 	for _, f := range features.GatewayCoreFeatures.Union(features.HTTPRouteCoreFeatures).Union(features.ReferenceGrantCoreFeatures).UnsortedList() {
 		opts.SupportedFeatures = append(opts.SupportedFeatures, f.Name)
 	}
-	// A load balancer takes minutes to become active (15 minutes for a Gateway).
+	// A load balancer takes minutes to become active (15 minutes for a Gateway), and a namespace
+	// is ready when every Gateway in it is.
 	tc := &opts.TimeoutConfig
-	for _, d := range []*time.Duration{&tc.GatewayMustHaveAddress, &tc.GatewayMustHaveCondition, &tc.GatewayStatusMustHaveListeners,
+	for _, d := range []*time.Duration{&tc.GatewayMustHaveAddress, &tc.GatewayMustHaveCondition, &tc.GatewayStatusMustHaveListeners, &tc.NamespacesMustBeReady,
 		&tc.GatewayListenersMustHaveConditions, &tc.RouteMustHaveParents, &tc.HTTPRouteMustHaveCondition, &tc.MaxTimeToConsistency,
 		&tc.DeleteTimeout, &tc.DefaultTestTimeout} {
 		*d = max(*d, 15*time.Minute)

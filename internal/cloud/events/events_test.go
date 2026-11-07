@@ -47,6 +47,22 @@ func TestReportRetryAfter(t *testing.T) {
 	}
 }
 
+// A refused body says which field and why: the Certificates import's 400 names it.
+func TestReportIssues(t *testing.T) {
+	ev, _ := report(t, &apiclient.Error{Service: "Certificates", Status: 400, Code: "invalid_request", Message: "Invalid request", Issues: []apiclient.Issue{{Path: "certificate", Message: "must name 1-100 DNS names"}}})
+	if !strings.HasSuffix(ev, "Certificates answered 400: Invalid request (invalid_request): certificate must name 1-100 DNS names") {
+		t.Fatal(ev)
+	}
+}
+
+// A long answer is cut to what an event's note takes.
+func TestReportLong(t *testing.T) {
+	ev, _ := report(t, &apiclient.Error{Service: "Load Balancers", Status: 400, Code: "invalid_request", Message: strings.Repeat("x", 2000)})
+	if len(ev) > 1100 {
+		t.Fatal(len(ev))
+	}
+}
+
 type errString string
 
 func (e errString) Error() string { return string(e) }

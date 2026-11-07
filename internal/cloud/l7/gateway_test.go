@@ -198,6 +198,10 @@ func TestUnsupportedFilterRejectsRule(t *testing.T) {
 	if c := parentCond(t, st, "shop", "bad", "Accepted"); c.Status != metav1.ConditionFalse || c.Reason != "UnsupportedValue" {
 		t.Fatal(c)
 	}
+	// A route that isn't accepted isn't counted.
+	if st.Listeners[0].AttachedRoutes != 1 {
+		t.Fatal(st.Listeners[0].AttachedRoutes)
+	}
 }
 
 func TestCrossNamespaceNeedsReferenceGrant(t *testing.T) {
@@ -254,6 +258,37 @@ func TestSecretCertificateRefs(t *testing.T) {
 	}
 }
 
+// Only a grant in the Secret's namespace, from Gateways in the Gateway's, to that Secret (or all
+// Secrets) permits a certificateRef there.
+func TestSecretReferenceGrants(t *testing.T) {
+	l := allNamespaces(listener("https", gatewayv1.HTTPSProtocolType, 443, ""))
+	l.TLS = &gatewayv1.ListenerTLSConfig{CertificateRefs: []gatewayv1.SecretObjectReference{{Name: "certificate", Namespace: ptr.To(gatewayv1.Namespace("web"))}}}
+	grant := func(ns, group, kind, fromNS string, name *gatewayv1.ObjectName) gatewayv1.ReferenceGrant {
+		return gatewayv1.ReferenceGrant{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: "g"}, Spec: gatewayv1.ReferenceGrantSpec{
+			From: []gatewayv1.ReferenceGrantFrom{{Group: gatewayv1.Group(group), Kind: gatewayv1.Kind(kind), Namespace: gatewayv1.Namespace(fromNS)}},
+			To:   []gatewayv1.ReferenceGrantTo{{Kind: "Secret", Name: name}},
+		}}
+	}
+	for want, g := range map[string]gatewayv1.ReferenceGrant{
+		"wrong namespace":  grant("app", GatewayGroup, "Gateway", "infra", nil),
+		"wrong from group": grant("web", "example.com", "Gateway", "infra", nil),
+		"wrong from kind":  grant("web", GatewayGroup, "HTTPRoute", "infra", nil),
+		"wrong from ns":    grant("web", GatewayGroup, "Gateway", "other", nil),
+		"another Secret":   grant("web", GatewayGroup, "Gateway", "infra", ptr.To(gatewayv1.ObjectName("other"))),
+		"all Secrets":      grant("web", GatewayGroup, "Gateway", "infra", nil),
+		"this Secret":      grant("web", GatewayGroup, "Gateway", "infra", ptr.To(gatewayv1.ObjectName("certificate"))),
+	} {
+		in := input()
+		in.Grants = []gatewayv1.ReferenceGrant{g}
+		in.Secrets = map[string]*corev1.Secret{"web/certificate": tlsSecret(t, "web", "certificate", "x")}
+		_, st := FromGateway(gateway(l), in, testCfg)
+		c := meta.FindStatusCondition(st.Listeners[0].Conditions, "ResolvedRefs")
+		if permitted := want == "all Secrets" || want == "this Secret"; permitted != (c.Status == metav1.ConditionTrue) || !permitted && c.Reason != "RefNotPermitted" {
+			t.Fatal(want, c)
+		}
+	}
+}
+
 func TestUnsupportedProtocolListener(t *testing.T) {
 	m, st := FromGateway(gateway(listener("tcp", gatewayv1.TCPProtocolType, 5432, ""), listener("http", gatewayv1.HTTPProtocolType, 80, ""), listener("dup", gatewayv1.HTTPSProtocolType, 80, "")), input(), testCfg)
 	if c := meta.FindStatusCondition(st.Listeners[0].Conditions, "Accepted"); c.Status != metav1.ConditionFalse || c.Reason != "UnsupportedProtocol" || len(st.Listeners[0].SupportedKinds) != 0 {
@@ -264,6 +299,58 @@ func TestUnsupportedProtocolListener(t *testing.T) {
 	}
 	if len(m.Listeners) != 1 || m.Listeners[0].Port != 80 || m.Listeners[0].Protocol != "http" {
 		t.Fatal(m.Listeners)
+	}
+	// Some listeners can't be served: the Gateway is accepted, saying which.
+	if c := st.Gateway[0]; c.Type != "Accepted" || c.Status != metav1.ConditionTrue || c.Reason != "ListenersNotValid" || !strings.Contains(c.Message, "tcp, dup") {
+		t.Fatal(c)
+	}
+	// None can: the Gateway isn't accepted and has no load balancer, but its listeners say why.
+	m, st = FromGateway(gateway(listener("tcp", gatewayv1.TCPProtocolType, 5432, "")), input(), testCfg)
+	if c := st.Gateway[0]; m.Name != "" || c.Status != metav1.ConditionFalse || c.Reason != "ListenersNotValid" || len(st.Listeners) != 1 {
+		t.Fatal(m.Name, st)
+	}
+	// A listener whose certificate isn't usable is still accepted (ResolvedRefs says why).
+	_, st = FromGateway(gateway(listener("nocert", gatewayv1.HTTPSProtocolType, 443, "")), input(), testCfg)
+	if c := st.Gateway[0]; c.Status != metav1.ConditionTrue || c.Reason != "Accepted" {
+		t.Fatal(c)
+	}
+}
+
+// Attachment counts on a listener that can't be served (a missing Secret): AttachedRoutes is
+// allowedRoutes and parentRefs alone. Such a listener's routes get no rules, even on a port a
+// valid listener shares.
+func TestAttachedRoutesOnInvalidListener(t *testing.T) {
+	tls := allNamespaces(listener("tls", gatewayv1.HTTPSProtocolType, 443, ""))
+	tls.TLS = &gatewayv1.ListenerTLSConfig{CertificateRefs: []gatewayv1.SecretObjectReference{{Name: "does-not-exist"}}}
+	clash := allNamespaces(listener("clash", gatewayv1.HTTPSProtocolType, 80, "clash.example.com"))
+	m, st := FromGateway(gateway(allNamespaces(listener("http", gatewayv1.HTTPProtocolType, 80, "")), tls, clash),
+		input(route("shop", "web", 1, nil, rule(nil, backendRef("", "missing", 80)))), testCfg)
+	if st.Listeners[1].AttachedRoutes != 1 || st.Listeners[2].AttachedRoutes != 1 || st.Valid["tls"] || st.Valid["clash"] {
+		t.Fatal(st.Listeners)
+	}
+	if c := parentCond(t, st, "shop", "web", "Accepted"); c.Status != metav1.ConditionTrue {
+		t.Fatal(c)
+	}
+	if len(m.Listeners) != 1 || describe(m.Listeners[0].Rules) != "[][{prefix /}]>500" {
+		t.Fatal(m.Listeners)
+	}
+}
+
+// A Gateway with no listener it can serve makes nothing, and its status says so.
+func TestNoValidListenersNotAccepted(t *testing.T) {
+	r, k, _, f := newGatewayReconciler(t, gateway(listener("tcp", gatewayv1.TCPProtocolType, 5432, "")))
+	got, err := reconcileGateway(t, r, k)
+	if err != nil || len(f.log()) != 0 {
+		t.Fatal(err, f.log())
+	}
+	if c := meta.FindStatusCondition(got.Status.Conditions, "Accepted"); c.Status != metav1.ConditionFalse || c.Reason != "ListenersNotValid" || c.ObservedGeneration != 1 {
+		t.Fatal(got.Status.Conditions)
+	}
+	if c := meta.FindStatusCondition(got.Status.Conditions, "Programmed"); c.Status != metav1.ConditionFalse || c.Reason != "Invalid" {
+		t.Fatal(c)
+	}
+	if len(got.Status.Listeners) != 1 || meta.FindStatusCondition(got.Status.Listeners[0].Conditions, "Accepted").Reason != "UnsupportedProtocol" {
+		t.Fatal(got.Status.Listeners)
 	}
 }
 

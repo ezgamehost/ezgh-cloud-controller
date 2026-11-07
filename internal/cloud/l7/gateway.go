@@ -91,11 +91,10 @@ func FromGateway(gw *gatewayv1.Gateway, in GatewayInput, cfg config.Config) (Mod
 		st.Gateway = []metav1.Condition{condition("Accepted", false, "UnsupportedAddress", "EZGH load balancers choose their own addresses; spec.addresses isn't supported", gen)}
 		return Model{}, st
 	}
-	st.Gateway = []metav1.Condition{condition("Accepted", true, "Accepted", "", gen)}
-
 	listeners := make([]*gwListener, len(gw.Spec.Listeners))
 	st.Listeners = make([]gatewayv1.ListenerStatus, len(gw.Spec.Listeners))
 	protocolOf, hostsOn := map[gatewayv1.PortNumber]gatewayv1.ProtocolType{}, map[string]bool{}
+	var notValid []string // listeners not accepted, or conflicted
 	for i, spec := range gw.Spec.Listeners {
 		ls := &st.Listeners[i]
 		l := &gwListener{spec: spec, status: ls, valid: true, kinds: true, gwNS: gw.Namespace}
@@ -142,6 +141,9 @@ func FromGateway(gw *gatewayv1.Gateway, in GatewayInput, cfg config.Config) (Mod
 			}
 		}
 		ls.Conditions = []metav1.Condition{accepted, resolved, conflicted}
+		if accepted.Status == metav1.ConditionFalse || conflicted.Status == metav1.ConditionTrue {
+			notValid = append(notValid, string(spec.Name))
+		}
 		st.Valid[spec.Name] = l.valid && l.kinds
 	}
 
@@ -167,20 +169,21 @@ func FromGateway(gw *gatewayv1.Gateway, in GatewayInput, cfg config.Config) (Mod
 		route := &routes[i]
 		key := types.NamespacedName{Namespace: route.Namespace, Name: route.Name}
 		rules, partial, refs := routeRules(route, in, &m)
+		dropped := len(rules) == 0 && partial != "" // not accepted anywhere, so counted nowhere
 		attachedTo := map[gatewayv1.SectionName]bool{}
 		for _, pr := range route.Spec.ParentRefs {
 			if !refersTo(pr, route.Namespace, gw) {
 				continue
 			}
 			ps := gatewayv1.RouteParentStatus{ParentRef: pr, ControllerName: ControllerName}
-			accepted := attach(pr, route, listeners, st.Valid, in.Namespaces, func(l *gwListener, hosts []string) {
-				if !attachedTo[l.spec.Name] {
+			accepted := attach(pr, route, listeners, in.Namespaces, func(l *gwListener, hosts []string) {
+				if !dropped && !attachedTo[l.spec.Name] {
 					attachedTo[l.spec.Name] = true
 					l.status.AttachedRoutes++
 				}
 				lst, once := byPort[l.spec.Port], fmt.Sprint(key, l.spec.Port, hosts)
-				if lst == nil || seen[once] {
-					return // one route through two parentRefs to a port gets its rules once
+				if lst == nil || !st.Valid[l.spec.Name] || seen[once] {
+					return // an invalid listener serves nothing; two parentRefs to a port add rules once
 				}
 				seen[once] = true
 				for _, r := range rules {
@@ -188,7 +191,7 @@ func FromGateway(gw *gatewayv1.Gateway, in GatewayInput, cfg config.Config) (Mod
 					lst.Rules = append(lst.Rules, splitHosts(r)...)
 				}
 			}, route.Generation)
-			if accepted.Status == metav1.ConditionTrue && len(rules) == 0 && partial != "" {
+			if accepted.Status == metav1.ConditionTrue && dropped {
 				accepted = condition("Accepted", false, "UnsupportedValue", partial, route.Generation)
 			}
 			ps.Conditions = []metav1.Condition{accepted, refs}
@@ -219,6 +222,16 @@ func FromGateway(gw *gatewayv1.Gateway, in GatewayInput, cfg config.Config) (Mod
 		if !slices.ContainsFunc(m.Listeners, func(l Listener) bool { return slices.Contains(l.Secrets, ref) }) {
 			delete(m.Secrets, ref)
 		}
+	}
+	switch why := "Listeners not valid: " + strings.Join(notValid, ", "); {
+	case len(notValid) == 0:
+		st.Gateway = []metav1.Condition{condition("Accepted", true, "Accepted", "", gen)}
+	case len(notValid) < len(gw.Spec.Listeners):
+		st.Gateway = []metav1.Condition{condition("Accepted", true, "ListenersNotValid", why, gen)}
+	default:
+		// Not accepted: what exists keeps serving (as for spec.addresses), nothing new is made.
+		st.Gateway = []metav1.Condition{condition("Accepted", false, "ListenersNotValid", why, gen)}
+		return Model{}, st
 	}
 	return m, st
 }
@@ -307,8 +320,10 @@ func refersTo(pr gatewayv1.ParentReference, routeNS string, gw *gatewayv1.Gatewa
 }
 
 // attach attaches route through one parentRef to every listener it may use, calling add with
-// each one's hosts, and returns the parentRef's Accepted condition.
-func attach(pr gatewayv1.ParentReference, route *gatewayv1.HTTPRoute, listeners []*gwListener, valid map[gatewayv1.SectionName]bool, nsLabels map[string]map[string]string,
+// each one's hosts, and returns the parentRef's Accepted condition. Attachment is allowedRoutes,
+// parentRefs and hostnames only: a listener that can't be served (no certificate, conflicted)
+// still counts its routes, as Gateway API's attachedRoutes requires.
+func attach(pr gatewayv1.ParentReference, route *gatewayv1.HTTPRoute, listeners []*gwListener, nsLabels map[string]map[string]string,
 	add func(*gwListener, []string), gen int64) metav1.Condition {
 	matched, allowed, attached := false, false, false
 	for _, l := range listeners {
@@ -316,7 +331,7 @@ func attach(pr gatewayv1.ParentReference, route *gatewayv1.HTTPRoute, listeners 
 			continue
 		}
 		matched = true
-		if !valid[l.spec.Name] || !l.kinds || !namespaceAllowed(l.spec.AllowedRoutes, route.Namespace, l.gwNS, nsLabels) {
+		if !l.kinds || !namespaceAllowed(l.spec.AllowedRoutes, route.Namespace, l.gwNS, nsLabels) {
 			continue
 		}
 		allowed = true

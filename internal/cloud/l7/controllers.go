@@ -261,7 +261,8 @@ func (r *GatewayReconciler) Reconcile(ctx context.Context, req reconcile.Request
 		want, status = FromGateway(&gw, in, cfg)
 		r.warn(&gw, status.Refused)
 		if want.Name == "" {
-			// Not accepted (spec.addresses): what exists keeps serving, as a typo shouldn't change it.
+			// Not accepted (spec.addresses, no valid listener): what exists keeps serving, as a typo
+			// shouldn't change it.
 			return reconcile.Result{}, r.status(ctx, &gw, status, routes, have, false, "The Gateway isn't accepted")
 		}
 		if !controllerutil.ContainsFinalizer(&gw, lb.Finalizer) {
