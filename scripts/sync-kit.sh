@@ -122,7 +122,7 @@ cp go.mod "$tmp/backup/"
 if [[ -f go.sum ]]; then cp go.sum "$tmp/backup/"; fi
 if [[ -d internal/kit ]]; then mv internal/kit "$tmp/backup/kit"; fi
 mkdir -p internal/kit
-(cd "$src/kit/go" && tar cf - --exclude go.mod --exclude go.sum --exclude scripts .) | (cd internal/kit && tar xf -)
+(cd "$src/kit/go" && tar cf - --exclude go.mod --exclude go.sum --exclude scripts --exclude README.md .) | (cd internal/kit && tar xf -)
 mkdir -p internal/kit/testdata/contracts
 cp -R "$src/contracts/vectors" "$src/contracts/examples" internal/kit/testdata/contracts/
 

@@ -36,7 +36,7 @@ func NodeName(instance string) (string, error) {
 // ProviderID is the Node's spec.providerID, as the cloud controller writes it.
 func ProviderID(region, instance string) string { return "ezgh://" + region + "/" + instance }
 
-// Reserved is kubeReserved by EKS's formula (plan call): CPU 6% of the first core, 1% of the
+// Reserved is kubeReserved on a sliding scale: CPU 6% of the first core, 1% of the
 // second, 0.5% of the third and fourth, 0.25% of each beyond; memory 255 MiB plus 11 MiB a pod.
 func Reserved(cpus, maxPods int) (cpuMilli, memoryMi int) {
 	for core, milli := range []int{60, 10, 5, 5} {
