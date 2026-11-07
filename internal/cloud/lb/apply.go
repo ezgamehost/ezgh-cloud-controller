@@ -31,6 +31,7 @@ type State struct {
 	Status       string            `json:"status,omitempty"`      // the load balancer's
 	IPv4         *string           `json:"ipv4,omitempty"`        // its addresses, once it has them
 	IPv6         *string           `json:"ipv6,omitempty"`
+	IPv4Of       string            `json:"ipv4Of,omitempty"` // the pip_ IPv4 is the address of
 	// Operation is the load balancer create's, until it's active: if lb-api undoes the create,
 	// the operation says why.
 	Operation string `json:"operation,omitempty"`
@@ -144,7 +145,10 @@ func Apply(ctx context.Context, c *ezghclient.Clients, cfg config.Config, have S
 			return st, nil
 		}
 		if !isGone {
-			st.LoadBalancer, st.Status, st.IPv4, st.IPv6 = lb.Slug, lb.Status, lb.IPv4Address, lb.IPv6Address
+			st.LoadBalancer, st.Status, st.IPv6 = lb.Slug, lb.Status, lb.IPv6Address
+			if err := resolveIPv4(ctx, c, cfg, &st, lb.IPv4Address); err != nil {
+				return st, err
+			}
 			if st.Status == "active" {
 				st.Operation = ""
 			}
@@ -243,6 +247,27 @@ func ownIPv4(ctx context.Context, c *ezghclient.Clients, cfg config.Config, st *
 	}
 	st.IPv4Address, st.OwnIPv4 = "", false
 	st.Epoch++
+	return nil
+}
+
+// resolveIPv4 sets st.IPv4 to the address of pip, the load balancer's ipv4Address (a pip_ ID, not
+// an address), reading it from network-api only when pip isn't the one st.IPv4 already is.
+func resolveIPv4(ctx context.Context, c *ezghclient.Clients, cfg config.Config, st *State, pip *string) error {
+	if pip == nil {
+		st.IPv4, st.IPv4Of = nil, ""
+		return nil
+	}
+	if st.IPv4 != nil && st.IPv4Of == *pip {
+		return nil
+	}
+	st.IPv4, st.IPv4Of = nil, "" // never published while unresolved
+	ip, err := c.Network.GetIPv4Address(ctx, cfg.Org, cfg.Project, *pip)
+	if err != nil {
+		return err
+	}
+	if ip.Address != "" {
+		st.IPv4, st.IPv4Of = &ip.Address, *pip
+	}
 	return nil
 }
 

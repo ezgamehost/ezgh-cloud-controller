@@ -18,6 +18,7 @@ import (
 	"github.com/ezgamehost/ezgh-cloud-controller/internal/cloud/config"
 	"github.com/ezgamehost/ezgh-cloud-controller/internal/ezghclient"
 	"github.com/ezgamehost/ezgh-cloud-controller/internal/ezghclient/lbapi"
+	"github.com/ezgamehost/ezgh-cloud-controller/internal/ezghclient/networkapi"
 )
 
 var ctx = context.Background()
@@ -162,8 +163,9 @@ func TestDeleteOrder(t *testing.T) {
 	f, c = newFake(t)
 	svc := twoPorts()
 	svc.Annotations = map[string]string{Prefix + "ipv4-address": "pip_mine"}
+	f.pips["pip_mine"] = &networkapi.IPv4Address{Slug: "pip_mine", Address: "198.51.100.7"}
 	st = converge(t, c, State{}, model(t, svc))
-	if st.OwnIPv4 || st.IPv4Address != "pip_mine" {
+	if st.OwnIPv4 || st.IPv4Address != "pip_mine" || st.IPv4 == nil || *st.IPv4 != "198.51.100.7" {
 		t.Fatalf("%+v", st)
 	}
 	st, _ = Apply(ctx, c, testCfg, st, teardownModel(twoPorts()))
@@ -493,4 +495,24 @@ func TestPortSwapDeletesListenerFirst(t *testing.T) {
 		t.Fatal(err)
 	}
 	hasPrefixes(t, f.log(), "DELETE /load-balancers/"+st.LoadBalancer+"/listeners/", "POST /load-balancers/"+st.LoadBalancer+"/listeners")
+}
+
+// A v0.1.0 annotation decodes, heals, and the address is read once, not every pass.
+func TestOldAnnotationHealedOnce(t *testing.T) {
+	f, c := newFake(t)
+	st := converge(t, c, State{}, model(t, twoPorts()))
+	old, _ := ReadState(map[string]string{StateAnnotation: `{"loadBalancer":"` + st.LoadBalancer + `","ipv4Address":"` + st.IPv4Address +
+		`","ownIpv4":true,"groups":{"u1/http":"` + st.Groups["u1/http"] + `","u1/admin":"` + st.Groups["u1/admin"] + `"},"status":"active","ipv4":"` + st.IPv4Address + `"}`})
+	f.mu.Lock()
+	f.pipGets = 0
+	f.mu.Unlock()
+	for range 2 {
+		var err error
+		if old, err = Apply(ctx, c, testCfg, old, model(t, twoPorts())); err != nil || old.IPv4 == nil || *old.IPv4 != "203.0.113.9" {
+			t.Fatal(old, err)
+		}
+	}
+	if f.pipGets != 1 {
+		t.Fatal(f.pipGets)
+	}
 }

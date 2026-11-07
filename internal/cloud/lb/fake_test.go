@@ -30,6 +30,7 @@ type fakeEZGH struct {
 	groups    map[string]*lbapi.TargetGroup
 	targets   map[string]*lbapi.Target
 	pips      map[string]*networkapi.IPv4Address
+	pipGets   int // GET /ipv4-addresses/{id}
 	ops       map[string]*lbapi.Operation
 	writes    []string
 	keys      []string         // each write's Idempotency-Key
@@ -146,6 +147,7 @@ func (f *fakeEZGH) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		f.pips[p.Slug] = p
 		out(201, p)
 	case r.Method == "GET" && seg[0] == "ipv4-addresses" && len(seg) == 2:
+		f.pipGets++
 		if f.pips[seg[1]] == nil {
 			notFound()
 			return
@@ -226,8 +228,10 @@ func (f *fakeEZGH) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	case call == "POST /load-balancers":
 		id := f.id("uuid")
-		v4 := "203.0.113.9"
-		lb := &lbapi.LoadBalancer{ID: id, Slug: f.id("lbr"), Name: str("name"), Tags: tags(), Subnet: str("subnet"), Status: f.lbStatus, IPv4Address: &v4}
+		lb := &lbapi.LoadBalancer{ID: id, Slug: f.id("lbr"), Name: str("name"), Tags: tags(), Subnet: str("subnet"), Status: f.lbStatus}
+		if v4 := str("ipv4Address"); v4 != "" {
+			lb.IPv4Address = &v4 // lb-api answers the pip_ it was given, not its address
+		}
 		f.lbs[id], f.lbs[lb.Slug] = lb, lb
 		op := &lbapi.Operation{ID: f.id("op"), Status: "running"}
 		op.Target.ID = id

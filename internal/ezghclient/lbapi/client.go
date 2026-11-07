@@ -43,8 +43,8 @@ type LoadBalancer struct {
 	Tags           map[string]string `json:"tags"`
 	VPC            string            `json:"vpc"`
 	Subnet         string            `json:"subnet"`
-	// IPv4Address is nil on a load balancer with only IPv6. IPv6Address is nil while IPv6 is off or
-	// on its way.
+	// IPv4Address is its public IPv4's pip_ ID (not the address; network-api has that), nil on a
+	// load balancer with only IPv6. IPv6Address is the address, nil while IPv6 is off or on its way.
 	IPv4Address *string     `json:"ipv4Address"`
 	IPv6        bool        `json:"ipv6"`
 	IPv6Address *string     `json:"ipv6Address"`

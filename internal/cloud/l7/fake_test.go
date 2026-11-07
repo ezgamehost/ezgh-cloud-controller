@@ -207,7 +207,7 @@ func (f *fakeEZGH) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case call == "POST /load-balancers":
 		id := f.id("uuid")
 		lb := map[string]any{"id": id, "slug": f.id("lbr"), "name": str("name"), "tags": body["tags"], "subnet": str("subnet"), "status": f.lbStatus,
-			"ipv4Address": "203.0.113.9", "ipv6Address": "2001:db8::9"}
+			"ipv4Address": body["ipv4Address"], "ipv6Address": "2001:db8::9"}
 		f.lbs[id], f.lbs[lb["slug"].(string)] = lb, lb
 		out(202, map[string]any{"id": f.id("op"), "status": "running", "target": map[string]any{"id": id}})
 	case seg[0] == "load-balancers" && len(seg) == 2:
