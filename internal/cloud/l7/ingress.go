@@ -412,6 +412,9 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req reconcile.Request
 		}
 		return reconcile.Result{}, nil
 	}
+	if d, ok := run.Busy(applyErr); ok {
+		return reconcile.Result{RequeueAfter: d}, nil
+	}
 	if applyErr != nil {
 		// Review Focus 1: every Ingress of the group says why; nothing was deleted for a refused read.
 		// shortcut: a Retry-After is honoured only for an Ingress's own group (run.Fail keys it by

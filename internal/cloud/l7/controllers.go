@@ -18,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/events"
 	"k8s.io/utils/ptr"
@@ -295,7 +296,9 @@ func (r *GatewayReconciler) Reconcile(ctx context.Context, req reconcile.Request
 	}
 	lb.WarnForged(r.Recorder, &gw, st.Forged)
 	why := "Waiting for the load balancer to be active"
-	if applyErr != nil {
+	if _, busy := run.Busy(applyErr); busy {
+		why = "Waiting for the load balancer's current operation to finish"
+	} else if applyErr != nil {
 		_, why = cloudevents.Describe(applyErr)
 	}
 	if err := r.status(ctx, &gw, status, routes, st, st.Status == "active" && applyErr == nil, why); err != nil && applyErr == nil {
@@ -392,7 +395,20 @@ func (r *GatewayReconciler) save(ctx context.Context, gw *gatewayv1.Gateway, st 
 
 // status writes the Gateway's status (a live one's) and this Gateway's entries in every route's.
 func (r *GatewayReconciler) status(ctx context.Context, gw *gatewayv1.Gateway, status Status, routes []gatewayv1.HTTPRoute, st State, programmed bool, why string) error {
-	if gw.DeletionTimestamp == nil && len(status.Gateway) > 0 {
+	if gw.DeletionTimestamp != nil {
+		// Deletion bumps the generation by one and changes nothing the conditions judged: those
+		// of the generation before are restamped while the load balancer is torn down.
+		orig := gw.DeepCopy()
+		restamp(gw.Status.Conditions, gw.Generation)
+		for i := range gw.Status.Listeners {
+			restamp(gw.Status.Listeners[i].Conditions, gw.Generation)
+		}
+		if !equality.Semantic.DeepEqual(orig.Status, gw.Status) {
+			if err := r.Client.Status().Patch(ctx, gw, client.MergeFrom(orig)); client.IgnoreNotFound(err) != nil {
+				return err
+			}
+		}
+	} else if len(status.Gateway) > 0 {
 		orig := gw.DeepCopy()
 		var addrs []string
 		for _, ip := range []*string{st.IPv4, st.IPv6} {
@@ -420,6 +436,14 @@ func (r *GatewayReconciler) status(ctx context.Context, gw *gatewayv1.Gateway, s
 		}
 	}
 	return nil
+}
+
+func restamp(conds []metav1.Condition, gen int64) {
+	for i := range conds {
+		if conds[i].ObservedGeneration == gen-1 {
+			conds[i].ObservedGeneration = gen
+		}
+	}
 }
 
 // warn records a Gateway's refusals when they change.

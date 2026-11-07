@@ -6,6 +6,7 @@ package run
 
 import (
 	"log/slog"
+	"net/http"
 	"os"
 	"sync"
 	"time"
@@ -26,6 +27,7 @@ import (
 	"github.com/ezgamehost/ezgh-cloud-controller/internal/cloud/config"
 	cloudevents "github.com/ezgamehost/ezgh-cloud-controller/internal/cloud/events"
 	"github.com/ezgamehost/ezgh-cloud-controller/internal/ezghclient"
+	"github.com/ezgamehost/ezgh-cloud-controller/internal/ezghclient/apiclient"
 	"github.com/ezgamehost/ezgh-cloud-controller/internal/kit/logging"
 )
 
@@ -121,9 +123,27 @@ func (retryAfterLimiter) When(item reconcile.Request) time.Duration {
 func (retryAfterLimiter) Forget(item reconcile.Request)     { retryAfters.Delete(item) }
 func (retryAfterLimiter) NumRequeues(reconcile.Request) int { return 0 }
 
+// busyPoll is how soon an object is reconciled again while its resource is busy.
+const busyPoll = 15 * time.Second
+
+// Busy reports whether err is a 409 that only means "not yet": another operation on the resource
+// (often our own create) is still running, or the load balancer is still being made. It returns
+// how soon to try again.
+func Busy(err error) (time.Duration, bool) {
+	e, ok := apiclient.AsError(err)
+	if !ok || e.Status != http.StatusConflict || e.Code != "operation_in_progress" && e.Code != "load_balancer_provisioning" {
+		return 0, false
+	}
+	return max(busyPoll, e.RetryAfter), true
+}
+
 // Fail reports err on obj and hands it back for the workqueue's backoff, which keeps growing while
-// the errors last; a Retry-After longer than the backoff is honoured.
+// the errors last; a Retry-After longer than the backoff is honoured. A Busy err isn't a failure:
+// it's tried again soon, without an event or a growing backoff.
 func Fail(rec events.EventRecorder, obj runtime.Object, err error) (reconcile.Result, error) {
+	if d, ok := Busy(err); ok {
+		return reconcile.Result{RequeueAfter: d}, nil
+	}
 	if d := cloudevents.Report(rec, obj, err); d > 0 {
 		if m, merr := meta.Accessor(obj); merr == nil {
 			retryAfters.Store(reconcile.Request{NamespacedName: types.NamespacedName{Namespace: m.GetNamespace(), Name: m.GetName()}}, d)

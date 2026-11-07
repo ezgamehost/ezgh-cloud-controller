@@ -352,3 +352,15 @@ func TestIngressDeniedGetsEvent(t *testing.T) {
 		t.Fatal(st)
 	}
 }
+
+// A busy load balancer (409 operation_in_progress) is waited out: no event on any Ingress of the
+// group, no error, a requeue.
+func TestIngressBusyIsQuiet(t *testing.T) {
+	a := ingress("shop", "home", 1, map[string]string{GroupAnnotation: "shop"}, hostRule("", path(networkingv1.PathTypePrefix, "/", backend("home", 80))))
+	b := ingress("shop", "cart", 2, map[string]string{GroupAnnotation: "shop"}, hostRule("", path(networkingv1.PathTypePrefix, "/cart", backend("cart", 80))))
+	r, _, rec, f := newIngressReconciler(t, a, b, svc("shop", "home", port("", 80)), svc("shop", "cart", port("", 80)))
+	f.fail["POST /load-balancers"] = [2]string{"409", "operation_in_progress"}
+	if res, err := r.Reconcile(ctx, groupRequest("shop/shop")); err != nil || res.RequeueAfter == 0 || len(rec.Events) != 0 {
+		t.Fatal(res, err, len(rec.Events))
+	}
+}

@@ -2,6 +2,7 @@ package l7
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -671,4 +672,93 @@ func TestUnsupportedAddressKeepsServing(t *testing.T) {
 	if c := meta.FindStatusCondition(got.Status.Conditions, "Accepted"); c.Status != metav1.ConditionFalse || c.Reason != "UnsupportedAddress" || len(f.log()) != 0 {
 		t.Fatal(c, f.log())
 	}
+}
+
+// While another operation on the load balancer runs (409 operation_in_progress), a spec change
+// and a deletion are each written at the Gateway's generation, with no Warning, and tried again
+// soon rather than after a growing backoff.
+func TestOperationInProgressStillWritesStatus(t *testing.T) {
+	gw := gateway(allNamespaces(listener("http", gatewayv1.HTTPProtocolType, 80, "")))
+	r, k, rec, f := newGatewayReconciler(t, gw)
+	f.lbStatus = "provisioning"
+	got, err := reconcileGateway(t, r, k)
+	if err != nil {
+		t.Fatal(err)
+	}
+	busy := [2]string{"409", "operation_in_progress"}
+	stamped := func(want int64) {
+		t.Helper()
+		for _, c := range got.Status.Conditions {
+			if c.ObservedGeneration != want {
+				t.Fatal(c)
+			}
+		}
+		for _, l := range got.Status.Listeners {
+			for _, c := range l.Conditions {
+				if c.ObservedGeneration != want {
+					t.Fatal(l.Name, c)
+				}
+			}
+		}
+		select {
+		case ev := <-rec.Events:
+			t.Fatal(ev)
+		default:
+		}
+	}
+
+	for _, lbr := range f.lbs {
+		lbr["status"] = "active" // the create finished; the next change is refused while another runs
+	}
+	got.Spec.Listeners = append(got.Spec.Listeners, allNamespaces(listener("alt", gatewayv1.HTTPProtocolType, 8080, "")))
+	got.Generation = 2
+	if err := k.Update(ctx, got); err != nil {
+		t.Fatal(err)
+	}
+	f.fail["POST /load-balancers/"] = busy
+	f.fail["PATCH /load-balancers/"] = busy
+	res, err := r.Reconcile(ctx, reconcile.Request{NamespacedName: types.NamespacedName{Namespace: "infra", Name: "edge"}})
+	if err != nil || res.RequeueAfter == 0 {
+		t.Fatal(res, err, f.log())
+	}
+	if err := k.Get(ctx, types.NamespacedName{Namespace: "infra", Name: "edge"}, got); err != nil {
+		t.Fatal(err)
+	}
+	stamped(2)
+	if c := meta.FindStatusCondition(got.Status.Conditions, "Programmed"); c.Status != metav1.ConditionFalse || c.Reason != "Pending" || !strings.Contains(c.Message, "current operation") {
+		t.Fatal(c)
+	}
+	if !slices.Contains(f.log(), "POST /load-balancers/lbr_3/listeners") || len(f.fail) != 1 {
+		t.Fatal(f.log(), f.fail)
+	}
+	// The operation ends: the next pass makes the change.
+	clear(f.fail)
+	f.reset()
+	if got, err = reconcileGateway(t, r, k); err != nil {
+		t.Fatal(err)
+	}
+	if c := meta.FindStatusCondition(got.Status.Conditions, "Programmed"); !slices.Contains(f.log(), "POST /load-balancers/lbr_3/listeners") || c.Status != metav1.ConditionTrue {
+		t.Fatal(f.log(), c)
+	}
+
+	// Deleting bumps the generation too (the apiserver does, for an object with finalizers).
+	if err := k.Delete(ctx, got); err != nil {
+		t.Fatal(err)
+	}
+	if err := k.Get(ctx, types.NamespacedName{Namespace: "infra", Name: "edge"}, got); err != nil {
+		t.Fatal(err)
+	}
+	got.Generation = 3
+	if err := k.Update(ctx, got); err != nil {
+		t.Fatal(err)
+	}
+	f.fail["DELETE /load-balancers/"] = busy
+	res, err = r.Reconcile(ctx, reconcile.Request{NamespacedName: types.NamespacedName{Namespace: "infra", Name: "edge"}})
+	if err != nil || res.RequeueAfter == 0 {
+		t.Fatal(res, err, f.log())
+	}
+	if err := k.Get(ctx, types.NamespacedName{Namespace: "infra", Name: "edge"}, got); err != nil {
+		t.Fatal(err)
+	}
+	stamped(3)
 }
