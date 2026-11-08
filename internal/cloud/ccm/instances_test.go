@@ -146,7 +146,7 @@ func TestInstanceMetadata(t *testing.T) {
 }
 
 func TestInstanceExists(t *testing.T) {
-	for status, want := range map[string]bool{"terminated": false, "terminating": true, "running": true, "stopped": true} {
+	for status, want := range map[string]bool{"terminated": false, "terminating": true, "running": true, "stopped": true, "failed": true} {
 		c, _ := cloud(t, &fake{instance: newInstance(status)})
 		got, err := c.InstanceExists(context.Background(), theNode)
 		if err != nil || got != want {
@@ -170,7 +170,7 @@ func TestInstanceNotFoundInAMissingProjectIsAnError(t *testing.T) {
 }
 
 func TestInstanceShutdown(t *testing.T) {
-	for status, want := range map[string]bool{"stopping": true, "stopped": true, "running": false, "terminating": false} {
+	for status, want := range map[string]bool{"stopping": true, "stopped": true, "failed": true, "running": false, "terminating": false} {
 		c, _ := cloud(t, &fake{instance: newInstance(status)})
 		got, err := c.InstanceShutdown(context.Background(), theNode)
 		if err != nil || got != want {

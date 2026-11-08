@@ -114,7 +114,8 @@ func (c *Cloud) InstanceExists(ctx context.Context, node *corev1.Node) (bool, er
 	return inst.Status != "terminated", nil
 }
 
-// InstanceShutdown is true while the instance is stopping or stopped.
+// InstanceShutdown is true while the instance is stopping, stopped or failed (a failed one is
+// down, but only terminated or a 404 removes the Node).
 func (c *Cloud) InstanceShutdown(ctx context.Context, node *corev1.Node) (bool, error) {
 	inst, _, err := c.instance(ctx, node)
 	if ezghclient.IsNotFound(err) {
@@ -123,7 +124,7 @@ func (c *Cloud) InstanceShutdown(ctx context.Context, node *corev1.Node) (bool, 
 	if err != nil {
 		return false, err
 	}
-	return inst.Status == "stopping" || inst.Status == "stopped", nil
+	return inst.Status == "stopping" || inst.Status == "stopped" || inst.Status == "failed", nil
 }
 
 // InstanceMetadata is what the cloud-node controller initializes node with.
