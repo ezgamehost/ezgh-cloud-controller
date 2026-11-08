@@ -45,7 +45,6 @@ type Imported struct {
 	Hash string `json:"hash"`
 }
 
-// Empty reports whether nothing is left to delete.
 // recorded counts what the state names, to tell a partial save from the full one at one epoch.
 func (s State) recorded() int {
 	n := len(s.Groups) + len(s.Listeners) + len(s.Certificates)
@@ -55,6 +54,7 @@ func (s State) recorded() int {
 	return n
 }
 
+// Empty reports whether nothing is left to delete.
 func (s State) Empty() bool { return s.State.Empty() && len(s.Certificates) == 0 }
 
 // readState is the state an object's annotation holds.
