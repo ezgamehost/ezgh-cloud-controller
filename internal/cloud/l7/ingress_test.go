@@ -306,6 +306,41 @@ func TestMoveBetweenGroupsReleasesTheOldOne(t *testing.T) {
 	}
 }
 
+// A save that reached only some members leaves a partial copy at the same epoch; the fuller one
+// is the newer, so the group keeps its load balancer instead of creating a second.
+func TestEqualEpochPrefersFullerCopy(t *testing.T) {
+	g := map[string]string{GroupAnnotation: "shop"}
+	rule := hostRule("", path(networkingv1.PathTypePrefix, "/", backend("web", 80)))
+	r, k, _, f := newIngressReconciler(t, ingress("shop", "a", 1, g, rule), ingress("shop", "b", 2, map[string]string{GroupAnnotation: "shop"}, rule), svc("shop", "web", port("", 80)))
+	reconcileGroup(t, r, "shop/shop", 2)
+	full, _ := readState(getIngress(t, k, "shop", "b").Annotations)
+	if full.LoadBalancer == "" || len(full.Groups) == 0 {
+		t.Fatal(full)
+	}
+	full.Epoch = 1
+	partial := State{Group: full.Group, Key: full.Key, State: lb.State{Groups: full.Groups, Epoch: 1}}
+	for name, st := range map[string]State{"a": partial, "b": full} {
+		ing := getIngress(t, k, "shop", name)
+		raw, _ := json.Marshal(st)
+		ing.Annotations[lb.StateAnnotation] = string(raw)
+		if err := k.Update(ctx, ing); err != nil {
+			t.Fatal(err)
+		}
+	}
+	f.reset()
+	reconcileGroup(t, r, "shop/shop", 2)
+	for _, w := range f.log() {
+		if strings.HasPrefix(w, "POST ") { // a new load balancer, or an address for one
+			t.Fatal("created again from the partial copy", f.log())
+		}
+	}
+	for _, name := range []string{"a", "b"} {
+		if st, _ := readState(getIngress(t, k, "shop", name).Annotations); st.LoadBalancer != full.LoadBalancer {
+			t.Fatal(name, st)
+		}
+	}
+}
+
 // Fix: a state written by hand naming another's certificate never deletes it.
 func TestForgedIngressStateDeletesNothing(t *testing.T) {
 	ing := ingress("shop", "web", 1, nil, hostRule("", path(networkingv1.PathTypePrefix, "/", backend("web", 80))))

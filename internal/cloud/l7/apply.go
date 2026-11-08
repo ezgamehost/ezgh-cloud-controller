@@ -46,6 +46,15 @@ type Imported struct {
 }
 
 // Empty reports whether nothing is left to delete.
+// recorded counts what the state names, to tell a partial save from the full one at one epoch.
+func (s State) recorded() int {
+	n := len(s.Groups) + len(s.Listeners) + len(s.Certificates)
+	if s.LoadBalancer != "" {
+		n++
+	}
+	return n
+}
+
 func (s State) Empty() bool { return s.State.Empty() && len(s.Certificates) == 0 }
 
 // readState is the state an object's annotation holds.

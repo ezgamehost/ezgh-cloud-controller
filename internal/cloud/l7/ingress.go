@@ -340,8 +340,9 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req reconcile.Request
 		}
 		if st.Group == group {
 			holders = append(holders, ing)
-			// The fullest copy wins: one that holds something, then the latest epoch.
-			if st.Empty() != have.Empty() && !st.Empty() || st.Empty() == have.Empty() && st.Epoch > have.Epoch {
+			// The fullest copy wins: one that holds something, then the latest epoch, then (every
+			// deletion bumps the epoch) the one that records more.
+			if st.Empty() != have.Empty() && !st.Empty() || st.Empty() == have.Empty() && (st.Epoch > have.Epoch || st.Epoch == have.Epoch && st.recorded() > have.recorded()) {
 				have = st
 			}
 		}
