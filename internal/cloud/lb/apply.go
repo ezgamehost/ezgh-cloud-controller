@@ -171,6 +171,11 @@ func Apply(ctx context.Context, c *ezghclient.Clients, cfg config.Config, have S
 		}
 	}
 	if create {
+		if st.LoadBalancer == "" {
+			if adopted, err := adoptLoadBalancer(ctx, c, cfg, &st, want); err != nil || adopted {
+				return st, err
+			}
+		}
 		op, err := c.LB.CreateLoadBalancer(ezghclient.WithIdempotencyKey(ctx, want.key(epoch, "")), org, prj,
 			lbapi.LoadBalancerCreate{Name: want.Name, Tags: want.Tags, Subnet: want.Subnet, IPv4Address: st.IPv4Address})
 		if err != nil {
@@ -447,6 +452,29 @@ func syncListeners(ctx context.Context, c *ezghclient.Clients, cfg config.Config
 	return nil
 }
 
+// adoptLoadBalancer records the load balancer want owns, by tag, when none is recorded; it
+// reports whether it did. Create calls it first: an expired idempotency key would otherwise make a
+// second one.
+func adoptLoadBalancer(ctx context.Context, c *ezghclient.Clients, cfg config.Config, st *State, want Model) (bool, error) {
+	if want.LBName() == "" || st.LoadBalancer != "" {
+		return false, nil
+	}
+	lbs, err := all(func(cursor string) (apiclient.Page[lbapi.LoadBalancer], error) {
+		return c.LB.ListLoadBalancers(ctx, cfg.Org, cfg.Project, pageSize, cursor)
+	})
+	if err != nil {
+		return false, err
+	}
+	for _, lb := range lbs {
+		// shortcut: one load balancer is adopted; a second (two lost states) is left for the customer.
+		if want.Owns(lb.Tags, lb.Name, false) && lb.Status != "deleting" && lb.Status != "deleted" {
+			st.LoadBalancer, st.Status = lb.Slug, lb.Status
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 // adopt finds what a lost state annotation (kubectl replace, GitOps) left behind, by both of
 // want's tags, so it's reused or deleted instead of duplicated. Only with an empty state, so it's
 // rare.
@@ -455,17 +483,8 @@ func adopt(ctx context.Context, c *ezghclient.Clients, cfg config.Config, st Sta
 	if want.LBName() == "" {
 		return st, nil
 	}
-	lbs, err := all(func(cursor string) (apiclient.Page[lbapi.LoadBalancer], error) {
-		return c.LB.ListLoadBalancers(ctx, org, prj, pageSize, cursor)
-	})
-	if err != nil {
+	if _, err := adoptLoadBalancer(ctx, c, cfg, &st, want); err != nil {
 		return st, err
-	}
-	for _, lb := range lbs {
-		// shortcut: one load balancer is adopted; a second (two lost states) is left for the customer.
-		if want.Owns(lb.Tags, lb.Name, false) && lb.Status != "deleting" && lb.Status != "deleted" && st.LoadBalancer == "" {
-			st.LoadBalancer, st.Status = lb.Slug, lb.Status
-		}
 	}
 	groups, err := all(func(cursor string) (apiclient.Page[lbapi.TargetGroup], error) {
 		return c.LB.ListTargetGroups(ctx, org, prj, pageSize, cursor)

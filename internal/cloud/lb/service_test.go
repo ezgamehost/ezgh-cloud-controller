@@ -557,3 +557,24 @@ func TestFingerprintFollowsSpec(t *testing.T) {
 		t.Fatal("a spec change keeps the fingerprint")
 	}
 }
+
+func TestCreateAdoptsUnrecordedLoadBalancer(t *testing.T) {
+	f, c := newFake(t)
+	m := model(t, twoPorts())
+	st := converge(t, c, State{}, m)
+	slug := st.LoadBalancer
+	st.LoadBalancer, st.Status, st.Operation, st.Listeners = "", "", "", nil
+	f.reset()
+	st, err := Apply(ctx, c, testCfg, st, m)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, l := range f.log() {
+		if l == "POST /load-balancers" {
+			t.Fatal("created a second load balancer", f.log())
+		}
+	}
+	if st.LoadBalancer != slug {
+		t.Fatalf("LoadBalancer %q, want %q", st.LoadBalancer, slug)
+	}
+}
