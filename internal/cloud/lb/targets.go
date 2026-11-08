@@ -77,6 +77,9 @@ func ServiceBackends(_ context.Context, _ client.Reader, svc *corev1.Service) ([
 	if err != nil {
 		return nil, err
 	}
+	if st.LoadBalancer == "" { // a failed create leaves groups but nothing to gate on
+		return nil, nil
+	}
 	var out []Backend
 	for _, p := range svc.Spec.Ports {
 		if id := st.Groups[GroupKey(svc, p)]; id != "" {

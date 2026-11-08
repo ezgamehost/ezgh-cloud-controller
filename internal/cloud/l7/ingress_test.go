@@ -364,3 +364,15 @@ func TestIngressBusyIsQuiet(t *testing.T) {
 		t.Fatal(res, err, len(rec.Events))
 	}
 }
+
+func TestBackendsNeedALoadBalancer(t *testing.T) {
+	s := svc("shop", "cart", port("", 80))
+	st := State{Group: "shop/shop", State: lb.State{Groups: map[string]string{"shop.cart.80": "tgp_a"}}}
+	if got := backendsOf([]State{st}, s); len(got) != 0 {
+		t.Fatal(got)
+	}
+	st.LoadBalancer = "lbr_a"
+	if got := backendsOf([]State{st}, s); len(got) != 1 {
+		t.Fatal(got)
+	}
+}

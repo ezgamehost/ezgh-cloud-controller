@@ -199,3 +199,33 @@ func TestTargetLimitConflictIsAnEvent(t *testing.T) {
 		t.Fatal(ev)
 	}
 }
+
+func TestGateReleasedWhenCreateFailed(t *testing.T) {
+	p := pod("a", "10.0.0.1", true, map[string]corev1.ConditionStatus{GateType("web"): ""})
+	s := slice("h", discoveryv1.AddressTypeIPv4, "http", 8080, ep{ip: "10.0.0.1", pod: "a"})
+	_, r, _, st := targetsSetup(t, service([]corev1.ServicePort{tcpPort("http", 80, intstr.FromInt32(8080))}, nil), p, &s)
+	setState := func(mut State) {
+		var svc corev1.Service
+		_ = r.Client.Get(ctx, webKey.NamespacedName, &svc)
+		data, _ := json.Marshal(mut)
+		svc.Annotations[StateAnnotation] = string(data)
+		if err := r.Client.Update(ctx, &svc); err != nil {
+			t.Fatal(err)
+		}
+	}
+	// Review Focus 1: a load balancer still being created keeps gating.
+	setState(State{Groups: st.Groups, LoadBalancer: "lbr_a", Status: "provisioning"})
+	if res, err := r.Reconcile(ctx, webKey); err != nil || res.RequeueAfter == 0 || gateStatus(t, r, "a") == corev1.ConditionTrue {
+		t.Fatal(res, err)
+	}
+	// A failed create recorded no load balancer: nothing to wait for.
+	setState(State{Groups: st.Groups, Failed: "fp"})
+	res, err := r.Reconcile(ctx, webKey)
+	if err != nil || res.RequeueAfter != 0 || gateStatus(t, r, "a") != corev1.ConditionTrue { // reason NotLoadBalanced
+		t.Fatal(res, err)
+	}
+	newPod := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "b", Labels: map[string]string{"app": "web"}}}
+	if resp := admit(t, &Webhook{Client: r.Client, Backends: r.Backends}, newPod); len(resp.Patches) != 0 {
+		t.Fatal(resp)
+	}
+}

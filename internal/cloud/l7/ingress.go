@@ -670,6 +670,9 @@ func StateServices(_ context.Context, obj client.Object) []reconcile.Request {
 func backendsOf(states []State, svc *corev1.Service) []lb.Backend {
 	var out []lb.Backend
 	for _, st := range states {
+		if st.LoadBalancer == "" {
+			continue
+		}
 		for _, key := range slices.Sorted(maps.Keys(st.Groups)) {
 			ns, name, port, ok := ParseBackendKey(key)
 			if !ok || ns != svc.Namespace || name != svc.Name || slices.ContainsFunc(out, func(b lb.Backend) bool { return b.Group == st.Groups[key] }) {
