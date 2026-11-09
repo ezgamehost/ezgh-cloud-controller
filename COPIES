@@ -1,8 +1,8 @@
 # Code copied from other ezgamehost repositories, refreshed by scripts/sync-copies.sh <repository>.
 # <repository> <commit> <path, the same there and here>
-kubernetes-stack cc38073414da06fce070558549562f4726e04c12 internal/nodeauth/join.go
-kubernetes-stack cc38073414da06fce070558549562f4726e04c12 internal/nodeauth/join_test.go
-kubernetes-stack cc38073414da06fce070558549562f4726e04c12 internal/nodeauth/kubelet.go
-kubernetes-stack cc38073414da06fce070558549562f4726e04c12 internal/nodeauth/testdata/ca.crt
-kubernetes-stack cc38073414da06fce070558549562f4726e04c12 internal/nodeauth/imds
-kubernetes-stack cc38073414da06fce070558549562f4726e04c12 cmd/ezgh-cloud/bootstrap/manifest.yaml
+kubernetes-stack 991ac50691133e23adf7001681a7fe39968a9146 internal/nodeauth/join.go
+kubernetes-stack 991ac50691133e23adf7001681a7fe39968a9146 internal/nodeauth/join_test.go
+kubernetes-stack 991ac50691133e23adf7001681a7fe39968a9146 internal/nodeauth/kubelet.go
+kubernetes-stack 991ac50691133e23adf7001681a7fe39968a9146 internal/nodeauth/testdata/ca.crt
+kubernetes-stack 991ac50691133e23adf7001681a7fe39968a9146 internal/nodeauth/imds
+kubernetes-stack 991ac50691133e23adf7001681a7fe39968a9146 cmd/ezgh-cloud/bootstrap/manifest.yaml

@@ -216,3 +216,28 @@ func TestCredentialsStringRedacts(t *testing.T) {
 		}
 	}
 }
+
+// A 401 for a token another caller already replaced doesn't drop the newer one.
+func TestStale401KeepsNewerToken(t *testing.T) {
+	var c *Client
+	s := &server{}
+	s.handle = func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("EZGH-Metadata-Token") == "a" {
+			c.mu.Lock()
+			c.token, c.tokenEnd = "b", time.Now().Add(time.Hour)
+			c.mu.Unlock()
+			http.Error(w, `{"error":{"code":"invalid_token"}}`, http.StatusUnauthorized)
+			return
+		}
+		instanceJSON(w, "[]")
+	}
+	c = newClient(t, s)
+	c.token, c.tokenEnd = "a", time.Now().Add(time.Hour)
+	if _, err := c.Instance(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	last := s.requests[len(s.requests)-1]
+	if s.puts != 0 || last.Header.Get("EZGH-Metadata-Token") != "b" {
+		t.Fatalf("puts %d, retry carried %q", s.puts, last.Header.Get("EZGH-Metadata-Token"))
+	}
+}

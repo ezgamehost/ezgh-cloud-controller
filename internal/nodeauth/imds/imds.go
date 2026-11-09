@@ -176,7 +176,9 @@ func (c *Client) get(ctx context.Context, path string) ([]byte, error) {
 		var e *Error
 		if attempt == 0 && errors.As(err, &e) && e.Status == http.StatusUnauthorized {
 			c.mu.Lock()
-			c.token = ""
+			if c.token == token { // a concurrent caller may already hold a newer one
+				c.token = ""
+			}
 			c.mu.Unlock()
 			continue
 		}
