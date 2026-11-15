@@ -31,6 +31,8 @@ type fake struct {
 	members []map[string]string // instanceId, state
 	stale   int                 // answer this many PATCHes 412 (another writer got there first)
 	denied  bool                // every write is 403
+	spend   bool                // every PATCH is 403 spend_limit_reached
+	patches int                 // PATCHes answered
 	rootGiB any
 	writes  []string // "PATCH {body} If-Match" and "POST <path> {body}"
 }
@@ -60,6 +62,11 @@ func (f *fake) serve(t *testing.T) *ezghclient.Clients {
 	mux.HandleFunc("PATCH "+base, func(w http.ResponseWriter, r *http.Request) {
 		f.mu.Lock()
 		defer f.mu.Unlock()
+		f.patches++
+		if f.spend {
+			write(w, 403, map[string]any{"error": map[string]string{"code": "spend_limit_reached", "message": spendMessage}})
+			return
+		}
 		if denied(w) {
 			return
 		}
@@ -301,5 +308,18 @@ func TestDeniedIsGRPCPermissionDenied(t *testing.T) {
 	}
 	if f.desired != 2 {
 		t.Fatal(f.desired)
+	}
+}
+
+const spendMessage = "This organization's plan credit for November 2026 is used up."
+
+// Billing's spend block is a quota-like ResourceExhausted in billing's words (Cluster Autoscaler
+// backs the group off), not a missing permission, and is tried once.
+func TestIncreaseSizeSpendLimit(t *testing.T) {
+	f := &fake{desired: 2, spend: true}
+	p := newProvider(t, f)
+	_, err := p.NodeGroupIncreaseSize(ctx, &NodeGroupIncreaseSizeRequest{Id: "kng_a", Delta: 1})
+	if status.Code(err) != codes.ResourceExhausted || status.Convert(err).Message() != spendMessage || f.patches != 1 {
+		t.Fatal(err, f.patches)
 	}
 }

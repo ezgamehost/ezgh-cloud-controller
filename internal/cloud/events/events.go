@@ -20,6 +20,7 @@ import (
 // Event reasons.
 const (
 	MissingPermission      = "MissingPermission"
+	SpendLimitReached      = "SpendLimitReached"
 	QuotaExceeded          = "QuotaExceeded"
 	CredentialsUnavailable = "CredentialsUnavailable"
 	EZGHAPIError           = "EZGHAPIError"
@@ -43,6 +44,9 @@ func Describe(err error) (reason, message string) {
 const maxNote = 1000
 
 func describe(err error) (reason, message string) {
+	if msg, ok := ezghclient.AsSpendLimit(err); ok {
+		return SpendLimitReached, msg
+	}
 	if p, ok := ezghclient.AsPermission(err); ok {
 		if p.Action == "" {
 			return MissingPermission, "The cluster's Bot was refused: " + p.Message + ". Grant the permission on the Bot, or attach KubernetesClusterAccess."

@@ -338,7 +338,7 @@ func apiStatus(err error) error {
 	switch {
 	case isPermission(err):
 		return status.Error(codes.PermissionDenied, msg)
-	case isQuota(err):
+	case isQuota(err), isSpendLimit(err): // Cluster Autoscaler backs the node group off
 		return status.Error(codes.ResourceExhausted, msg)
 	case ezghclient.IsNotFound(err):
 		return status.Error(codes.NotFound, msg)
@@ -351,3 +351,4 @@ func apiStatus(err error) error {
 
 func isPermission(err error) bool { _, ok := ezghclient.AsPermission(err); return ok }
 func isQuota(err error) bool      { _, _, ok := ezghclient.AsQuota(err); return ok }
+func isSpendLimit(err error) bool { _, ok := ezghclient.AsSpendLimit(err); return ok }

@@ -22,10 +22,14 @@ func (e *PermissionError) Error() string { return e.Message + " (" + e.Code + ")
 // own (a listener create checks certificates.certificates.use as the caller too).
 var deniedAction = regexp.MustCompile(`allowed to ([a-z][A-Za-z0-9]*(?:\.[A-Za-z0-9]+)+)\s*\.?$`)
 
-// AsPermission reports whether err is a 403, and which action it names.
+// SpendLimitCode is the 403 of billing's spend block on the organization (its plan credit used
+// up): not a permission the Bot lacks.
+const SpendLimitCode = "spend_limit_reached"
+
+// AsPermission reports whether err is a 403 other than a spend limit, and which action it names.
 func AsPermission(err error) (*PermissionError, bool) {
 	e, ok := apiclient.AsError(err)
-	if !ok || e.Status != http.StatusForbidden {
+	if !ok || e.Status != http.StatusForbidden || e.Code == SpendLimitCode {
 		return nil, false
 	}
 	p := &PermissionError{Code: e.Code, Message: e.Message, Status: e.Status}
@@ -33,6 +37,15 @@ func AsPermission(err error) (*PermissionError, bool) {
 		p.Action = m[1]
 	}
 	return p, true
+}
+
+// AsSpendLimit reports whether err is billing's spend block, with the API's message.
+func AsSpendLimit(err error) (message string, ok bool) {
+	e, isAPI := apiclient.AsError(err)
+	if !isAPI || e.Status != http.StatusForbidden || e.Code != SpendLimitCode {
+		return "", false
+	}
+	return e.Message, true
 }
 
 // AsQuota reports whether err is a quota refusal, with its code and message.

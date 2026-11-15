@@ -66,3 +66,11 @@ func TestReportLong(t *testing.T) {
 type errString string
 
 func (e errString) Error() string { return string(e) }
+
+func TestDescribeSpendLimit(t *testing.T) {
+	msg := "This organization's plan credit for November 2026 is used up."
+	reason, got := Describe(&apiclient.Error{Service: "Compute", Status: 403, Code: "spend_limit_reached", Message: msg})
+	if reason != SpendLimitReached || got != msg {
+		t.Fatal(reason, got)
+	}
+}
